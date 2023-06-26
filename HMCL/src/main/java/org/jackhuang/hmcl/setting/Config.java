@@ -167,7 +167,7 @@ public final class Config implements Cloneable, Observable {
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
 
     @SerializedName("addedLittleSkin")
-    private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
+    private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(true);
 
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();

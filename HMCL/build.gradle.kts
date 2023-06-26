@@ -21,7 +21,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
-        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
+        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "liteUI"
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"

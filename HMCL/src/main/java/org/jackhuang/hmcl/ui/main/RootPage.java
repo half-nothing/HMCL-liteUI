@@ -138,31 +138,31 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             });
 
             // third item in left sidebar
-            AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG::viewList));
-            gameItem.setActionButtonVisible(false);
-            gameItem.setTitle(i18n("version.manage"));
-            gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+//            AdvancedListItem gameItem = new AdvancedListItem();
+//            gameItem.setLeftGraphic(wrap(SVG::viewList));
+//            gameItem.setActionButtonVisible(false);
+//            gameItem.setTitle(i18n("version.manage"));
+//            gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
-            AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
-            downloadItem.setActionButtonVisible(false);
-            downloadItem.setTitle(i18n("download"));
-            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+//            AdvancedListItem downloadItem = new AdvancedListItem();
+//            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
+//            downloadItem.setActionButtonVisible(false);
+//            downloadItem.setTitle(i18n("download"));
+//            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
             // fifth item in left sidebar
-            AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
-            multiplayerItem.setActionButtonVisible(false);
-            multiplayerItem.setTitle(i18n("multiplayer"));
-            JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
-            link.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate");
-            multiplayerItem.setOnAction(e -> Controllers.dialog(
-                    new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
-                            .addAction(link)
-                            .ok(null)
-                            .build()));
+//            AdvancedListItem multiplayerItem = new AdvancedListItem();
+//            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
+//            multiplayerItem.setActionButtonVisible(false);
+//            multiplayerItem.setTitle(i18n("multiplayer"));
+//            JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
+//            link.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate");
+//            multiplayerItem.setOnAction(e -> Controllers.dialog(
+//                    new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
+//                            .addAction(link)
+//                            .ok(null)
+//                            .build()));
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
@@ -177,10 +177,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(accountListItem)
                     .startCategory(i18n("version").toUpperCase(Locale.ROOT))
                     .add(gameListItem)
-                    .add(gameItem)
-                    .add(downloadItem)
+//                    .add(gameItem)
+//                    .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
-                    .add(multiplayerItem)
+//                    .add(multiplayerItem)
                     .add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.
