@@ -65,9 +65,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public final class Accounts {
-    private Accounts() {}
+    private Accounts() {
+    }
 
     private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
+
     private static void triggerAuthlibInjectorUpdateCheck() {
         if (AUTHLIB_INJECTOR_DOWNLOADER instanceof AuthlibInjectorDownloader) {
             Schedulers.io().execute(() -> {
@@ -86,12 +88,13 @@ public final class Accounts {
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-//    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    //    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
     private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
+
     static {
 //        type2factory.put("offline", FACTORY_OFFLINE);
 //        type2factory.put("yggdrasil", FACTORY_MOJANG);
@@ -138,7 +141,7 @@ public final class Accounts {
     private static final String GLOBAL_PREFIX = "$GLOBAL:";
     private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
 
-    private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
+    private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
     private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
 
     /**
@@ -237,6 +240,10 @@ public final class Accounts {
 //
 //            config().setAddedLittleSkin(true);
 //        }
+        AuthlibInjectorServer authlibInjectorServer = new AuthlibInjectorServer("https://skin.pigeon-server.cn/api/yggdrasil");
+        if (config().getAuthlibInjectorServers().stream().noneMatch(it -> it.getUrl().contains("skin.pigeon-server.cn"))) {
+            config().getAuthlibInjectorServers().add(0, authlibInjectorServer);
+        }
 
         loadGlobalAccountStorages();
 

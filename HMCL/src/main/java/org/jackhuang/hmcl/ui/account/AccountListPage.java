@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.net.URI;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -130,14 +131,16 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         item.setLeftGraphic(wrap(SVG::server));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
-                        JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> {
-                            skinnable.authServersProperty().remove(server);
-                            e.consume();
-                        });
-                        btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 14, 14));
-                        item.setRightGraphic(btnRemove);
+                        if (!server.getUrl().contains("skin.pigeon-server.cn")) {
+                            JFXButton btnRemove = new JFXButton();
+                            btnRemove.setOnAction(e -> {
+                                skinnable.authServersProperty().remove(server);
+                                e.consume();
+                            });
+                            btnRemove.getStyleClass().add("toggle-icon4");
+                            btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 14, 14));
+                            item.setRightGraphic(btnRemove);
+                        }
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
