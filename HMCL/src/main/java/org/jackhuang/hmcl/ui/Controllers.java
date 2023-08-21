@@ -72,7 +72,6 @@ public final class Controllers {
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageWidth = new SimpleDoubleProperty();
     private static DoubleProperty stageHeight = new SimpleDoubleProperty();
-
     private static Scene scene;
     private static Stage stage;
     private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);

@@ -111,6 +111,7 @@ public final class LauncherHelper {
         Logging.LOG.info("Launching game version: " + selectedVersion);
 
         Controllers.dialog(launchingStepsPane);
+
         launch0();
     }
 
@@ -130,11 +131,27 @@ public final class LauncherHelper {
         List<String> javaAgents = new ArrayList<>(0);
 
         AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
+        final JavaVersion[] javaVersion = {null};
 
         TaskExecutor executor = checkGameState(profile, setting, version.get())
-                .thenComposeAsync(javaVersion -> {
-                    javaVersionRef.set(Objects.requireNonNull(javaVersion));
-                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion, setting));
+                .thenComposeAsync( e -> {
+                    javaVersion[0] = e;
+                    File rootPath = dependencyManager.getGameRepository().getRunDirectory(version.get().getId());
+                    File mods = new File(rootPath, "mods");
+                    File config = new File(rootPath, "config");
+                    if (!mods.isDirectory()){
+                        throw new CheckModsUpdateException();
+                    }
+                    if (!config.isDirectory()){
+                        throw new CheckConfigUpdateException();
+                    }
+                    System.out.println(account.getUsername());
+                    System.out.println(account.getUUID());
+                    return null;
+                }).withStage("launch.state.mods")
+                .thenComposeAsync(() -> {
+                    javaVersionRef.set(Objects.requireNonNull(javaVersion[0]));
+                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion[0], setting));
                     if (setting.isNotCheckGame())
                         return null;
                     return Task.allOf(
@@ -152,7 +169,7 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(javaVersion, renderer);
+                                    Library lib = NativePatcher.getMesaLoader(javaVersion[0], renderer);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
@@ -176,50 +193,48 @@ public final class LauncherHelper {
                             })
                     );
                 }).withStage("launch.state.dependencies")
-                .thenComposeAsync(() -> {
-                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null);
-                })
+                .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
-                    return new HMCLGameLauncher(
-                            repository,
-                            version.get(),
-                            authInfo,
-                            launchOptions,
-                            launcherVisibility == LauncherVisibility.CLOSE
-                                    ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
-                    );
-                }).thenComposeAsync(launcher -> { // launcher is prev task's result
-                    if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
-                    } else {
-                        return Task.supplyAsync(() -> {
-                            launcher.makeLaunchScript(scriptFile);
-                            return null;
-                        });
-                    }
-                }).thenAcceptAsync(process -> { // process is LaunchTask's result
-                    if (scriptFile == null) {
-                        PROCESSES.add(process);
-                        if (launcherVisibility == LauncherVisibility.CLOSE)
-                            Launcher.stopApplication();
-                        else
-                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
-                                process.stop();
-                                it.fireEvent(new DialogCloseEvent());
-                            }));
-                    } else {
-                        Platform.runLater(() -> {
-                            launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
-                        });
-                    }
-                }).thenRunAsync(() -> {
-                    launchingLatch.await();
-                }).withStage("launch.state.waiting_launching"))
+                            LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
+                            return new HMCLGameLauncher(
+                                    repository,
+                                    version.get(),
+                                    authInfo,
+                                    launchOptions,
+                                    launcherVisibility == LauncherVisibility.CLOSE
+                                            ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                            : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                            );
+                        })
+                        .thenComposeAsync(launcher -> { // launcher is prev task's result
+                            if (scriptFile == null) {
+                                return Task.supplyAsync(launcher::launch);
+                            } else {
+                                return Task.supplyAsync(() -> {
+                                    launcher.makeLaunchScript(scriptFile);
+                                    return null;
+                                });
+                            }
+                        }).thenAcceptAsync(process -> { // process is LaunchTask's result
+                            if (scriptFile == null) {
+                                PROCESSES.add(process);
+                                if (launcherVisibility == LauncherVisibility.CLOSE)
+                                    Launcher.stopApplication();
+                                else
+                                    launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
+                                        process.stop();
+                                        it.fireEvent(new DialogCloseEvent());
+                                    }));
+                            } else {
+                                Platform.runLater(() -> {
+                                    launchingStepsPane.fireEvent(new DialogCloseEvent());
+                                    Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                                });
+                            }
+                        }).thenRunAsync(launchingLatch::await).withStage("launch.state.waiting_launching"))
                 .withStagesHint(Lang.immutableListOf(
+                        "launch.state.mods",
                         "launch.state.java",
                         "launch.state.dependencies",
                         "launch.state.logging_in",
@@ -244,7 +259,11 @@ public final class LauncherHelper {
                                         message = i18n("modpack.type.curse.not_found");
                                     else
                                         message = i18n("modpack.type.curse.error");
-                                } else if (ex instanceof PermissionException) {
+                                }else if (ex instanceof CheckModsUpdateException){
+                                    message = "无法找到mods文件夹";
+                                }else if (ex instanceof CheckConfigUpdateException){
+                                    message = "无法找到config文件夹";
+                                }else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
                                     message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
@@ -617,7 +636,7 @@ public final class LauncherHelper {
     /**
      * Directly start java downloading.
      *
-     * @param javaVersion target Java version
+     * @param javaVersion      target Java version
      * @param downloadProvider download provider
      * @return JavaVersion, null if we failed to download java, failed if an error occurred when downloading.
      */

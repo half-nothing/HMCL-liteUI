@@ -224,6 +224,8 @@ public final class Accounts {
         }
     }
 
+    private final static List<String> adminAccount = Arrays.asList("Half_nothing", "fsj");
+
     /**
      * Called when it's ready to load accounts from {@link ConfigHolder#config()}.
      */
@@ -240,18 +242,23 @@ public final class Accounts {
 //
 //            config().setAddedLittleSkin(true);
 //        }
-        AuthlibInjectorServer authlibInjectorServer = new AuthlibInjectorServer("https://skin.pigeon-server.cn/api/yggdrasil");
+        AuthlibInjectorServer authlibInjectorServer = new AuthlibInjectorServer("https://skin.pigeon-server.cn/api/yggdrasil/");
         if (config().getAuthlibInjectorServers().stream().noneMatch(it -> it.getUrl().contains("skin.pigeon-server.cn"))) {
             config().getAuthlibInjectorServers().add(0, authlibInjectorServer);
         }
 
         loadGlobalAccountStorages();
-
         // load accounts
         Account selected = null;
         for (Map<Object, Object> storage : config().getAccountStorages()) {
             Account account = parseAccount(storage);
             if (account != null) {
+                if (account instanceof AuthlibInjectorAccount) {
+                    AuthlibInjectorAccount authlibInjectorAccount = (AuthlibInjectorAccount) account;
+                    if (authlibInjectorAccount.getServer().getUrl().contains("skin.pigeon-server.cn") && adminAccount.contains(authlibInjectorAccount.getUsername())) {
+                        Metadata.adminMode = true;
+                    }
+                }
                 account.setPortable(true);
                 accounts.add(account);
                 if (Boolean.TRUE.equals(storage.get("selected"))) {
@@ -263,6 +270,12 @@ public final class Accounts {
         for (Map<Object, Object> storage : globalAccountStorages) {
             Account account = parseAccount(storage);
             if (account != null) {
+                if (account instanceof AuthlibInjectorAccount) {
+                    AuthlibInjectorAccount authlibInjectorAccount = (AuthlibInjectorAccount) account;
+                    if (authlibInjectorAccount.getServer().getUrl().contains("skin.pigeon-server.cn") && adminAccount.contains(authlibInjectorAccount.getUsername())) {
+                        Metadata.adminMode = true;
+                    }
+                }
                 accounts.add(account);
             }
         }
