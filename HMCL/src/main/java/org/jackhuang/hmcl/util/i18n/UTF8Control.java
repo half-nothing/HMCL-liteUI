@@ -32,7 +32,8 @@ final class UTF8Control extends ResourceBundle.Control {
 
     public static final UTF8Control INSTANCE = new UTF8Control();
 
-    private UTF8Control() {}
+    private UTF8Control() {
+    }
 
     @Override
     public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload) throws IOException {

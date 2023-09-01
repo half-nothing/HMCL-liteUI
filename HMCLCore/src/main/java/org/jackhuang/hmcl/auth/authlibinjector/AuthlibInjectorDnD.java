@@ -36,7 +36,8 @@ public final class AuthlibInjectorDnD {
     private static final String SCHEME = "authlib-injector";
     private static final String PATH_YGGDRASIL_SERVER = "yggdrasil-server";
 
-    private AuthlibInjectorDnD() {}
+    private AuthlibInjectorDnD() {
+    }
 
     public static Optional<String> parseUrlFromDragboard(Dragboard dragboard) {
         String uri = dragboard.getString();

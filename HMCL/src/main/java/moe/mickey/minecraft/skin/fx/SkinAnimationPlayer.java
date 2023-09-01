@@ -42,16 +42,16 @@ public class SkinAnimationPlayer {
         return weightedSum;
     }
 
+    public long getInterval() {
+        return interval;
+    }
+
     public void setInterval(long interval) {
         this.interval = interval;
         if (interval < 1)
             animationTimer.stop();
         else
             start();
-    }
-
-    public long getInterval() {
-        return interval;
     }
 
     public long getLastPlayTime() {

@@ -78,35 +78,35 @@ public class OptionToggleButton extends StackPane {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public String getSubtitle() {
         return subtitle.get();
     }
 
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
+    }
+
+    public StringProperty subtitleProperty() {
+        return subtitle;
     }
 
     public boolean isSelected() {
         return selected.get();
     }
 
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
     public void setSelected(boolean selected) {
         this.selected.set(selected);
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
     }
 }

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import java.util.Objects;
 
 /**
- *
  * @author huangyuhui
  */
 public class Event {
@@ -31,6 +30,8 @@ public class Event {
      * The object on which the Event initially occurred.
      */
     protected final transient Object source;
+    private boolean canceled;
+    private Result result = Result.DEFAULT;
 
     /**
      * Constructs a prototypical Event.
@@ -62,8 +63,6 @@ public class Event {
         return new ToStringBuilder(this).append("source", source).toString();
     }
 
-    private boolean canceled;
-
     /**
      * true if this event is canceled.
      *
@@ -93,8 +92,6 @@ public class Event {
     public boolean hasResult() {
         return false;
     }
-
-    private Result result = Result.DEFAULT;
 
     /**
      * Retutns the value set as the result of this event

@@ -21,8 +21,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -52,9 +54,11 @@ public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
-
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .create();
     private final OAuth.Callback callback;
-
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
     public MicrosoftService(OAuth.Callback callback) {
@@ -63,6 +67,74 @@ public class MicrosoftService {
             LOG.info("Fetching properties of " + uuid);
             return getCompleteGameProfile(uuid);
         }, (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid, e), POOL);
+    }
+
+    private static void handleErrorResponse(MinecraftErrorResponse response) throws AuthenticationException {
+        if (response.error != null) {
+            throw new RemoteAuthenticationException(response.error, response.errorMessage, response.developerMessage);
+        }
+    }
+
+    public static Optional<Map<TextureType, Texture>> getTextures(MinecraftProfileResponse profile) {
+        Objects.requireNonNull(profile);
+
+        Map<TextureType, Texture> textures = new EnumMap<>(TextureType.class);
+
+        if (!profile.skins.isEmpty()) {
+            textures.put(TextureType.SKIN, new Texture(profile.skins.get(0).url, null));
+        }
+        // if (!profile.capes.isEmpty()) {
+        // textures.put(TextureType.CAPE, new Texture(profile.capes.get(0).url, null);
+        // }
+
+        return Optional.of(textures);
+    }
+
+    private static void getXBoxProfile(String uhs, String xstsToken) throws IOException {
+        HttpRequest.GET("https://profile.xboxlive.com/users/me/profile/settings",
+                        pair("settings", "GameDisplayName,AppDisplayName,AppDisplayPicRaw,GameDisplayPicRaw,"
+                                + "PublicGamerpic,ShowUserAsAvatar,Gamerscore,Gamertag,ModernGamertag,ModernGamertagSuffix,"
+                                + "UniqueModernGamertag,AccountTier,TenureLevel,XboxOneRep,"
+                                + "PreferredColor,Location,Bio,Watermarks," + "RealName,RealNameOverride,IsQuarantined"))
+                .accept("application/json")
+                .authorization(String.format("XBL3.0 x=%s;%s", uhs, xstsToken))
+                .header("x-xbl-contract-version", "3")
+                .getString();
+    }
+
+    private static MinecraftProfileResponse getMinecraftProfile(String tokenType, String accessToken)
+            throws IOException, AuthenticationException {
+        HttpURLConnection conn = HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
+                .authorization(tokenType, accessToken)
+                .createConnection();
+        int responseCode = conn.getResponseCode();
+        if (responseCode == HTTP_NOT_FOUND) {
+            throw new NoMinecraftJavaEditionProfileException();
+        } else if (responseCode != 200) {
+            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), responseCode);
+        }
+
+        String result = NetworkUtils.readData(conn);
+        return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
+    }
+
+    private static String request(URL url, Object payload) throws AuthenticationException {
+        try {
+            if (payload == null)
+                return NetworkUtils.doGet(url);
+            else
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        }
+    }
+
+    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
+        try {
+            return GSON.fromJson(text, typeOfT);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(text, e);
+        }
     }
 
     public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
@@ -185,81 +257,16 @@ public class MicrosoftService {
         }
     }
 
-    private static void handleErrorResponse(MinecraftErrorResponse response) throws AuthenticationException {
-        if (response.error != null) {
-            throw new RemoteAuthenticationException(response.error, response.errorMessage, response.developerMessage);
-        }
-    }
-
-    public static Optional<Map<TextureType, Texture>> getTextures(MinecraftProfileResponse profile) {
-        Objects.requireNonNull(profile);
-
-        Map<TextureType, Texture> textures = new EnumMap<>(TextureType.class);
-
-        if (!profile.skins.isEmpty()) {
-            textures.put(TextureType.SKIN, new Texture(profile.skins.get(0).url, null));
-        }
-        // if (!profile.capes.isEmpty()) {
-        // textures.put(TextureType.CAPE, new Texture(profile.capes.get(0).url, null);
-        // }
-
-        return Optional.of(textures);
-    }
-
-    private static void getXBoxProfile(String uhs, String xstsToken) throws IOException {
-        HttpRequest.GET("https://profile.xboxlive.com/users/me/profile/settings",
-                        pair("settings", "GameDisplayName,AppDisplayName,AppDisplayPicRaw,GameDisplayPicRaw,"
-                                + "PublicGamerpic,ShowUserAsAvatar,Gamerscore,Gamertag,ModernGamertag,ModernGamertagSuffix,"
-                                + "UniqueModernGamertag,AccountTier,TenureLevel,XboxOneRep,"
-                                + "PreferredColor,Location,Bio,Watermarks," + "RealName,RealNameOverride,IsQuarantined"))
-                .accept("application/json")
-                .authorization(String.format("XBL3.0 x=%s;%s", uhs, xstsToken))
-                .header("x-xbl-contract-version", "3")
-                .getString();
-    }
-
-    private static MinecraftProfileResponse getMinecraftProfile(String tokenType, String accessToken)
-            throws IOException, AuthenticationException {
-        HttpURLConnection conn = HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
-                .authorization(tokenType, accessToken)
-                .createConnection();
-        int responseCode = conn.getResponseCode();
-        if (responseCode == HTTP_NOT_FOUND) {
-            throw new NoMinecraftJavaEditionProfileException();
-        } else if (responseCode != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), responseCode);
-        }
-
-        String result = NetworkUtils.readData(conn);
-        return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
-    }
-
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
         return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
     }
 
-    private static String request(URL url, Object payload) throws AuthenticationException {
-        try {
-            if (payload == null)
-                return NetworkUtils.doGet(url);
-            else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
-        }
-    }
-
     public static class XboxAuthorizationException extends AuthenticationException {
+        public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
+        public static final long COUNTRY_UNAVAILABLE = 2148916235L;
+        public static final long ADD_FAMILY = 2148916238L;
         private final long errorCode;
         private final String redirect;
 
@@ -275,10 +282,6 @@ public class MicrosoftService {
         public String getRedirect() {
             return redirect;
         }
-
-        public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
-        public static final long COUNTRY_UNAVAILABLE = 2148916235L;
-        public static final long ADD_FAMILY = 2148916238L;
     }
 
     public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
@@ -408,10 +411,5 @@ public class MicrosoftService {
         public String errorMessage;
         public String developerMessage;
     }
-
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .create();
 
 }

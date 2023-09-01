@@ -40,7 +40,8 @@ public final class StreamPump implements Runnable {
     private final Charset charset;
 
     public StreamPump(InputStream inputStream) {
-        this(inputStream, s -> {});
+        this(inputStream, s -> {
+        });
     }
 
     public StreamPump(InputStream inputStream, Consumer<String> callback) {

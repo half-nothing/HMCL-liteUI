@@ -34,8 +34,8 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 
 public class HttpServer extends NanoHTTPD {
-    private int traceId = 0;
     protected final List<Route> routes = new ArrayList<>();
+    private int traceId = 0;
 
     public HttpServer(int port) {
         super(port);
@@ -43,14 +43,6 @@ public class HttpServer extends NanoHTTPD {
 
     public HttpServer(String hostname, int port) {
         super(hostname, port);
-    }
-
-    public String getRootUrl() {
-        return "http://localhost:" + getListeningPort();
-    }
-
-    protected void addRoute(Method method, Pattern path, ExceptionalFunction<Request, Response, ?> server) {
-        routes.add(new DefaultRoute(method, path, server));
     }
 
     protected static Response ok(Object response) {
@@ -72,6 +64,14 @@ public class HttpServer extends NanoHTTPD {
 
     protected static Response internalError() {
         return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "500 internal error");
+    }
+
+    public String getRootUrl() {
+        return "http://localhost:" + getListeningPort();
+    }
+
+    protected void addRoute(Method method, Pattern path, ExceptionalFunction<Request, Response, ?> server) {
+        routes.add(new DefaultRoute(method, path, server));
     }
 
     @Override

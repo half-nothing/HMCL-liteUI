@@ -6,7 +6,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NormalizedSkinTest {
     private static NormalizedSkin getSkin(String name) throws InvalidSkinException {

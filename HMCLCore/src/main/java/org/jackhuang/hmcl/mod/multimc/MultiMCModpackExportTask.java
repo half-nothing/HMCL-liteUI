@@ -39,6 +39,7 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
  * Export the game to a mod pack file.
  */
 public class MultiMCModpackExportTask extends Task<Void> {
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options().requireMinMemory();
     private final DefaultGameRepository repository;
     private final String versionId;
     private final List<String> whitelist;
@@ -93,6 +94,4 @@ public class MultiMCModpackExportTask extends Task<Void> {
             zip.putTextFile("", ".packignore");
         }
     }
-
-    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options().requireMinMemory();
 }

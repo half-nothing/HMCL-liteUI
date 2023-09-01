@@ -39,20 +39,6 @@ import java.util.function.Function;
  */
 final class ScrollUtils {
 
-    public enum ScrollDirection {
-        UP(-1), RIGHT(-1), DOWN(1), LEFT(1);
-
-        final int intDirection;
-
-        ScrollDirection(int intDirection) {
-            this.intDirection = intDirection;
-        }
-
-        public int intDirection() {
-            return intDirection;
-        }
-    }
-
     private ScrollUtils() {
     }
 
@@ -108,10 +94,6 @@ final class ScrollUtils {
         }
     }
 
-    //================================================================================
-    // ScrollPanes
-    //================================================================================
-
     /**
      * Adds a smooth scrolling effect to the given scroll pane,
      * calls {@link #addSmoothScrolling(ScrollPane, double)} with a
@@ -120,6 +102,10 @@ final class ScrollUtils {
     public static void addSmoothScrolling(ScrollPane scrollPane) {
         addSmoothScrolling(scrollPane, 1);
     }
+
+    //================================================================================
+    // ScrollPanes
+    //================================================================================
 
     /**
      * Adds a smooth scrolling effect to the given scroll pane with the given scroll speed.
@@ -210,6 +196,20 @@ final class ScrollUtils {
             }
         }));
         timeline.setCycleCount(Animation.INDEFINITE);
+    }
+
+    public enum ScrollDirection {
+        UP(-1), RIGHT(-1), DOWN(1), LEFT(1);
+
+        final int intDirection;
+
+        ScrollDirection(int intDirection) {
+            this.intDirection = intDirection;
+        }
+
+        public int intDirection() {
+            return intDirection;
+        }
     }
 
 }

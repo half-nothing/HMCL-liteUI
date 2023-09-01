@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -25,12 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
-
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
 
 /**
  * @author yushijinhun

@@ -80,12 +80,12 @@ public class HintPane extends VBox {
         return text.get();
     }
 
-    public StringProperty textProperty() {
-        return text;
-    }
-
     public void setText(String text) {
         this.text.set(text);
+    }
+
+    public StringProperty textProperty() {
+        return text;
     }
 
     public void setSegment(String segment) {

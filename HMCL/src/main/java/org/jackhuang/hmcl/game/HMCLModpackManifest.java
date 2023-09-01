@@ -23,7 +23,8 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 public final class HMCLModpackManifest implements ModpackManifest {
     public static final HMCLModpackManifest INSTANCE = new HMCLModpackManifest();
 
-    private HMCLModpackManifest() {}
+    private HMCLModpackManifest() {
+    }
 
     @Override
     public ModpackProvider getProvider() {

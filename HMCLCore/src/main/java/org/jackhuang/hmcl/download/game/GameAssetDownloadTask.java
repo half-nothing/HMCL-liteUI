@@ -40,11 +40,12 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GameAssetDownloadTask extends Task<Void> {
-    
+
+    public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
+    public static final boolean DOWNLOAD_INDEX_IF_NECESSARY = false;
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final AssetIndexInfo assetIndexInfo;
@@ -57,7 +58,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the game version
+     * @param version           the game version
      */
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
@@ -124,7 +125,4 @@ public final class GameAssetDownloadTask extends Task<Void> {
             notifyPropertiesChanged();
         }
     }
-
-    public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
-    public static final boolean DOWNLOAD_INDEX_IF_NECESSARY = false;
 }

@@ -72,11 +72,6 @@ public final class GameLibrariesTask extends Task<Void> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    @Override
-    public List<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
     public static boolean shouldDownloadLibrary(GameRepository gameRepository, Version version, Library library, boolean integrityCheck) {
         File file = gameRepository.getLibraryFile(version, library);
         Path jar = file.toPath();
@@ -102,6 +97,11 @@ public final class GameLibrariesTask extends Task<Void> {
         }
 
         return false;
+    }
+
+    @Override
+    public List<Task<?>> getDependencies() {
+        return dependencies;
     }
 
     @Override

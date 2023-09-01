@@ -31,16 +31,58 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 public final class ModManager {
+    public static final String DISABLED_EXTENSION = ".disabled";
+    public static final String OLD_EXTENSION = ".old";
     private final GameRepository repository;
     private final String id;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
     private final HashMap<LocalMod, LocalMod> localMods = new HashMap<>();
-
     private boolean loaded = false;
 
     public ModManager(GameRepository repository, String id) {
         this.repository = repository;
         this.id = id;
+    }
+
+    public static String getModName(Path file) {
+        return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
+    }
+
+    public static boolean isFileNameMod(Path file) {
+        String name = getModName(file);
+        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+    }
+
+    public static boolean isFileMod(Path modFile) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
+                // Forge mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("fabric.mod.json"))) {
+                // Fabric mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("litemod.json"))) {
+                // Liteloader mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("pack.mcmeta"))) {
+                // resource pack, data pack
+                return true;
+            }
+
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public static String getMcbbsUrl(String mcbbsId) {
+        return String.format("https://www.mcbbs.net/thread-%s-1-1.html", mcbbsId);
     }
 
     public GameRepository getRepository() {
@@ -252,49 +294,12 @@ public final class ModManager {
         return enabled;
     }
 
-    public static String getModName(Path file) {
-        return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
-    }
-
     public boolean isOld(Path file) {
         return FileUtils.getName(file).endsWith(OLD_EXTENSION);
     }
 
     public boolean isDisabled(Path file) {
         return FileUtils.getName(file).endsWith(DISABLED_EXTENSION);
-    }
-
-    public static boolean isFileNameMod(Path file) {
-        String name = getModName(file);
-        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
-    }
-
-    public static boolean isFileMod(Path modFile) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
-                return true;
-            }
-
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     /**
@@ -311,11 +316,4 @@ public final class ModManager {
     public Path getSimpleModPath(String fileName) {
         return getModsDirectory().resolve(fileName);
     }
-
-    public static String getMcbbsUrl(String mcbbsId) {
-        return String.format("https://www.mcbbs.net/thread-%s-1-1.html", mcbbsId);
-    }
-
-    public static final String DISABLED_EXTENSION = ".disabled";
-    public static final String OLD_EXTENSION = ".old";
 }

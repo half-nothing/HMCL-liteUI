@@ -15,15 +15,15 @@ public class SkinTransition extends Transition {
     protected boolean fix;
     protected int count;
 
-    public int getCount() {
-        return count;
-    }
-
     @SafeVarargs
     public SkinTransition(Duration duration, Function<Double, Double> expression, WritableValue<Number>... observables) {
         setCycleDuration(duration);
         this.expression = expression;
         this.observables = Arrays.asList(observables);
+    }
+
+    public int getCount() {
+        return count;
     }
 
     @Override

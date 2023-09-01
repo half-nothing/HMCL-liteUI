@@ -65,6 +65,60 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         this.dependencyManager = profile.getDependency(downloadProvider);
     }
 
+    public static void alertFailureMessage(Exception exception, Runnable next) {
+        if (exception instanceof LibraryDownloadException) {
+            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n";
+            if (exception.getCause() instanceof ResponseCodeException) {
+                ResponseCodeException rce = (ResponseCodeException) exception.getCause();
+                int responseCode = rce.getResponseCode();
+                URL url = rce.getUrl();
+                if (responseCode == 404)
+                    message += i18n("download.code.404", url);
+                else
+                    message += i18n("download.failed", url, responseCode);
+            } else {
+                message += StringUtils.getStackTrace(exception.getCause());
+            }
+            Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof DownloadException) {
+            URL url = ((DownloadException) exception).getUrl();
+            if (exception.getCause() instanceof SocketTimeoutException) {
+                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+            } else if (exception.getCause() instanceof ResponseCodeException) {
+                ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
+                if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                } else {
+                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                }
+            } else {
+                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+            }
+        } else if (exception instanceof UnsupportedInstallationException) {
+            switch (((UnsupportedInstallationException) exception).getReason()) {
+                case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2:
+                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    break;
+                default:
+                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    break;
+            }
+        } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
+            Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof ArtifactMalformedException || exception instanceof ZipException) {
+            Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
+            Controllers.dialog(i18n("assets.index.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof VersionMismatchException) {
+            VersionMismatchException e = ((VersionMismatchException) exception);
+            Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof CancellationException) {
+            // Ignore cancel
+        } else {
+            Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        }
+    }
+
     @Override
     public void start(Map<String, Object> settings) {
     }
@@ -125,60 +179,6 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         // VersionsPage will call wizardController.onPrev(cleanUp = true) when list is empty.
         // So we cancel this wizard when VersionPage calls the method.
         return true;
-    }
-
-    public static void alertFailureMessage(Exception exception, Runnable next) {
-        if (exception instanceof LibraryDownloadException) {
-            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n";
-            if (exception.getCause() instanceof ResponseCodeException) {
-                ResponseCodeException rce = (ResponseCodeException) exception.getCause();
-                int responseCode = rce.getResponseCode();
-                URL url = rce.getUrl();
-                if (responseCode == 404)
-                    message += i18n("download.code.404", url);
-                else
-                    message += i18n("download.failed", url, responseCode);
-            } else {
-                message += StringUtils.getStackTrace(exception.getCause());
-            }
-            Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof DownloadException) {
-            URL url = ((DownloadException) exception).getUrl();
-            if (exception.getCause() instanceof SocketTimeoutException) {
-                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-            } else if (exception.getCause() instanceof ResponseCodeException) {
-                ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
-                if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-                } else {
-                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-                }
-            } else {
-                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-            }
-        } else if (exception instanceof UnsupportedInstallationException) {
-            switch (((UnsupportedInstallationException) exception).getReason()) {
-                case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2:
-                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
-                default:
-                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
-            }
-        } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
-            Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof ArtifactMalformedException || exception instanceof ZipException) {
-            Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
-            Controllers.dialog(i18n("assets.index.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof VersionMismatchException) {
-            VersionMismatchException e = ((VersionMismatchException) exception);
-            Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof CancellationException) {
-            // Ignore cancel
-        } else {
-            Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        }
     }
 
     public static class RemoveVersionAction {

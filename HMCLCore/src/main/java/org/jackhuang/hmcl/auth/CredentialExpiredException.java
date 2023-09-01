@@ -26,7 +26,8 @@ package org.jackhuang.hmcl.auth;
  */
 public class CredentialExpiredException extends AuthenticationException {
 
-    public CredentialExpiredException() {}
+    public CredentialExpiredException() {
+    }
 
     public CredentialExpiredException(String message, Throwable cause) {
         super(message, cause);

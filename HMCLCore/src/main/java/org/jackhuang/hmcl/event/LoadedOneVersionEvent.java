@@ -32,8 +32,7 @@ public final class LoadedOneVersionEvent extends Event {
     private final Version version;
 
     /**
-     *
-     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param source  {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the version id.
      */
     public LoadedOneVersionEvent(Object source, Version version) {

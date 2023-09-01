@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- *
  * @author huangyuhui
  */
 public abstract class Launcher {

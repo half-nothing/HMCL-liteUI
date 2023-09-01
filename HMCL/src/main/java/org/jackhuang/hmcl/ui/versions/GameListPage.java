@@ -122,12 +122,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return profiles.get();
     }
 
-    public ListProperty<Profile> profilesProperty() {
-        return profiles;
-    }
-
     public void setProfiles(ObservableList<Profile> profiles) {
         this.profiles.set(profiles);
+    }
+
+    public ListProperty<Profile> profilesProperty() {
+        return profiles;
     }
 
     public void modifyGlobalGameSettings() {

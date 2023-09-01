@@ -116,59 +116,59 @@ public class FileItem extends BorderPane {
         return name.get();
     }
 
-    public StringProperty nameProperty() {
-        return name;
-    }
-
     public void setName(String name) {
         this.name.set(name);
+    }
+
+    public StringProperty nameProperty() {
+        return name;
     }
 
     public String getTitle() {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public String getTooltip() {
         return tooltip.get();
     }
 
-    public StringProperty tooltipProperty() {
-        return tooltip;
-    }
-
     public void setTooltip(String tooltip) {
         this.tooltip.set(tooltip);
+    }
+
+    public StringProperty tooltipProperty() {
+        return tooltip;
     }
 
     public String getPath() {
         return path.get();
     }
 
-    public StringProperty pathProperty() {
-        return path;
-    }
-
     public void setPath(String path) {
         this.path.set(path);
+    }
+
+    public StringProperty pathProperty() {
+        return path;
     }
 
     public boolean isConvertToRelativePath() {
         return convertToRelativePath.get();
     }
 
-    public BooleanProperty convertToRelativePathProperty() {
-        return convertToRelativePath;
-    }
-
     public void setConvertToRelativePath(boolean convertToRelativePath) {
         this.convertToRelativePath.set(convertToRelativePath);
+    }
+
+    public BooleanProperty convertToRelativePathProperty() {
+        return convertToRelativePath;
     }
 }

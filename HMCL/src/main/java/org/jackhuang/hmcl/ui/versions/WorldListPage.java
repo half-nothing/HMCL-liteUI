@@ -148,12 +148,12 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         return showAll.get();
     }
 
-    public BooleanProperty showAllProperty() {
-        return showAll;
-    }
-
     public void setShowAll(boolean showAll) {
         this.showAll.set(showAll);
+    }
+
+    public BooleanProperty showAllProperty() {
+        return showAll;
     }
 
     private class WorldListPageSkin extends ToolbarListPageSkin<WorldListPage> {

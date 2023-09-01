@@ -33,13 +33,12 @@ import java.util.logging.*;
  * @author huangyuhui
  */
 public final class Logging {
-    private Logging() {
-    }
-
     public static final Logger LOG = Logger.getLogger("HMCL");
     private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
-
     private static volatile String[] accessTokens = new String[0];
+
+    private Logging() {
+    }
 
     public static synchronized void registerAccessToken(String token) {
         final String[] oldAccessTokens = accessTokens;

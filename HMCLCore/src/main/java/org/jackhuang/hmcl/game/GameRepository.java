@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * Supports operations on versioning.
- *
+ * <p>
  * Note that game repository will not do any operations which need connection with Internet, if do,
  * see {@link org.jackhuang.hmcl.download.DependencyManager}
  *
@@ -79,7 +79,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Load version list.
-     *
+     * <p>
      * This method should be called before launching a version.
      * A time-costly operation.
      * You'd better execute this method in a new thread.
@@ -111,20 +111,20 @@ public interface GameRepository extends VersionProvider {
      * This method allows versions and libraries that are not loaded by this game repository.
      *
      * @param version the reference of game version
-     * @param lib the library, {@link Version#getLibraries()}
+     * @param lib     the library, {@link Version#getLibraries()}
      * @return the library file
      */
     File getLibraryFile(Version version, Library lib);
 
     /**
      * Get the directory that native libraries will be unzipped to.
-     *
+     * <p>
      * You'd better return a unique directory.
      * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
      * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
      * always fail({@code UnsupportedOperationException}) and not to use it.
      *
-     * @param id version id
+     * @param id       version id
      * @param platform the platform of native libraries
      * @return the native directory
      */
@@ -140,7 +140,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *
@@ -151,7 +151,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *
@@ -176,9 +176,9 @@ public interface GameRepository extends VersionProvider {
      * Rename given version to new name.
      *
      * @param from The id of original version
-     * @param to The new id of the version
-     * @throws UnsupportedOperationException if this game repository does not support renaming a version
+     * @param to   The new id of the version
      * @return true if the operation is done successfully, false if version `from` not found, version json is malformed or I/O errors occurred.
+     * @throws UnsupportedOperationException if this game repository does not support renaming a version
      */
     boolean renameVersion(String from, String to);
 
@@ -207,9 +207,9 @@ public interface GameRepository extends VersionProvider {
      *
      * @param version the id of specific version that is relevant to {@code assetId}
      * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @param name the asset object name, you can find it in keys of {@link AssetIndex#getObjects()}
-     * @throws java.io.IOException if I/O operation fails.
+     * @param name    the asset object name, you can find it in keys of {@link AssetIndex#getObjects()}
      * @return the file that given asset object refers to
+     * @throws java.io.IOException if I/O operation fails.
      */
     Optional<Path> getAssetObject(String version, String assetId, String name) throws IOException;
 
@@ -218,7 +218,7 @@ public interface GameRepository extends VersionProvider {
      *
      * @param version the id of specific version that is relevant to {@code assetId}
      * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @param obj the asset object, you can find it in {@link AssetIndex#getObjects()}
+     * @param obj     the asset object, you can find it in {@link AssetIndex#getObjects()}
      * @return the file that given asset object refers to
      */
     Path getAssetObject(String version, String assetId, AssetObject obj);
@@ -243,8 +243,8 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get logging object
      *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
+     * @param version     the id of specific version that is relevant to {@code assetId}
+     * @param assetId     the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @param loggingInfo the logging info
      * @return the file that loggingInfo refers to
      */

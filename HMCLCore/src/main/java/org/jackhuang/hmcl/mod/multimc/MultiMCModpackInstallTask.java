@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCModpackInstallTask extends Task<Void> {

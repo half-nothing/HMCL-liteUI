@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- *
  * @author huangyuhui
  */
 final class ExitWaiter implements Runnable {

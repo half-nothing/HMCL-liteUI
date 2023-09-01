@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

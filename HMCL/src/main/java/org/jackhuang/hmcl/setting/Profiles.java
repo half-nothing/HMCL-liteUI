@@ -43,24 +43,14 @@ public final class Profiles {
 
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
-
-    private Profiles() {
-    }
-
-    public static String getProfileDisplayName(Profile profile) {
-        switch (profile.getName()) {
-            case Profiles.DEFAULT_PROFILE:
-                return i18n("profile.default");
-            case Profiles.HOME_PROFILE:
-                return i18n("profile.home");
-            default:
-                return profile.getName();
-        }
-    }
-
-    private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
+    private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[]{profile});
     private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
-
+    private static final ReadOnlyStringWrapper selectedVersion = new ReadOnlyStringWrapper();
+    private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);
+    /**
+     * True if {@link #init()} hasn't been called.
+     */
+    private static boolean initialized = false;
     private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
@@ -102,19 +92,6 @@ public final class Profiles {
         }
     };
 
-    private static void checkProfiles() {
-        if (profiles.isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE, new File(".minecraft"), new VersionSetting(), null, true);
-            Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY.toFile());
-            Platform.runLater(() -> profiles.addAll(current, home));
-        }
-    }
-
-    /**
-     * True if {@link #init()} hasn't been called.
-     */
-    private static boolean initialized = false;
-
     static {
         profiles.addListener(onInvalidating(Profiles::updateProfileStorages));
         profiles.addListener(onInvalidating(Profiles::checkProfiles));
@@ -123,6 +100,28 @@ public final class Profiles {
             if (newValue != null)
                 newValue.getRepository().refreshVersionsAsync().start();
         });
+    }
+
+    private Profiles() {
+    }
+
+    public static String getProfileDisplayName(Profile profile) {
+        switch (profile.getName()) {
+            case Profiles.DEFAULT_PROFILE:
+                return i18n("profile.default");
+            case Profiles.HOME_PROFILE:
+                return i18n("profile.home");
+            default:
+                return profile.getName();
+        }
+    }
+
+    private static void checkProfiles() {
+        if (profiles.isEmpty()) {
+            Profile current = new Profile(Profiles.DEFAULT_PROFILE, new File(".minecraft"), new VersionSetting(), null, true);
+            Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY.toFile());
+            Platform.runLater(() -> profiles.addAll(current, home));
+        }
     }
 
     private static void updateProfileStorages() {
@@ -197,8 +196,6 @@ public final class Profiles {
         return selectedProfile;
     }
 
-    private static final ReadOnlyStringWrapper selectedVersion = new ReadOnlyStringWrapper();
-
     public static ReadOnlyStringProperty selectedVersionProperty() {
         return selectedVersion.getReadOnlyProperty();
     }
@@ -207,8 +204,6 @@ public final class Profiles {
     public static String getSelectedVersion() {
         return selectedVersion.get();
     }
-
-    private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);
 
     public static void registerVersionsListener(Consumer<Profile> listener) {
         Profile profile = getSelectedProfile();

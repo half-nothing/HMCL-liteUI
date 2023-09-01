@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -49,6 +50,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * @author huangyuhui
  */
 public class DefaultLauncher extends Launcher {
+
+    private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
+            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+    );
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -292,10 +297,6 @@ public class DefaultLauncher extends Launcher {
                 options.getHeight() != null && options.getHeight() != 0 && options.getWidth() != null && options.getWidth() != 0
         );
     }
-
-    private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
-            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
-    );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {
         return forbiddens;

@@ -79,14 +79,14 @@ public class GameItem extends Control {
                 .exceptionally(handleUncaught);
 
         CompletableFuture.runAsync(() -> {
-            try {
-                ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(version);
-                if (config == null) return;
-                tag.set(config.getVersion());
-            } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Failed to read modpack configuration from " + version, e);
-            }
-        }, Platform::runLater)
+                    try {
+                        ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(version);
+                        if (config == null) return;
+                        tag.set(config.getVersion());
+                    } catch (IOException | JsonParseException e) {
+                        LOG.log(Level.WARNING, "Failed to read modpack configuration from " + version, e);
+                    }
+                }, Platform::runLater)
                 .exceptionally(handleUncaught);
 
         title.set(id);

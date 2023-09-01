@@ -23,7 +23,10 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -37,6 +40,7 @@ public class YggdrasilAccount extends ClassicAccount {
 
     private boolean authenticated = false;
     private YggdrasilSession session;
+    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
 
     protected YggdrasilAccount(YggdrasilService service, String username, YggdrasilSession session) {
         this.service = requireNonNull(service);
@@ -74,7 +78,10 @@ public class YggdrasilAccount extends ClassicAccount {
         addProfilePropertiesListener();
     }
 
-    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
+    private static String randomClientToken() {
+        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
+    }
+
     private void addProfilePropertiesListener() {
         // binding() is thread-safe
         // hold the binding so that it won't be garbage-collected
@@ -206,10 +213,6 @@ public class YggdrasilAccount extends ClassicAccount {
 
     public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {
         service.uploadSkin(characterUUID, session.getAccessToken(), model, file);
-    }
-
-    private static String randomClientToken() {
-        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
     }
 
     @Override

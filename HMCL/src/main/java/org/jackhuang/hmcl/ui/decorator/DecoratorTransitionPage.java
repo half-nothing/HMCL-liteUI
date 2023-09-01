@@ -30,11 +30,11 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 
 public abstract class DecoratorTransitionPage extends Control implements DecoratorPage {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(""));
+    protected final TransitionPane transitionPane = new TransitionPane();
     private final DoubleProperty leftPaneWidth = new SimpleDoubleProperty();
     private final BooleanProperty backable = new SimpleBooleanProperty(false);
     private final BooleanProperty refreshable = new SimpleBooleanProperty(false);
     private Node currentPage;
-    protected final TransitionPane transitionPane = new TransitionPane();
 
     protected void navigate(Node page, AnimationProducer animation) {
         transitionPane.setContent(currentPage = page, animation);
@@ -83,25 +83,25 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         return backable.get();
     }
 
-    public BooleanProperty backableProperty() {
-        return backable;
-    }
-
     public void setBackable(boolean backable) {
         this.backable.set(backable);
+    }
+
+    public BooleanProperty backableProperty() {
+        return backable;
     }
 
     public boolean isRefreshable() {
         return refreshable.get();
     }
 
+    public void setRefreshable(boolean refreshable) {
+        this.refreshable.set(refreshable);
+    }
+
     @Override
     public BooleanProperty refreshableProperty() {
         return refreshable;
-    }
-
-    public void setRefreshable(boolean refreshable) {
-        this.refreshable.set(refreshable);
     }
 
     @Override
@@ -113,11 +113,11 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         return leftPaneWidth.get();
     }
 
-    public DoubleProperty leftPaneWidthProperty() {
-        return leftPaneWidth;
-    }
-
     public void setLeftPaneWidth(double leftPaneWidth) {
         this.leftPaneWidth.set(leftPaneWidth);
+    }
+
+    public DoubleProperty leftPaneWidthProperty() {
+        return leftPaneWidth;
     }
 }

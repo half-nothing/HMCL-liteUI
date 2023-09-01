@@ -262,7 +262,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         refresh();
     }
 
-    private void onBack() { navigation.onPrev(true); }
+    private void onBack() {
+        navigation.onPrev(true);
+    }
 
     private void onSponsor() {
         HMCLService.openRedirectLink("bmclapi_sponsor");

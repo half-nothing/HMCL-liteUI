@@ -62,8 +62,6 @@ import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ModpackHelper {
-    private ModpackHelper() {}
-
     private static final Map<String, ModpackProvider> providers = mapOf(
             pair(CurseModpackProvider.INSTANCE.getName(), CurseModpackProvider.INSTANCE),
             pair(McbbsModpackProvider.INSTANCE.getName(), McbbsModpackProvider.INSTANCE),
@@ -72,6 +70,9 @@ public final class ModpackHelper {
             pair(ServerModpackProvider.INSTANCE.getName(), ServerModpackProvider.INSTANCE),
             pair(HMCLModpackProvider.INSTANCE.getName(), HMCLModpackProvider.INSTANCE)
     );
+
+    private ModpackHelper() {
+    }
 
     @Nullable
     public static ModpackProvider getProviderByType(String type) {

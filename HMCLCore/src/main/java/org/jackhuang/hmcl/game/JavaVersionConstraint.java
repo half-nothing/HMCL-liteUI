@@ -184,6 +184,9 @@ public enum JavaVersionConstraint {
         }
     };;
 
+    public static final List<JavaVersionConstraint> ALL = Lang.immutableListOf(values());
+    public static final int RULE_MANDATORY = 1;
+    public static final int RULE_SUGGESTED = 2;
     private final int type;
     private final VersionRange gameVersionRange;
     private final VersionRange javaVersionRange;
@@ -193,36 +196,6 @@ public enum JavaVersionConstraint {
         this.gameVersionRange = gameVersionRange;
         this.javaVersionRange = javaVersionRange;
     }
-
-    public int getType() {
-        return type;
-    }
-
-    public VersionRange getGameVersionRange() {
-        return gameVersionRange;
-    }
-
-    public VersionRange getJavaVersionRange(Version version) {
-        return javaVersionRange;
-    }
-
-    public final boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                          @Nullable JavaVersion javaVersion, LibraryAnalyzer analyzer) {
-        return gameVersionRange.contains(gameVersionNumber)
-                && appliesToVersionImpl(gameVersionNumber, version, javaVersion, analyzer);
-    }
-
-    protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                           @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
-        return true;
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
-        return getJavaVersionRange(version).contains(javaVersion.getVersionNumber());
-    }
-
-    public static final List<JavaVersionConstraint> ALL = Lang.immutableListOf(values());
 
     public static VersionRanges findSuitableJavaVersionRange(VersionNumber gameVersion, Version version) {
         VersionRange mandatoryJavaRange = VersionRange.all();
@@ -295,8 +268,33 @@ public enum JavaVersionConstraint {
         return javaVersion1.getVersionNumber().compareTo(javaVersion2.getVersionNumber());
     }
 
-    public static final int RULE_MANDATORY = 1;
-    public static final int RULE_SUGGESTED = 2;
+    public int getType() {
+        return type;
+    }
+
+    public VersionRange getGameVersionRange() {
+        return gameVersionRange;
+    }
+
+    public VersionRange getJavaVersionRange(Version version) {
+        return javaVersionRange;
+    }
+
+    public final boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
+                                          @Nullable JavaVersion javaVersion, LibraryAnalyzer analyzer) {
+        return gameVersionRange.contains(gameVersionNumber)
+                && appliesToVersionImpl(gameVersionNumber, version, javaVersion, analyzer);
+    }
+
+    protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                           @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+        return true;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
+        return getJavaVersionRange(version).contains(javaVersion.getVersionNumber());
+    }
 
     public static final class VersionRanges {
         private final VersionRange mandatory;

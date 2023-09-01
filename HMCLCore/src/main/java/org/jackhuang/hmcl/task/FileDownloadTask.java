@@ -45,47 +45,21 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  */
 public class FileDownloadTask extends FetchTask<Void> {
 
-    public static class IntegrityCheck {
-        private final String algorithm;
-        private final String checksum;
-
-        public IntegrityCheck(String algorithm, String checksum) {
-            this.algorithm = requireNonNull(algorithm);
-            this.checksum = requireNonNull(checksum);
-        }
-
-        public static IntegrityCheck of(String algorithm, String checksum) {
-            if (checksum == null) return null;
-            else return new IntegrityCheck(algorithm, checksum);
-        }
-
-        public String getAlgorithm() {
-            return algorithm;
-        }
-
-        public String getChecksum() {
-            return checksum;
-        }
-
-        public MessageDigest createDigest() {
-            return getDigest(algorithm);
-        }
-
-        public void performCheck(MessageDigest digest) throws ChecksumMismatchException {
-            String actualChecksum = Hex.encodeHex(digest.digest());
-            if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+    public static final IntegrityCheckHandler ZIP_INTEGRITY_CHECK_HANDLER = (filePath, destinationPath) -> {
+        String ext = FileUtils.getExtension(destinationPath).toLowerCase(Locale.ROOT);
+        if (ext.equals("zip") || ext.equals("jar")) {
+            try (FileSystem ignored = CompressingUtils.createReadOnlyZipFileSystem(filePath)) {
+                // test for zip format
             }
         }
-    }
-
+    };
     private final File file;
     private final IntegrityCheck integrityCheck;
-    private Path candidate;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
+    private Path candidate;
 
     /**
-     * @param url the URL of remote file.
+     * @param url  the URL of remote file.
      * @param file the location that download to.
      */
     public FileDownloadTask(URL url, File file) {
@@ -93,8 +67,8 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
+     * @param url            the URL of remote file.
+     * @param file           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck) {
@@ -102,10 +76,10 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
+     * @param url            the URL of remote file.
+     * @param file           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
+     * @param retry          the times for retrying if downloading fails.
      */
     public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck, int retry) {
         this(Collections.singletonList(url), file, integrityCheck, retry);
@@ -113,6 +87,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
+     *
      * @param urls urls of remote file, will be attempted in order.
      * @param file the location that download to.
      */
@@ -122,8 +97,9 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
-     * @param urls urls of remote file, will be attempted in order.
-     * @param file the location that download to.
+     *
+     * @param urls           urls of remote file, will be attempted in order.
+     * @param file           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck) {
@@ -132,10 +108,11 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
-     * @param urls urls of remote file, will be attempted in order.
-     * @param file the location that download to.
+     *
+     * @param urls           urls of remote file, will be attempted in order.
+     * @param file           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
+     * @param retry          the times for retrying if downloading fails.
      */
     public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck, int retry) {
         super(urls, retry);
@@ -258,19 +235,45 @@ public class FileDownloadTask extends FetchTask<Void> {
     public interface IntegrityCheckHandler {
         /**
          * Check whether the file is corrupted or not.
-         * @param filePath the file locates in (maybe in temp directory)
+         *
+         * @param filePath        the file locates in (maybe in temp directory)
          * @param destinationPath for real file name
          * @throws IOException if the file is corrupted
          */
         void checkIntegrity(Path filePath, Path destinationPath) throws IOException;
     }
 
-    public static final IntegrityCheckHandler ZIP_INTEGRITY_CHECK_HANDLER = (filePath, destinationPath) -> {
-        String ext = FileUtils.getExtension(destinationPath).toLowerCase(Locale.ROOT);
-        if (ext.equals("zip") || ext.equals("jar")) {
-            try (FileSystem ignored = CompressingUtils.createReadOnlyZipFileSystem(filePath)) {
-                // test for zip format
+    public static class IntegrityCheck {
+        private final String algorithm;
+        private final String checksum;
+
+        public IntegrityCheck(String algorithm, String checksum) {
+            this.algorithm = requireNonNull(algorithm);
+            this.checksum = requireNonNull(checksum);
+        }
+
+        public static IntegrityCheck of(String algorithm, String checksum) {
+            if (checksum == null) return null;
+            else return new IntegrityCheck(algorithm, checksum);
+        }
+
+        public String getAlgorithm() {
+            return algorithm;
+        }
+
+        public String getChecksum() {
+            return checksum;
+        }
+
+        public MessageDigest createDigest() {
+            return getDigest(algorithm);
+        }
+
+        public void performCheck(MessageDigest digest) throws ChecksumMismatchException {
+            String actualChecksum = Hex.encodeHex(digest.digest());
+            if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
             }
         }
-    };
+    }
 }

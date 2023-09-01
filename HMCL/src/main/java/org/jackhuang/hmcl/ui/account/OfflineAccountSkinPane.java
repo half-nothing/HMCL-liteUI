@@ -44,7 +44,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -185,14 +184,14 @@ public class OfflineAccountSkinPane extends StackPane {
             fireEvent(new DialogCloseEvent());
         });
 
-        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
-        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
-        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-        onEscPressed(this, cancelButton::fire);
-
-        layout.setActions(littleSkinLink, acceptButton, cancelButton);
+//        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
+//        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
+//        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+//        cancelButton.getStyleClass().add("dialog-cancel");
+//        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+//        onEscPressed(this, cancelButton::fire);
+//
+//        layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
 
     private Skin getSkin() {

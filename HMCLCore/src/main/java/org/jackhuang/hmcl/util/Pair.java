@@ -21,21 +21,19 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
  * @author huangyuhui
  */
 public final class Pair<K, V> implements Map.Entry<K, V> {
 
-    public static <K, V> Pair<K, V> pair(K key, V value) {
-        return new Pair<>(key, value);
-    }
-
     private K key;
     private V value;
-
     private Pair(K key, V value) {
         this.key = key;
         this.value = value;
+    }
+
+    public static <K, V> Pair<K, V> pair(K key, V value) {
+        return new Pair<>(key, value);
     }
 
     @Override

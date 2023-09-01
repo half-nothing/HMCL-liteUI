@@ -2,7 +2,10 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.Contract;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 
 /**
  * @author Glavo
@@ -52,30 +55,6 @@ public final class CircularArrayList<E> extends AbstractList<E> implements Rando
         return i;
     }
 
-    private void grow() {
-        grow(elements.length + 1);
-    }
-
-    private void grow(int minCapacity) {
-        final int oldCapacity = elements.length;
-        final int size = size();
-        final int newCapacity = newCapacity(oldCapacity, minCapacity);
-
-        final Object[] newElements;
-        if (size == 0) {
-            newElements = new Object[newCapacity];
-        } else if (begin < end) {
-            newElements = Arrays.copyOf(elements, newCapacity, Object[].class);
-        } else {
-            newElements = new Object[newCapacity];
-            System.arraycopy(elements, begin, newElements, 0, elements.length - begin);
-            System.arraycopy(elements, 0, newElements, elements.length - begin, end);
-            begin = 0;
-            end = size;
-        }
-        this.elements = newElements;
-    }
-
     private static int newCapacity(int oldCapacity, int minCapacity) {
         return oldCapacity == 0
                 ? Math.max(DEFAULT_CAPACITY, minCapacity)
@@ -122,6 +101,30 @@ public final class CircularArrayList<E> extends AbstractList<E> implements Rando
             throw new IndexOutOfBoundsException("index(" + index + ") > size(" + size + ")");
         }
         throw new AssertionError();
+    }
+
+    private void grow() {
+        grow(elements.length + 1);
+    }
+
+    private void grow(int minCapacity) {
+        final int oldCapacity = elements.length;
+        final int size = size();
+        final int newCapacity = newCapacity(oldCapacity, minCapacity);
+
+        final Object[] newElements;
+        if (size == 0) {
+            newElements = new Object[newCapacity];
+        } else if (begin < end) {
+            newElements = Arrays.copyOf(elements, newCapacity, Object[].class);
+        } else {
+            newElements = new Object[newCapacity];
+            System.arraycopy(elements, begin, newElements, 0, elements.length - begin);
+            System.arraycopy(elements, 0, newElements, elements.length - begin, end);
+            begin = 0;
+            end = size;
+        }
+        this.elements = newElements;
     }
 
     @Override

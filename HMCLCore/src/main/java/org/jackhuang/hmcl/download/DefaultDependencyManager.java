@@ -194,14 +194,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenApplyAsync(oldVersion::addPatch);
     }
 
-    public static class UnsupportedLibraryInstallerException extends Exception {
-    }
-
     /**
      * Remove installed library.
      * Will try to remove libraries and patches.
      *
-     * @param version not resolved version
+     * @param version   not resolved version
      * @param libraryId forge/liteloader/optifine/fabric
      * @return task to remove the specified library
      */
@@ -214,6 +211,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         Version independentVersion = version.resolvePreservingPatches(repository);
 
         return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion).removeLibrary(libraryId).build());
+    }
+
+    public static class UnsupportedLibraryInstallerException extends Exception {
     }
 
 }

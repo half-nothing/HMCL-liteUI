@@ -25,9 +25,9 @@ import java.util.*;
 
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
-    private WizardProvider provider = null;
     private final Map<String, Object> settings = new HashMap<>();
     private final Stack<Node> pages = new Stack<>();
+    private WizardProvider provider = null;
     private boolean stopped = false;
 
     public WizardController(WizardDisplayer displayer) {
@@ -125,7 +125,8 @@ public class WizardController implements Navigation {
     @Override
     public void onFinish() {
         Object result = provider.finish(settings);
-        if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
+        if (result instanceof Summary)
+            displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
         else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
     }

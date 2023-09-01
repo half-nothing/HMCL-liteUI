@@ -28,9 +28,8 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public abstract class FloatListCell<T> extends ListCell<T> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
-
     protected final StackPane pane = new StackPane();
+    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public FloatListCell(JFXListView<T> listView) {
         setText(null);

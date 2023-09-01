@@ -122,24 +122,24 @@ public class MultiColorItem extends ComponentList {
         return customTitle.get();
     }
 
-    public StringProperty customTitleProperty() {
-        return customTitle;
-    }
-
     public void setCustomTitle(String customTitle) {
         this.customTitle.set(customTitle);
+    }
+
+    public StringProperty customTitleProperty() {
+        return customTitle;
     }
 
     public String getChooserTitle() {
         return chooserTitle.get();
     }
 
-    public StringProperty chooserTitleProperty() {
-        return chooserTitle;
-    }
-
     public void setChooserTitle(String chooserTitle) {
         this.chooserTitle.set(chooserTitle);
+    }
+
+    public StringProperty chooserTitleProperty() {
+        return chooserTitle;
     }
 
     public void setCustomUserData(Object userData) {

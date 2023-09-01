@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URL;
-import java.util.*;
+import java.util.UUID;
 
 public class MojangYggdrasilProvider implements YggdrasilProvider {
 

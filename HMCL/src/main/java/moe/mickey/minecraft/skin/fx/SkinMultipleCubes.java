@@ -14,35 +14,9 @@ import java.util.function.Supplier;
 
 public class SkinMultipleCubes extends Group {
 
-    public static class Face extends Group {
-
-        public Face(Image image, int startX, int startY, int width, int height, int interval, boolean reverseX, boolean reverseY,
-                    Supplier<Box> supplier, BiConsumer<Box, Point2D> consumer) {
-            PixelReader reader = image.getPixelReader();
-            for (int x = 0; x < width; x++)
-                for (int y = 0; y < height; y++) {
-                    int argb;
-                    if ((argb = reader.getArgb(startX + (reverseX ? width - x - 1 : x) * interval,
-                            startY + (reverseY ? height - y - 1 : y) * interval)) != 0) {
-                        Box pixel = supplier.get();
-                        consumer.accept(pixel, new Point2D(x, y));
-                        pixel.setMaterial(createMaterial(Color.rgb(
-                                (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, (argb >> 0) & 0xFF)));
-                        getChildren().add(pixel);
-                    }
-                }
-        }
-
-        protected Material createMaterial(Color color) {
-            return new PhongMaterial(color);
-        }
-
-    }
-
     protected int width, height, depth;
     protected float startX, startY;
     protected double length, thick;
-
     public SkinMultipleCubes(int width, int height, int depth, float startX, float startY, double length, double thick) {
         this.width = width;
         this.height = height;
@@ -53,60 +27,60 @@ public class SkinMultipleCubes extends Group {
         this.thick = thick;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
     public int getWidth() {
         return width;
     }
 
-    public void setHeight(int height) {
-        this.height = height;
+    public void setWidth(int width) {
+        this.width = width;
     }
 
     public int getHeight() {
         return height;
     }
 
-    public void setDepth(int depth) {
-        this.depth = depth;
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     public int getDepth() {
         return depth;
     }
 
-    public void setStartX(float startX) {
-        this.startX = startX;
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     public float getStartX() {
         return startX;
     }
 
-    public void setStartY(float startY) {
-        this.startY = startY;
+    public void setStartX(float startX) {
+        this.startX = startX;
     }
 
     public float getStartY() {
         return startY;
     }
 
-    public void setLength(double length) {
-        this.length = length;
+    public void setStartY(float startY) {
+        this.startY = startY;
     }
 
     public double getLength() {
         return length;
     }
 
-    public void setThick(double thick) {
-        this.thick = thick;
+    public void setLength(double length) {
+        this.length = length;
     }
 
     public double getThick() {
         return thick;
+    }
+
+    public void setThick(double thick) {
+        this.thick = thick;
     }
 
     public void updateSkin(Image skin) {
@@ -156,6 +130,31 @@ public class SkinMultipleCubes extends Group {
             b.setTranslateY((height * length + thick) / 2.0);
             b.setTranslateZ(-((depth - 1) / 2.0 - p.getY()) * b.getDepth());
         }));
+    }
+
+    public static class Face extends Group {
+
+        public Face(Image image, int startX, int startY, int width, int height, int interval, boolean reverseX, boolean reverseY,
+                    Supplier<Box> supplier, BiConsumer<Box, Point2D> consumer) {
+            PixelReader reader = image.getPixelReader();
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++) {
+                    int argb;
+                    if ((argb = reader.getArgb(startX + (reverseX ? width - x - 1 : x) * interval,
+                            startY + (reverseY ? height - y - 1 : y) * interval)) != 0) {
+                        Box pixel = supplier.get();
+                        consumer.accept(pixel, new Point2D(x, y));
+                        pixel.setMaterial(createMaterial(Color.rgb(
+                                (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, (argb >> 0) & 0xFF)));
+                        getChildren().add(pixel);
+                    }
+                }
+        }
+
+        protected Material createMaterial(Color color) {
+            return new PhongMaterial(color);
+        }
+
     }
 
 }

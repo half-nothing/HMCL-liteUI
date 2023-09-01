@@ -51,7 +51,7 @@ class HMCLDownloadTask extends FileDownloadTask {
                 case PACK_XZ:
                     byte[] raw = Files.readAllBytes(target);
                     try (InputStream in = new XZInputStream(new ByteArrayInputStream(raw));
-                            JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
+                         JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
                         Pack200Utils.unpack(in, out);
                     }
                     break;

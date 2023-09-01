@@ -11,7 +11,6 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
-
 import org.jetbrains.annotations.Nullable;
 
 public class SkinCanvas extends Group {
@@ -24,32 +23,19 @@ public class SkinCanvas extends Group {
 
     public static final SkinCube STEVEN_LARM = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, false);
     public static final SkinCube STEVEN_RARM = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, false);
-
-    protected Image srcSkin, skin, srcCape, cape;
-    protected boolean isSlim;
-
-    protected double preW, preH;
-    protected boolean msaa;
-
-    protected SubScene subScene;
-    protected Group root = new Group();
-
     public final SkinMultipleCubes headOuter = new SkinMultipleCubes(8, 8, 8, 32F / 64F, 0F, 1.125, 0.2);
     public final SkinMultipleCubes bodyOuter = new SkinMultipleCubes(8, 12, 4, 16F / 64F, 32F / 64F, 1, 0.2);
     public final SkinMultipleCubes larmOuter = new SkinMultipleCubes(4, 12, 4, 48F / 64F, 48F / 64F, 1.0625, 0.2);
     public final SkinMultipleCubes rarmOuter = new SkinMultipleCubes(4, 12, 4, 40F / 64F, 32F / 64F, 1.0625, 0.2);
     public final SkinMultipleCubes llegOuter = new SkinMultipleCubes(4, 12, 4, 0F / 64F, 48F / 64F, 1.0625, 0.2);
     public final SkinMultipleCubes rlegOuter = new SkinMultipleCubes(4, 12, 4, 0F / 64F, 32F / 64F, 1.0625, 0.2);
-
     public final SkinCube headInside = new SkinCube(8, 8, 8, 32F / 64F, 16F / 64F, 0F, 0F, 0F, false);
     public final SkinCube bodyInside = new SkinCube(8, 12, 4, 24F / 64F, 16F / 64F, 16F / 64F, 16F / 64F, 0.03F, false);
     public final SkinCube larmInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, false);
     public final SkinCube rarmInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, false);
     public final SkinCube llegInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 16F / 64F, 48F / 64F, 0F, false);
     public final SkinCube rlegInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 0F, 16F / 64F, 0F, false);
-
     public final SkinCube capeCube = new SkinCube(10, 16, 1, 22F / 64F, 17F / 32F, 0F, 0F, 0F, false);
-
     public final SkinGroup head = new SkinGroup(
             new Rotate(0, 0, headInside.getHeight() / 2, 0, Rotate.X_AXIS),
             new Rotate(0, Rotate.Y_AXIS),
@@ -86,14 +72,18 @@ public class SkinCanvas extends Group {
             new Rotate(0, 0, -rlegInside.getHeight() / 2, 0, Rotate.Z_AXIS),
             rlegOuter, rlegInside
     );
-
     public final SkinGroup capeGroup = new SkinGroup(
             new Rotate(0, 0, -capeCube.getHeight() / 2, 0, Rotate.X_AXIS),
             new Rotate(0, Rotate.Y_AXIS),
             new Rotate(0, Rotate.Z_AXIS),
             capeCube
     );
-
+    protected Image srcSkin, skin, srcCape, cape;
+    protected boolean isSlim;
+    protected double preW, preH;
+    protected boolean msaa;
+    protected SubScene subScene;
+    protected Group root = new Group();
     protected PerspectiveCamera camera = new PerspectiveCamera(true);
 
     protected Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
@@ -103,6 +93,20 @@ public class SkinCanvas extends Group {
     protected Scale scale = new Scale(1, 1);
 
     protected SkinAnimationPlayer animationPlayer = new SkinAnimationPlayer();
+    private double lastX, lastY;
+
+    public SkinCanvas(double preW, double preH) {
+        this(STEVE, preW, preH, true);
+    }
+
+    public SkinCanvas(Image skin, double preW, double preH, boolean msaa) {
+        this.skin = skin;
+        this.preW = preW;
+        this.preH = preH;
+        this.msaa = msaa;
+
+        init();
+    }
 
     public SkinAnimationPlayer getAnimationPlayer() {
         return animationPlayer;
@@ -149,19 +153,6 @@ public class SkinCanvas extends Group {
         rarm.getZRotate().setPivotX(+rarmInside.getWidth() / 2);
 
         capeGroup.setVisible(hasCape);
-    }
-
-    public SkinCanvas(double preW, double preH) {
-        this(STEVE, preW, preH, true);
-    }
-
-    public SkinCanvas(Image skin, double preW, double preH, boolean msaa) {
-        this.skin = skin;
-        this.preW = preW;
-        this.preH = preH;
-        this.msaa = msaa;
-
-        init();
     }
 
     protected Material createMaterial(final Image image) {
@@ -235,8 +226,6 @@ public class SkinCanvas extends Group {
     protected void init() {
         getChildren().add(createSubScene());
     }
-
-    private double lastX, lastY;
 
     public void enableRotation(double sensitivity) {
         addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {

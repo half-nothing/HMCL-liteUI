@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author huangyuhui
  */
 public class DefaultGameBuilder extends GameBuilder {

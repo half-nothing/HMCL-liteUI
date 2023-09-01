@@ -34,7 +34,7 @@ public class JVMLaunchFailedEvent extends Event {
     /**
      * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
+     * @param source  {@link org.jackhuang.hmcl.launch.ExitWaiter}
      * @param process the crashed process.
      */
     public JVMLaunchFailedEvent(Object source, ManagedProcess process) {

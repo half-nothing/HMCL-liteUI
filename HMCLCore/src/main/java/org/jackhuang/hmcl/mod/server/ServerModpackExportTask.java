@@ -40,6 +40,8 @@ import java.util.List;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 
 public class ServerModpackExportTask extends Task<Void> {
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireFileApi(false);
     private final DefaultGameRepository repository;
     private final String versionId;
     private final ModpackExportInfo exportInfo;
@@ -97,7 +99,4 @@ public class ServerModpackExportTask extends Task<Void> {
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }
     }
-
-    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
-            .requireFileApi(false);
 }

@@ -17,13 +17,12 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.Immutable;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.JsonAdapter;
+import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -33,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
 @JsonAdapter(StringArgument.Serializer.class)

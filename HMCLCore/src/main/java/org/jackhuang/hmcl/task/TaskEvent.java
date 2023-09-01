@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 
 /**
- *
  * @author huang
  */
 public class TaskEvent extends Event {

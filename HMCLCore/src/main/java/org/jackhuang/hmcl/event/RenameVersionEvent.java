@@ -31,9 +31,8 @@ public class RenameVersionEvent extends Event {
     private final String from, to;
 
     /**
-     *
      * @param source {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param from the version id.
+     * @param from   the version id.
      */
     public RenameVersionEvent(Object source, String from, String to) {
         super(source);

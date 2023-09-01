@@ -36,9 +36,16 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
+    public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
     private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
+    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(FAILED_ACTION, get());
+        }
+    };
 
     public SpinnerPane() {
         getStyleClass().add("spinner-pane");
@@ -57,59 +64,56 @@ public class SpinnerPane extends Control {
         return content.get();
     }
 
-    public ObjectProperty<Node> contentProperty() {
-        return content;
-    }
-
     public void setContent(Node content) {
         this.content.set(content);
+    }
+
+    public ObjectProperty<Node> contentProperty() {
+        return content;
     }
 
     public boolean isLoading() {
         return loading.get();
     }
 
-    public BooleanProperty loadingProperty() {
-        return loading;
-    }
-
     public void setLoading(boolean loading) {
         this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 
     public String getFailedReason() {
         return failedReason.get();
     }
 
-    public StringProperty failedReasonProperty() {
-        return failedReason;
-    }
-
     public void setFailedReason(String failedReason) {
         this.failedReason.set(failedReason);
+    }
+
+    public StringProperty failedReasonProperty() {
+        return failedReason;
     }
 
     public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
         return onFailedAction;
     }
 
-    public final void setOnFailedAction(EventHandler<Event> value) {
-        onFailedActionProperty().set(value);
-    }
-
     public final EventHandler<Event> getOnFailedAction() {
         return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(FAILED_ACTION, get());
-        }
-    };
+    public final void setOnFailedAction(EventHandler<Event> value) {
+        onFailedActionProperty().set(value);
+    }
+
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
+    }
+
+    public interface State {
     }
 
     private static class Skin extends SkinBase<SpinnerPane> {
@@ -159,11 +163,11 @@ public class SpinnerPane extends Control {
         }
     }
 
-    public interface State {}
+    public static class LoadedState implements State {
+    }
 
-    public static class LoadedState implements State {}
-
-    public static class LoadingState implements State {}
+    public static class LoadingState implements State {
+    }
 
     public static class FailedState implements State {
         private final String reason;
@@ -176,6 +180,4 @@ public class SpinnerPane extends Control {
             return reason;
         }
     }
-
-    public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
 }

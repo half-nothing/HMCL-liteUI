@@ -30,6 +30,19 @@ import java.util.Optional;
 
 public class RemoteVersion {
 
+    private final UpdateChannel channel;
+    private final String version;
+    private final String url;
+    private final Type type;
+    private final IntegrityCheck integrityCheck;
+    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck) {
+        this.channel = channel;
+        this.version = version;
+        this.url = url;
+        this.type = type;
+        this.integrityCheck = integrityCheck;
+    }
+
     public static RemoteVersion fetch(UpdateChannel channel, String url) throws IOException {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(url)), JsonObject.class);
@@ -48,20 +61,6 @@ public class RemoteVersion {
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
-    }
-
-    private final UpdateChannel channel;
-    private final String version;
-    private final String url;
-    private final Type type;
-    private final IntegrityCheck integrityCheck;
-
-    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck) {
-        this.channel = channel;
-        this.version = version;
-        this.url = url;
-        this.type = type;
-        this.integrityCheck = integrityCheck;
     }
 
     public UpdateChannel getChannel() {

@@ -42,15 +42,15 @@ fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algo
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
-        "MD5" to "md5",
-        "SHA-1" to "sha1",
-        "SHA-256" to "sha256",
-        "SHA-512" to "sha512"
+            "MD5" to "md5",
+            "SHA-1" to "sha1",
+            "SHA-256" to "sha256",
+            "SHA-512" to "sha512"
     )
 
     algorithms.forEach { (algorithm, ext) ->
         File(file.parentFile, "${file.name}.$ext").writeText(
-            digest(algorithm, file.readBytes()).joinToString(separator = "", postfix = "\n") { "%02x".format(it) }
+                digest(algorithm, file.readBytes()).joinToString(separator = "", postfix = "\n") { "%02x".format(it) }
         )
     }
 }
@@ -67,12 +67,12 @@ fun attachSignature(jar: File) {
     signer.initSign(privatekey)
     ZipFile(jar).use { zip ->
         zip.stream()
-            .sorted(Comparator.comparing { it.name })
-            .filter { it.name != "META-INF/hmcl_signature" }
-            .forEach {
-                signer.update(digest("SHA-512", it.name.toByteArray()))
-                signer.update(digest("SHA-512", zip.getInputStream(it).readBytes()))
-            }
+                .sorted(Comparator.comparing { it.name })
+                .filter { it.name != "META-INF/hmcl_signature" }
+                .forEach {
+                    signer.update(digest("SHA-512", it.name.toByteArray()))
+                    signer.update(digest("SHA-512", zip.getInputStream(it).readBytes()))
+                }
     }
     val signature = signer.sign()
     FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), emptyMap<String, Any>()).use { zipfs ->
@@ -115,29 +115,29 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2023 huangyuhui.",
-            "Main-Class" to "org.jackhuang.hmcl.Main",
-            "Multi-Release" to "true",
-            "Implementation-Version" to project.version,
-            "Microsoft-Auth-Id" to microsoftAuthId,
-            "Microsoft-Auth-Secret" to microsoftAuthSecret,
-            "CurseForge-Api-Key" to curseForgeApiKey,
-            "Build-Channel" to versionType,
-            "Class-Path" to "pack200.jar",
-            "Add-Opens" to listOf(
-                "java.base/java.lang",
-                "java.base/java.lang.reflect",
-                "java.base/jdk.internal.loader",
-                "javafx.base/com.sun.javafx.binding",
-                "javafx.base/com.sun.javafx.event",
-                "javafx.base/com.sun.javafx.runtime",
-                "javafx.graphics/javafx.css",
-                "javafx.graphics/com.sun.javafx.stage",
-                "javafx.graphics/com.sun.prism",
-                "javafx.controls/com.sun.javafx.scene.control",
-                "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin"
-            ).joinToString(" ")
+                "Created-By" to "Copyright(c) 2013-2023 huangyuhui.",
+                "Main-Class" to "org.jackhuang.hmcl.Main",
+                "Multi-Release" to "true",
+                "Implementation-Version" to project.version,
+                "Microsoft-Auth-Id" to microsoftAuthId,
+                "Microsoft-Auth-Secret" to microsoftAuthSecret,
+                "CurseForge-Api-Key" to curseForgeApiKey,
+                "Build-Channel" to versionType,
+                "Class-Path" to "pack200.jar",
+                "Add-Opens" to listOf(
+                        "java.base/java.lang",
+                        "java.base/java.lang.reflect",
+                        "java.base/jdk.internal.loader",
+                        "javafx.base/com.sun.javafx.binding",
+                        "javafx.base/com.sun.javafx.event",
+                        "javafx.base/com.sun.javafx.runtime",
+                        "javafx.graphics/javafx.css",
+                        "javafx.graphics/com.sun.javafx.stage",
+                        "javafx.graphics/com.sun.prism",
+                        "javafx.controls/com.sun.javafx.scene.control",
+                        "javafx.controls/com.sun.javafx.scene.control.behavior",
+                        "javafx.controls/javafx.scene.control.skin"
+                ).joinToString(" ")
         )
 
         System.getenv("GITHUB_SHA")?.also {
@@ -198,6 +198,10 @@ val makeExecutables = tasks.create("makeExecutables") {
         createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
         createExecutable("sh", "src/main/resources/assets/HMCLauncher.sh")
     }
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.build {

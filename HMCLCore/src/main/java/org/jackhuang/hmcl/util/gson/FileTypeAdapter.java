@@ -23,7 +23,6 @@ import java.io.File;
 import java.lang.reflect.Type;
 
 /**
- *
  * @author huangyuhui
  */
 public final class FileTypeAdapter implements JsonSerializer<File>, JsonDeserializer<File> {

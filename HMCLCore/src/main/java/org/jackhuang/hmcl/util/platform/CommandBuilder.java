@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.util.platform;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -41,6 +43,67 @@ public final class CommandBuilder {
 
     public CommandBuilder(OperatingSystem os) {
         this.os = os;
+    }
+
+    public static String pwshString(String str) {
+        return "'" + str.replace("'", "''") + "'";
+    }
+
+    public static boolean hasExecutionPolicy() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return true;
+        }
+        try {
+            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Get-ExecutionPolicy"});
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroy();
+                return false;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
+                String policy = reader.readLine();
+                return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    public static boolean setExecutionPolicy() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return true;
+        }
+        try {
+            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser"});
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroy();
+                return false;
+            }
+        } catch (Throwable ignored) {
+        }
+        return true;
+    }
+
+    private static boolean containsEscape(String str, String escapeChars) {
+        for (int i = 0; i < escapeChars.length(); i++) {
+            if (str.indexOf(escapeChars.charAt(i)) >= 0)
+                return true;
+        }
+        return false;
+    }
+
+    private static String escape(String str, char... escapeChars) {
+        for (char ch : escapeChars) {
+            str = str.replace("" + ch, "\\" + ch);
+        }
+        return str;
+    }
+
+    public static String toBatchStringLiteral(String s) {
+        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') + '"' : s;
+    }
+
+    public static String toShellStringLiteral(String s) {
+        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? '"' + escape(s, '"', '$', '&', '`') + '"' : s;
     }
 
     private String parse(String s) {
@@ -241,66 +304,5 @@ public final class CommandBuilder {
         public String toString() {
             return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
         }
-    }
-
-    public static String pwshString(String str) {
-        return "'" + str.replace("'", "''") + "'";
-    }
-
-    public static boolean hasExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
-            return true;
-        }
-        try {
-            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Get-ExecutionPolicy"});
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroy();
-                return false;
-            }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                String policy = reader.readLine();
-                return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
-            }
-        } catch (Throwable ignored) {
-        }
-        return false;
-    }
-
-    public static boolean setExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
-            return true;
-        }
-        try {
-            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser"});
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroy();
-                return false;
-            }
-        } catch (Throwable ignored) {
-        }
-        return true;
-    }
-
-    private static boolean containsEscape(String str, String escapeChars) {
-        for (int i = 0; i < escapeChars.length(); i++) {
-            if (str.indexOf(escapeChars.charAt(i)) >= 0)
-                return true;
-        }
-        return false;
-    }
-
-    private static String escape(String str, char... escapeChars) {
-        for (char ch : escapeChars) {
-            str = str.replace("" + ch, "\\" + ch);
-        }
-        return str;
-    }
-
-    public static String toBatchStringLiteral(String s) {
-        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') + '"' : s;
-    }
-
-    public static String toShellStringLiteral(String s) {
-        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? '"' + escape(s, '"', '$', '&', '`') + '"' : s;
     }
 }

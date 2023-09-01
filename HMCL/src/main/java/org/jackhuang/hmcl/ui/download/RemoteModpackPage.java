@@ -36,6 +36,9 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class RemoteModpackPage extends ModpackPage {
+    public static final String MODPACK_SERVER_MANIFEST = "MODPACK_SERVER_MANIFEST";
+    public static final String MODPACK_NAME = "MODPACK_NAME";
+    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
     private final ServerModpackManifest manifest;
 
     public RemoteModpackPage(WizardController controller) {
@@ -86,8 +89,4 @@ public final class RemoteModpackPage extends ModpackPage {
     protected void onDescribe() {
         FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
     }
-
-    public static final String MODPACK_SERVER_MANIFEST = "MODPACK_SERVER_MANIFEST";
-    public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
 }

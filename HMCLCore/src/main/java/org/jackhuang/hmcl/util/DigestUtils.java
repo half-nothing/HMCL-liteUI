@@ -25,15 +25,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
  * @author huangyuhui
  */
 public final class DigestUtils {
 
+    private static final int STREAM_BUFFER_LENGTH = 1024;
+    private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);
+
     private DigestUtils() {
     }
-
-    private static final int STREAM_BUFFER_LENGTH = 1024;
 
     public static MessageDigest getDigest(String algorithm) {
         try {
@@ -72,8 +72,6 @@ public final class DigestUtils {
     public static String digestToString(String algorithm, InputStream data) throws IOException {
         return Hex.encodeHex(digest(algorithm, data));
     }
-
-    private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);
 
     public static MessageDigest updateDigest(MessageDigest digest, InputStream data) throws IOException {
         byte[] buffer = threadLocalBuffer.get();

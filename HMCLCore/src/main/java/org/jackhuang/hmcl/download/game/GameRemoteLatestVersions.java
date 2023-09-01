@@ -21,7 +21,6 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.emptyMap;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.io.IOUtils.readFullyAsByteArray;
-import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -34,28 +36,33 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jetbrains.annotations.Nullable;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.annotations.JsonAdapter;
-
-import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyMap;
+import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.io.IOUtils.readFullyAsByteArray;
+import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 
 @JsonAdapter(AuthlibInjectorServer.Deserializer.class)
 public class AuthlibInjectorServer implements Observable {
 
     private static final Gson GSON = new GsonBuilder().create();
+    private final transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient YggdrasilService yggdrasilService;
+    private String url;
+    @Nullable
+    private String metadataResponse;
+    private long metadataTimestamp;
+    @Nullable
+    private transient String name;
+    private transient Map<String, String> links = emptyMap();
+    private transient boolean nonEmailLogin;
+    private transient boolean metadataRefreshed;
+
+    public AuthlibInjectorServer(String url) {
+        this.url = url;
+        this.yggdrasilService = new YggdrasilService(new AuthlibInjectorProvider(url));
+    }
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         try {
@@ -101,25 +108,6 @@ public class AuthlibInjectorServer implements Observable {
         if (!b.endsWith("/"))
             b += "/";
         return a.equals(b);
-    }
-
-    private String url;
-    @Nullable
-    private String metadataResponse;
-    private long metadataTimestamp;
-
-    @Nullable
-    private transient String name;
-    private transient Map<String, String> links = emptyMap();
-    private transient boolean nonEmailLogin;
-
-    private transient boolean metadataRefreshed;
-    private final transient ObservableHelper helper = new ObservableHelper(this);
-    private final transient YggdrasilService yggdrasilService;
-
-    public AuthlibInjectorServer(String url) {
-        this.url = url;
-        this.yggdrasilService = new YggdrasilService(new AuthlibInjectorProvider(url));
     }
 
     public String getUrl() {

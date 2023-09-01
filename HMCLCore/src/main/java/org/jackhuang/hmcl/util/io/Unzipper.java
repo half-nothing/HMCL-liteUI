@@ -73,10 +73,10 @@ public class Unzipper {
 
     /**
      * Will only uncompress files in the "subDirectory", their path will be also affected.
-     *
+     * <p>
      * For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
      * uncompressed to the destination directory without creating META-INF folder.
-     *
+     * <p>
      * Default value: "/"
      */
     public Unzipper setSubDirectory(String subDirectory) {

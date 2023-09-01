@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -77,6 +76,7 @@ public class AuthInfo implements AutoCloseable {
 
     /**
      * Called when launching game.
+     *
      * @return null if no argument is specified
      */
     public Arguments getLaunchArguments(LaunchOptions options) throws IOException {

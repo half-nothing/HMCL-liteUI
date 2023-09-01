@@ -29,7 +29,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
@@ -37,6 +36,10 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
 
     public OfflineAccountFactory(AuthlibInjectorArtifactProvider downloader) {
         this.downloader = downloader;
+    }
+
+    public static UUID getUUIDFromUserName(String username) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(UTF_8));
     }
 
     @Override
@@ -74,10 +77,6 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
 
         return new OfflineAccount(downloader, username, uuid, skin);
-    }
-
-    public static UUID getUUIDFromUserName(String username) {
-        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(UTF_8));
     }
 
     public static class AdditionalData {

@@ -32,7 +32,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
@@ -45,9 +48,9 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
  */
 final class ComponentListCell extends StackPane {
     private final Node content;
+    private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
     private Animation expandAnimation;
     private Rectangle clipRect;
-    private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
 
     ComponentListCell(Node content) {
         this.content = content;
@@ -198,11 +201,11 @@ final class ComponentListCell extends StackPane {
         return expanded.get();
     }
 
-    public BooleanProperty expandedProperty() {
-        return expanded;
-    }
-
     public void setExpanded(boolean expanded) {
         this.expanded.set(expanded);
+    }
+
+    public BooleanProperty expandedProperty() {
+        return expanded;
     }
 }

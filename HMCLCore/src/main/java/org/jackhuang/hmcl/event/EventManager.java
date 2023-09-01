@@ -25,7 +25,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
 /**
- *
  * @author huangyuhui
  */
 public final class EventManager<T extends Event> {

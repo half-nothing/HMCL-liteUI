@@ -60,7 +60,7 @@ public interface DependencyManager {
      * Check if patches of this version in complete.
      * If not, reinstall the patch if possible.
      *
-     * @param version the version to be checked
+     * @param version        the version to be checked
      * @param integrityCheck check if some libraries are corrupt.
      * @return the task to check patches completion.
      */
@@ -75,9 +75,9 @@ public interface DependencyManager {
      * Install a library to a version.
      * **Note**: Installing a library may change the version.json.
      *
-     * @param gameVersion the Minecraft version that the library relies on.
-     * @param baseVersion the version.json.
-     * @param libraryId the type of being installed library. i.e. "forge", "liteloader", "optifine"
+     * @param gameVersion    the Minecraft version that the library relies on.
+     * @param baseVersion    the version.json.
+     * @param libraryId      the type of being installed library. i.e. "forge", "liteloader", "optifine"
      * @param libraryVersion the version of being installed library.
      * @return the task to install the specific library.
      */
@@ -87,7 +87,7 @@ public interface DependencyManager {
      * Install a library to a version.
      * **Note**: Installing a library may change the version.json.
      *
-     * @param baseVersion the version.json.
+     * @param baseVersion    the version.json.
      * @param libraryVersion the remote version of being installed library.
      * @return the task to install the specific library.
      */

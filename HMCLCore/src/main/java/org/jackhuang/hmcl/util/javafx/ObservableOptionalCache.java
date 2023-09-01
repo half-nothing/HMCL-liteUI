@@ -17,13 +17,12 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
+import javafx.beans.binding.ObjectBinding;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
-
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-
-import javafx.beans.binding.ObjectBinding;
 
 /**
  * @author yushijinhun

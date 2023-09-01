@@ -32,14 +32,25 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemoteVersion> {
+    public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
     private final BMCLAPIDownloadProvider downloadProvider;
 
     public LiteLoaderBMCLVersionList(BMCLAPIDownloadProvider downloadProvider) {
         this.downloadProvider = downloadProvider;
+    }
+
+    private static String getLatestSnapshotVersion(String repo) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(repo + "maven-metadata.xml");
+        Element r = doc.getDocumentElement();
+        Element snapshot = (Element) r.getElementsByTagName("snapshot").item(0);
+        Node timestamp = snapshot.getElementsByTagName("timestamp").item(0);
+        Node buildNumber = snapshot.getElementsByTagName("buildNumber").item(0);
+        return timestamp.getTextContent() + "-" + buildNumber.getTextContent();
     }
 
     @Override
@@ -95,18 +106,5 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                         lock.writeLock().unlock();
                     }
                 });
-    }
-
-    public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
-
-    private static String getLatestSnapshotVersion(String repo) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(repo + "maven-metadata.xml");
-        Element r = doc.getDocumentElement();
-        Element snapshot = (Element) r.getElementsByTagName("snapshot").item(0);
-        Node timestamp = snapshot.getElementsByTagName("timestamp").item(0);
-        Node buildNumber = snapshot.getElementsByTagName("buildNumber").item(0);
-        return timestamp.getTextContent() + "-" + buildNumber.getTextContent();
     }
 }

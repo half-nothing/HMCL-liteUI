@@ -43,7 +43,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 /**
- *
  * @author huangyuhui
  */
 @JsonAdapter(Profile.Serializer.class)
@@ -52,70 +51,11 @@ public final class Profile implements Observable {
     private final HMCLGameRepository repository;
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
-
-    public StringProperty selectedVersionProperty() {
-        return selectedVersion;
-    }
-
-    public String getSelectedVersion() {
-        return selectedVersion.get();
-    }
-
-    public void setSelectedVersion(String selectedVersion) {
-        this.selectedVersion.set(selectedVersion);
-    }
-
     private final ObjectProperty<File> gameDir;
-
-    public ObjectProperty<File> gameDirProperty() {
-        return gameDir;
-    }
-
-    public File getGameDir() {
-        return gameDir.get();
-    }
-
-    public void setGameDir(File gameDir) {
-        this.gameDir.set(gameDir);
-    }
-
     private final ReadOnlyObjectWrapper<VersionSetting> global = new ReadOnlyObjectWrapper<>(this, "global");
-
-    public ReadOnlyObjectProperty<VersionSetting> globalProperty() {
-        return global.getReadOnlyProperty();
-    }
-
-    public VersionSetting getGlobal() {
-        return global.get();
-    }
-
     private final SimpleStringProperty name;
-
-    public StringProperty nameProperty() {
-        return name;
-    }
-
-    public String getName() {
-        return name.get();
-    }
-
-    public void setName(String name) {
-        this.name.set(name);
-    }
-
     private BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
-
-    public BooleanProperty useRelativePathProperty() {
-        return useRelativePath;
-    }
-
-    public boolean isUseRelativePath() {
-        return useRelativePath.get();
-    }
-
-    public void setUseRelativePath(boolean useRelativePath) {
-        this.useRelativePath.set(useRelativePath);
-    }
+    private ObservableHelper observableHelper = new ObservableHelper(this);
 
     public Profile(String name) {
         this(name, new File(".minecraft"));
@@ -142,6 +82,62 @@ public final class Profile implements Observable {
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
+    }
+
+    public StringProperty selectedVersionProperty() {
+        return selectedVersion;
+    }
+
+    public String getSelectedVersion() {
+        return selectedVersion.get();
+    }
+
+    public void setSelectedVersion(String selectedVersion) {
+        this.selectedVersion.set(selectedVersion);
+    }
+
+    public ObjectProperty<File> gameDirProperty() {
+        return gameDir;
+    }
+
+    public File getGameDir() {
+        return gameDir.get();
+    }
+
+    public void setGameDir(File gameDir) {
+        this.gameDir.set(gameDir);
+    }
+
+    public ReadOnlyObjectProperty<VersionSetting> globalProperty() {
+        return global.getReadOnlyProperty();
+    }
+
+    public VersionSetting getGlobal() {
+        return global.get();
+    }
+
+    public StringProperty nameProperty() {
+        return name;
+    }
+
+    public String getName() {
+        return name.get();
+    }
+
+    public void setName(String name) {
+        this.name.set(name);
+    }
+
+    public BooleanProperty useRelativePathProperty() {
+        return useRelativePath;
+    }
+
+    public boolean isUseRelativePath() {
+        return useRelativePath.get();
+    }
+
+    public void setUseRelativePath(boolean useRelativePath) {
+        this.useRelativePath.set(useRelativePath);
     }
 
     private void checkSelectedVersion() {
@@ -191,8 +187,6 @@ public final class Profile implements Observable {
         global.get().addPropertyChangedListener(listener);
         selectedVersion.addListener(listener);
     }
-
-    private ObservableHelper observableHelper = new ObservableHelper(this);
 
     @Override
     public void addListener(InvalidationListener listener) {

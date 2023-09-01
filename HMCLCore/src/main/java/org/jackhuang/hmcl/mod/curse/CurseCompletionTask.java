@@ -52,12 +52,11 @@ public final class CurseCompletionTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
-    private CurseManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
-
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
     private final AtomicBoolean notFound = new AtomicBoolean(false);
+    private CurseManifest manifest;
 
     /**
      * Constructor.

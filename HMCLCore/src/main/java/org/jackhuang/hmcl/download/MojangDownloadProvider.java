@@ -27,8 +27,8 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
- * @see <a href="http://wiki.vg">http://wiki.vg</a>
  * @author huangyuhui
+ * @see <a href="http://wiki.vg">http://wiki.vg</a>
  */
 public class MojangDownloadProvider implements DownloadProvider {
     private final GameVersionList game;

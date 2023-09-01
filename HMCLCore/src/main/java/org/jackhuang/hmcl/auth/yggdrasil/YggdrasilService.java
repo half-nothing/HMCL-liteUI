@@ -51,10 +51,15 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilService {
 
-    private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
-
     public static final YggdrasilService MOJANG = new YggdrasilService(new MojangYggdrasilProvider());
-
+    public static final String PROFILE_URL = "https://aka.ms/MinecraftMigration";
+    public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/articles/360050865492";
+    public static final String PURCHASE_URL = "https://www.microsoft.com/store/productId/9NXP44L49SHJ";
+    private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .create();
     private final YggdrasilProvider provider;
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
@@ -67,6 +72,79 @@ public class YggdrasilService {
                 },
                 (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid + " from " + provider, e),
                 POOL);
+    }
+
+    private static Map<String, Object> createRequestWithCredentials(String accessToken, String clientToken) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("accessToken", accessToken);
+        request.put("clientToken", clientToken);
+        return request;
+    }
+
+    public static Optional<Map<TextureType, Texture>> getTextures(CompleteGameProfile profile) throws ServerResponseMalformedException {
+        Objects.requireNonNull(profile);
+
+        String encodedTextures = profile.getProperties().get("textures");
+
+        if (encodedTextures != null) {
+            byte[] decodedBinary;
+            try {
+                decodedBinary = Base64.getDecoder().decode(encodedTextures);
+            } catch (IllegalArgumentException e) {
+                throw new ServerResponseMalformedException(e);
+            }
+            TextureResponse texturePayload = fromJson(new String(decodedBinary, UTF_8), TextureResponse.class);
+            return Optional.ofNullable(texturePayload.textures);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private static YggdrasilSession handleAuthenticationResponse(String responseText, String clientToken) throws AuthenticationException {
+        AuthenticationResponse response = fromJson(responseText, AuthenticationResponse.class);
+        handleErrorMessage(response);
+
+        if (!clientToken.equals(response.clientToken))
+            throw new AuthenticationException("Client token changed from " + clientToken + " to " + response.clientToken);
+
+        return new YggdrasilSession(
+                response.clientToken,
+                response.accessToken,
+                response.selectedProfile,
+                response.availableProfiles == null ? null : unmodifiableList(response.availableProfiles),
+                response.user == null ? null : response.user.getProperties());
+    }
+
+    private static void requireEmpty(String response) throws AuthenticationException {
+        if (StringUtils.isBlank(response))
+            return;
+
+        handleErrorMessage(fromJson(response, ErrorResponse.class));
+    }
+
+    private static void handleErrorMessage(ErrorResponse response) throws AuthenticationException {
+        if (!StringUtils.isBlank(response.error)) {
+            throw new RemoteAuthenticationException(response.error, response.errorMessage, response.cause);
+        }
+    }
+
+    private static String request(URL url, Object payload) throws AuthenticationException {
+        try {
+            if (payload == null)
+                return NetworkUtils.doGet(url);
+            else
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        }
+    }
+
+    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
+        try {
+            return GSON.fromJson(text, typeOfT);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(text, e);
+        }
     }
 
     public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
@@ -89,13 +167,6 @@ public class YggdrasilService {
         request.put("requestUser", true);
 
         return handleAuthenticationResponse(request(provider.getAuthenticationURL(), request), clientToken);
-    }
-
-    private static Map<String, Object> createRequestWithCredentials(String accessToken, String clientToken) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("accessToken", accessToken);
-        request.put("clientToken", clientToken);
-        return request;
     }
 
     public YggdrasilSession refresh(String accessToken, String clientToken, GameProfile characterToSelect) throws AuthenticationException {
@@ -171,7 +242,7 @@ public class YggdrasilService {
 
     /**
      * Get complete game profile.
-     *
+     * <p>
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
      * @param uuid the uuid that the character corresponding to.
@@ -181,72 +252,6 @@ public class YggdrasilService {
         Objects.requireNonNull(uuid);
 
         return Optional.ofNullable(fromJson(request(provider.getProfilePropertiesURL(uuid), null), CompleteGameProfile.class));
-    }
-
-    public static Optional<Map<TextureType, Texture>> getTextures(CompleteGameProfile profile) throws ServerResponseMalformedException {
-        Objects.requireNonNull(profile);
-
-        String encodedTextures = profile.getProperties().get("textures");
-
-        if (encodedTextures != null) {
-            byte[] decodedBinary;
-            try {
-                decodedBinary = Base64.getDecoder().decode(encodedTextures);
-            } catch (IllegalArgumentException e) {
-                throw new ServerResponseMalformedException(e);
-            }
-            TextureResponse texturePayload = fromJson(new String(decodedBinary, UTF_8), TextureResponse.class);
-            return Optional.ofNullable(texturePayload.textures);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    private static YggdrasilSession handleAuthenticationResponse(String responseText, String clientToken) throws AuthenticationException {
-        AuthenticationResponse response = fromJson(responseText, AuthenticationResponse.class);
-        handleErrorMessage(response);
-
-        if (!clientToken.equals(response.clientToken))
-            throw new AuthenticationException("Client token changed from " + clientToken + " to " + response.clientToken);
-
-        return new YggdrasilSession(
-                response.clientToken,
-                response.accessToken,
-                response.selectedProfile,
-                response.availableProfiles == null ? null : unmodifiableList(response.availableProfiles),
-                response.user == null ? null : response.user.getProperties());
-    }
-
-    private static void requireEmpty(String response) throws AuthenticationException {
-        if (StringUtils.isBlank(response))
-            return;
-
-        handleErrorMessage(fromJson(response, ErrorResponse.class));
-    }
-
-    private static void handleErrorMessage(ErrorResponse response) throws AuthenticationException {
-        if (!StringUtils.isBlank(response.error)) {
-            throw new RemoteAuthenticationException(response.error, response.errorMessage, response.cause);
-        }
-    }
-
-    private static String request(URL url, Object payload) throws AuthenticationException {
-        try {
-            if (payload == null)
-                return NetworkUtils.doGet(url);
-            else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
-        }
     }
 
     private static class TextureResponse {
@@ -266,13 +271,4 @@ public class YggdrasilService {
         public String errorMessage;
         public String cause;
     }
-
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .create();
-
-    public static final String PROFILE_URL = "https://aka.ms/MinecraftMigration";
-    public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/articles/360050865492";
-    public static final String PURCHASE_URL = "https://www.microsoft.com/store/productId/9NXP44L49SHJ";
 }

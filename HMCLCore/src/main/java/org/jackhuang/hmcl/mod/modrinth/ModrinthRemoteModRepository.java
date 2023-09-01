@@ -23,7 +23,10 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -51,11 +54,6 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         this.projectType = projectType;
     }
 
-    @Override
-    public Type getType() {
-        return Type.MOD;
-    }
-
     private static String convertSortType(SortType sortType) {
         switch (sortType) {
             case DATE_CREATED:
@@ -71,6 +69,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             default:
                 throw new IllegalArgumentException("Unsupported sort type " + sortType);
         }
+    }
+
+    @Override
+    public Type getType() {
+        return Type.MOD;
     }
 
     @Override
@@ -136,7 +139,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
-        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {}.getType());
+        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {
+        }.getType());
         return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
     }
 
@@ -154,7 +158,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String projectType;
 
         public Category() {
-            this("","","");
+            this("", "", "");
         }
 
         public Category(String icon, String name, String projectType) {

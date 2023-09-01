@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.Objects;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -36,16 +35,16 @@ public final class CurseManifestFile implements Validation {
 
     @SerializedName("projectID")
     private final int projectID;
-    
+
     @SerializedName("fileID")
     private final int fileID;
-    
+
     @SerializedName("fileName")
     private final String fileName;
 
     @SerializedName("url")
     private final String url;
-    
+
     @SerializedName("required")
     private final boolean required;
 

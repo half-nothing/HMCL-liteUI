@@ -56,60 +56,41 @@ public enum OperatingSystem {
      */
     UNKNOWN("universal");
 
-    private final String checkedName;
-
-    OperatingSystem(String checkedName) {
-        this.checkedName = checkedName;
-    }
-
-    public String getCheckedName() {
-        return checkedName;
-    }
-
     /**
      * The current operating system.
      */
     public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
-
     /**
      * The total memory/MB this computer have.
      */
     public static final int TOTAL_MEMORY;
-
     /**
      * The suggested memory size/MB for Minecraft to allocate.
      */
     public static final int SUGGESTED_MEMORY;
-
     public static final String PATH_SEPARATOR = File.pathSeparator;
     public static final String FILE_SEPARATOR = File.separator;
     public static final String LINE_SEPARATOR = System.lineSeparator();
-
     /**
      * The system default charset.
      */
     public static final Charset NATIVE_CHARSET;
-
     /**
      * Windows system build number.
      * When the version number is not recognized or on another system, the value will be -1.
      */
     public static final int SYSTEM_BUILD_NUMBER;
-
     /**
      * The name of current operating system.
      */
     public static final String SYSTEM_NAME;
-
     /**
      * The version of current operating system.
      */
     public static final String SYSTEM_VERSION;
-
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
-
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
@@ -199,6 +180,12 @@ public enum OperatingSystem {
             INVALID_RESOURCE_BASENAMES = null;
             INVALID_RESOURCE_FULLNAMES = null;
         }
+    }
+
+    private final String checkedName;
+
+    OperatingSystem(String checkedName) {
+        this.checkedName = checkedName;
     }
 
     public static OperatingSystem parseOSName(String name) {
@@ -322,13 +309,22 @@ public enum OperatingSystem {
         return true;
     }
 
+    public String getCheckedName() {
+        return checkedName;
+    }
+
     public static class PhysicalMemoryStatus {
+        public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
         private final long total;
         private final long available;
 
         public PhysicalMemoryStatus(long total, long available) {
             this.total = total;
             this.available = available;
+        }
+
+        public static double toGigaBytes(long bytes) {
+            return bytes / 1024. / 1024. / 1024.;
         }
 
         public long getTotal() {
@@ -358,11 +354,5 @@ public enum OperatingSystem {
         public boolean hasAvailable() {
             return available >= 0;
         }
-
-        public static double toGigaBytes(long bytes) {
-            return bytes / 1024. / 1024. / 1024.;
-        }
-
-        public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
     }
 }

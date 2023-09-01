@@ -44,6 +44,25 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         this.serverLookup = serverLookup;
     }
 
+    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
+        YggdrasilSession session = YggdrasilSession.fromStorage(storage);
+
+        String username = tryCast(storage.get("username"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
+
+        tryCast(storage.get("profileProperties"), Map.class).ifPresent(
+                it -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> properties = it;
+                    GameProfile selected = session.getSelectedProfile();
+                    ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository = server.getYggdrasilService().getProfileRepository();
+                    profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));
+                    profileRepository.invalidate(selected.getId());
+                });
+
+        return new AuthlibInjectorAccount(server, downloader, username, session);
+    }
+
     @Override
     public AccountLoginType getLoginType() {
         return AccountLoginType.USERNAME_PASSWORD;
@@ -68,24 +87,5 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
         return fromStorage(storage, downloader, server);
-    }
-
-    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
-        YggdrasilSession session = YggdrasilSession.fromStorage(storage);
-
-        String username = tryCast(storage.get("username"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-
-        tryCast(storage.get("profileProperties"), Map.class).ifPresent(
-                it -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, String> properties = it;
-                    GameProfile selected = session.getSelectedProfile();
-                    ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository = server.getYggdrasilService().getProfileRepository();
-                    profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));
-                    profileRepository.invalidate(selected.getId());
-                });
-
-        return new AuthlibInjectorAccount(server, downloader, username, session);
     }
 }

@@ -46,8 +46,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public class InstallerItem extends Control {
-    private final String id;
-    private final String imageUrl;
     public final StringProperty libraryVersion = new SimpleStringProperty();
     public final StringProperty incompatibleLibraryName = new SimpleStringProperty();
     public final StringProperty dependencyName = new SimpleStringProperty();
@@ -57,13 +55,9 @@ public class InstallerItem extends Control {
     public final BooleanProperty installable = new SimpleBooleanProperty(true);
     public final ObjectProperty<EventHandler<? super MouseEvent>> removeAction = new SimpleObjectProperty<>();
     public final ObjectProperty<EventHandler<? super MouseEvent>> action = new SimpleObjectProperty<>();
-
+    private final String id;
+    private final String imageUrl;
     private Style style = Style.LIST_ITEM;
-
-    public enum Style {
-        LIST_ITEM,
-        CARD,
-    }
 
     public InstallerItem(LibraryAnalyzer.LibraryType id) {
         this(id.getPatchId());
@@ -116,6 +110,11 @@ public class InstallerItem extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new InstallerItemSkin(this);
+    }
+
+    public enum Style {
+        LIST_ITEM,
+        CARD,
     }
 
     public static class InstallerItemGroup {

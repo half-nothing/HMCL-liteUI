@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import java.util.Date;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GameRemoteVersionInfo implements Validation {
@@ -82,7 +81,7 @@ public final class GameRemoteVersionInfo implements Validation {
     public String getUrl() {
         return url;
     }
-    
+
     @Override
     public void validate() throws JsonParseException {
         if (StringUtils.isBlank(gameVersion))

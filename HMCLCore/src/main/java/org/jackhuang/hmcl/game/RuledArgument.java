@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author huangyuhui
  */
 @JsonAdapter(RuledArgument.Serializer.class)

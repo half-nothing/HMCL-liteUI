@@ -28,10 +28,10 @@ import java.util.*;
  */
 public abstract class GameBuilder {
 
-    protected String name = "";
-    protected String gameVersion = "";
     protected final Map<String, String> toolVersions = new HashMap<>();
     protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
+    protected String name = "";
+    protected String gameVersion = "";
 
     public String getName() {
         return name;
@@ -53,7 +53,7 @@ public abstract class GameBuilder {
     }
 
     /**
-     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
+     * @param id      the core library id. i.e. "forge", "liteloader", "optifine"
      * @param version the version of the core library. For documents, you can first try [VersionList.versions]
      */
     public GameBuilder version(String id, String version) {

@@ -28,12 +28,8 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public final class JarUtils {
-    private JarUtils() {
-    }
-
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private static final Optional<Path> THIS_JAR;
-
     private static final Manifest manifest;
 
     static {
@@ -48,6 +44,9 @@ public final class JarUtils {
                 .filter(Files::isRegularFile);
 
         manifest = THIS_JAR.flatMap(JarUtils::getManifest).orElseGet(Manifest::new);
+    }
+
+    private JarUtils() {
     }
 
     public static Optional<Path> thisJar() {

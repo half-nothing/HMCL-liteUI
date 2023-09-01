@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * The remote version list.
  *
  * @param <T> The subclass of {@code RemoteVersion}, the type of RemoteVersion.
- *
  * @author huangyuhui
  */
 public abstract class VersionList<T extends RemoteVersion> {
@@ -38,6 +37,7 @@ public abstract class VersionList<T extends RemoteVersion> {
      * values: corresponding remote versions.
      */
     protected final SimpleMultimap<String, T> versions = new SimpleMultimap<String, T>(HashMap::new, TreeSet::new);
+    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * True if the version list has been loaded.
@@ -48,6 +48,7 @@ public abstract class VersionList<T extends RemoteVersion> {
 
     /**
      * True if the version list that contains the remote versions which depends on the specific game version has been loaded.
+     *
      * @param gameVersion the remote version depends on
      */
     public boolean isLoaded(String gameVersion) {
@@ -55,8 +56,6 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     public abstract boolean hasType();
-
-    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * @return the task to reload the remote version list.
@@ -123,7 +122,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     /**
      * Get the specific remote version.
      *
-     * @param gameVersion the Minecraft version that remote versions belong to
+     * @param gameVersion   the Minecraft version that remote versions belong to
      * @param remoteVersion the version of the remote version.
      * @return the specific remote version, null if it is not found.
      */

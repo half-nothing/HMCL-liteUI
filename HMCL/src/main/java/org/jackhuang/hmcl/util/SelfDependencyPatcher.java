@@ -99,76 +99,6 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    private static final class DependencyDescriptor {
-        private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
-
-        static List<DependencyDescriptor> readDependencies() {
-            ArrayList<DependencyDescriptor> dependencies;
-            //noinspection ConstantConditions
-            try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, ArrayList<DependencyDescriptor>> allDependencies =
-                        new Gson().fromJson(reader, new TypeToken<Map<String, ArrayList<DependencyDescriptor>>>(){}.getType());
-                dependencies = allDependencies.get(Platform.getPlatform().toString());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            if (dependencies == null) return null;
-
-            try {
-                ClassLoader classLoader = SelfDependencyPatcher.class.getClassLoader();
-                Class.forName("netscape.javascript.JSObject", false, classLoader);
-                Class.forName("org.w3c.dom.html.HTMLDocument", false, classLoader);
-            } catch (Throwable e) {
-                LOG.log(Level.WARNING, "Disable javafx.web because JRE is incomplete", e);
-                dependencies.removeIf(it -> "javafx.web".equals(it.module) || "javafx.media".equals(it.module));
-            }
-
-            return dependencies;
-        }
-
-        public String module;
-        public String groupId;
-        public String artifactId;
-        public String version;
-        public String classifier;
-        public String sha1;
-
-        public String filename() {
-            return artifactId + "-" + version + "-" + classifier + ".jar";
-        }
-
-        public String sha1() {
-            return sha1;
-        }
-
-        public Path localPath() {
-            return DEPENDENCIES_DIR_PATH.resolve(filename());
-        }
-    }
-
-    private static final class Repository {
-        public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
-        public static final Repository ALIYUN_MIRROR = new Repository(i18n("repositories.aliyun_mirror"), "https://maven.aliyun.com/repository/central");
-
-        private final String name;
-        private final String url;
-
-        Repository(String name, String url) {
-            this.name = name;
-            this.url = url;
-        }
-
-        public String resolveDependencyURL(DependencyDescriptor descriptor) {
-            return String.format("%s/%s/%s/%s/%s",
-                    url,
-                    descriptor.groupId.replace('.', '/'),
-                    descriptor.artifactId, descriptor.version,
-                    descriptor.filename());
-        }
-    }
-
     /**
      * Patch in any missing dependencies, if any.
      */
@@ -395,6 +325,76 @@ public final class SelfDependencyPatcher {
         String sha1 = Hex.encodeHex(digest.digest());
         if (!dependency.sha1().equalsIgnoreCase(sha1))
             throw new ChecksumMismatchException("SHA-1", dependency.sha1(), sha1);
+    }
+
+    private static final class DependencyDescriptor {
+        private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
+        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        public String module;
+        public String groupId;
+        public String artifactId;
+        public String version;
+        public String classifier;
+        public String sha1;
+
+        static List<DependencyDescriptor> readDependencies() {
+            ArrayList<DependencyDescriptor> dependencies;
+            //noinspection ConstantConditions
+            try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
+                Map<String, ArrayList<DependencyDescriptor>> allDependencies =
+                        new Gson().fromJson(reader, new TypeToken<Map<String, ArrayList<DependencyDescriptor>>>() {
+                        }.getType());
+                dependencies = allDependencies.get(Platform.getPlatform().toString());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+
+            if (dependencies == null) return null;
+
+            try {
+                ClassLoader classLoader = SelfDependencyPatcher.class.getClassLoader();
+                Class.forName("netscape.javascript.JSObject", false, classLoader);
+                Class.forName("org.w3c.dom.html.HTMLDocument", false, classLoader);
+            } catch (Throwable e) {
+                LOG.log(Level.WARNING, "Disable javafx.web because JRE is incomplete", e);
+                dependencies.removeIf(it -> "javafx.web".equals(it.module) || "javafx.media".equals(it.module));
+            }
+
+            return dependencies;
+        }
+
+        public String filename() {
+            return artifactId + "-" + version + "-" + classifier + ".jar";
+        }
+
+        public String sha1() {
+            return sha1;
+        }
+
+        public Path localPath() {
+            return DEPENDENCIES_DIR_PATH.resolve(filename());
+        }
+    }
+
+    private static final class Repository {
+        public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
+        public static final Repository ALIYUN_MIRROR = new Repository(i18n("repositories.aliyun_mirror"), "https://maven.aliyun.com/repository/central");
+
+        private final String name;
+        private final String url;
+
+        Repository(String name, String url) {
+            this.name = name;
+            this.url = url;
+        }
+
+        public String resolveDependencyURL(DependencyDescriptor descriptor) {
+            return String.format("%s/%s/%s/%s/%s",
+                    url,
+                    descriptor.groupId.replace('.', '/'),
+                    descriptor.artifactId, descriptor.version,
+                    descriptor.filename());
+        }
     }
 
     public static class PatchException extends Exception {

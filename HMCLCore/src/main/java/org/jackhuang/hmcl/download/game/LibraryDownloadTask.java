@@ -47,15 +47,15 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
-    private FileDownloadTask task;
     protected final File jar;
     protected final DefaultCacheRepository cacheRepository;
     protected final AbstractDependencyManager dependencyManager;
-    private final File xzFile;
     protected final Library library;
     protected final String url;
-    protected boolean xz;
+    private final File xzFile;
     private final Library originalLibrary;
+    protected boolean xz;
+    private FileDownloadTask task;
     private boolean cached = false;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
@@ -74,104 +74,6 @@ public class LibraryDownloadTask extends Task<Void> {
         jar = file;
 
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        if (cached) return Collections.emptyList();
-        else return Collections.singleton(task);
-    }
-
-    @Override
-    public boolean isRelyingOnDependents() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (cached) return;
-
-        if (!isDependentsSucceeded()) {
-            // Since FileDownloadTask wraps the actual exception with DownloadException.
-            // We should extract it letting the error message clearer.
-            Exception t = task.getException();
-            if (t instanceof DownloadException)
-                throw new LibraryDownloadException(library, t.getCause());
-            else if (t instanceof CancellationException)
-                throw new CancellationException();
-            else
-                throw new LibraryDownloadException(library, t);
-        } else {
-            if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
-        }
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() {
-        Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
-        if (libPath.isPresent()) {
-            try {
-                FileUtils.copyFile(libPath.get().toFile(), jar);
-                cached = true;
-                return;
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to copy file from cache", e);
-                // We cannot copy cached file to current location
-                // so we try to download a new one.
-            }
-        }
-
-        if (Pack200Utils.isSupported() && testURLExistence(url)) {
-            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
-            task = new FileDownloadTask(urls, xzFile, null);
-            task.setCacheRepository(cacheRepository);
-            task.setCaching(true);
-            xz = true;
-        } else {
-            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-            task = new FileDownloadTask(urls, jar,
-                    library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
-            task.setCacheRepository(cacheRepository);
-            task.setCaching(true);
-            task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-            xz = false;
-        }
-    }
-
-    private boolean testURLExistence(String rawUrl) {
-        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(rawUrl);
-        for (URL url : urls) {
-            URL xzURL = NetworkUtils.toURL(url.toString() + ".pack.xz");
-            for (int retry = 0; retry < 3; retry++) {
-                try {
-                    return NetworkUtils.urlExists(xzURL);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to test for url existence: " + url + ".pack.xz", e);
-                }
-            }
-        }
-        return false; // maybe some ugly implementation will give timeout for not existent url.
-    }
-
-    @Override
-    public boolean doPostExecute() {
-        return true;
-    }
-
-    @Override
-    public void postExecute() throws Exception {
-        if (!cached) {
-            try {
-                cacheRepository.cacheLibrary(library, jar.toPath(), xz);
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to cache downloaded library " + library, e);
-            }
-        }
     }
 
     public static boolean checksumValid(File libPath, List<String> checksums) {
@@ -271,5 +173,103 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
         Files.delete(temp);
+    }
+
+    @Override
+    public Collection<Task<?>> getDependents() {
+        if (cached) return Collections.emptyList();
+        else return Collections.singleton(task);
+    }
+
+    @Override
+    public boolean isRelyingOnDependents() {
+        return false;
+    }
+
+    @Override
+    public void execute() throws Exception {
+        if (cached) return;
+
+        if (!isDependentsSucceeded()) {
+            // Since FileDownloadTask wraps the actual exception with DownloadException.
+            // We should extract it letting the error message clearer.
+            Exception t = task.getException();
+            if (t instanceof DownloadException)
+                throw new LibraryDownloadException(library, t.getCause());
+            else if (t instanceof CancellationException)
+                throw new CancellationException();
+            else
+                throw new LibraryDownloadException(library, t);
+        } else {
+            if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
+        }
+    }
+
+    @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
+    public void preExecute() {
+        Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
+        if (libPath.isPresent()) {
+            try {
+                FileUtils.copyFile(libPath.get().toFile(), jar);
+                cached = true;
+                return;
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to copy file from cache", e);
+                // We cannot copy cached file to current location
+                // so we try to download a new one.
+            }
+        }
+
+        if (Pack200Utils.isSupported() && testURLExistence(url)) {
+            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
+            task = new FileDownloadTask(urls, xzFile, null);
+            task.setCacheRepository(cacheRepository);
+            task.setCaching(true);
+            xz = true;
+        } else {
+            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+            task = new FileDownloadTask(urls, jar,
+                    library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+            task.setCacheRepository(cacheRepository);
+            task.setCaching(true);
+            task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            xz = false;
+        }
+    }
+
+    private boolean testURLExistence(String rawUrl) {
+        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(rawUrl);
+        for (URL url : urls) {
+            URL xzURL = NetworkUtils.toURL(url.toString() + ".pack.xz");
+            for (int retry = 0; retry < 3; retry++) {
+                try {
+                    return NetworkUtils.urlExists(xzURL);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to test for url existence: " + url + ".pack.xz", e);
+                }
+            }
+        }
+        return false; // maybe some ugly implementation will give timeout for not existent url.
+    }
+
+    @Override
+    public boolean doPostExecute() {
+        return true;
+    }
+
+    @Override
+    public void postExecute() throws Exception {
+        if (!cached) {
+            try {
+                cacheRepository.cacheLibrary(library, jar.toPath(), xz);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to cache downloaded library " + library, e);
+            }
+        }
     }
 }

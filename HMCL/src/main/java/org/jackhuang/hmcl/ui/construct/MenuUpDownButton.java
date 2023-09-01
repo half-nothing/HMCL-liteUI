@@ -50,24 +50,24 @@ public class MenuUpDownButton extends Control {
         return selected.get();
     }
 
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
     public void setSelected(boolean selected) {
         this.selected.set(selected);
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
     }
 
     public String getText() {
         return text.get();
     }
 
-    public StringProperty textProperty() {
-        return text;
-    }
-
     public void setText(String text) {
         this.text.set(text);
+    }
+
+    public StringProperty textProperty() {
+        return text;
     }
 
     private static class MenuUpDownButtonSkin extends SkinBase<MenuUpDownButton> {

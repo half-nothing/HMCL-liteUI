@@ -33,11 +33,11 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DialogPane extends JFXDialogLayout {
-    private final StringProperty title = new SimpleStringProperty();
-    private final BooleanProperty valid = new SimpleBooleanProperty(true);
     protected final SpinnerPane acceptPane = new SpinnerPane();
     protected final JFXButton cancelButton = new JFXButton();
     protected final Label warningLabel = new Label();
+    private final StringProperty title = new SimpleStringProperty();
+    private final BooleanProperty valid = new SimpleBooleanProperty(true);
     private final JFXProgressBar progressBar = new JFXProgressBar();
 
     public DialogPane() {
@@ -74,24 +74,24 @@ public class DialogPane extends JFXDialogLayout {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public boolean isValid() {
         return valid.get();
     }
 
-    public BooleanProperty validProperty() {
-        return valid;
-    }
-
     public void setValid(boolean valid) {
         this.valid.set(valid);
+    }
+
+    public BooleanProperty validProperty() {
+        return valid;
     }
 
     protected void onCancel() {

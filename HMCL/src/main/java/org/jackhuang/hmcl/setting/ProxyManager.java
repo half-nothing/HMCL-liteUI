@@ -32,10 +32,10 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ProxyManager {
+    private static ObjectBinding<Proxy> proxyProperty;
+
     private ProxyManager() {
     }
-
-    private static ObjectBinding<Proxy> proxyProperty;
 
     public static Proxy getProxy() {
         return proxyProperty.get();

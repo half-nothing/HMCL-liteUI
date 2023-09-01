@@ -41,11 +41,9 @@ import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
+    public static String lastlyOpenedURL;
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
-
-    public static String lastlyOpenedURL;
-
     private String idToken;
 
     private OAuthServer(int port) {

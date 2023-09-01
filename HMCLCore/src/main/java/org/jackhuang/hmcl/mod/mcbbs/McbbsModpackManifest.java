@@ -26,7 +26,10 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.gson.JsonSubtype;
+import org.jackhuang.hmcl.util.gson.JsonType;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,16 +140,16 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         return files;
     }
 
+    public McbbsModpackManifest setFiles(List<File> files) {
+        return new McbbsModpackManifest(manifestType, manifestVersion, name, version, author, description, fileApi, url, forceUpdate, origins, addons, libraries, files, settings, launchInfo);
+    }
+
     public Settings getSettings() {
         return settings;
     }
 
     public LaunchInfo getLaunchInfo() {
         return launchInfo;
-    }
-
-    public McbbsModpackManifest setFiles(List<File> files) {
-        return new McbbsModpackManifest(manifestType, manifestVersion, name, version, author, description, fileApi, url, forceUpdate, origins, addons, libraries, files, settings, launchInfo);
     }
 
     @Override
@@ -164,6 +167,22 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
             throw new JsonParseException("McbbsModpackManifest.files cannot be null");
         if (addons == null)
             throw new JsonParseException("McbbsModpackManifest.addons cannot be null");
+    }
+
+    public Modpack toModpack(Charset encoding) throws IOException {
+        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
+                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
+        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {
+                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
+            }
+        };
+    }
+
+    public void injectLaunchOptions(LaunchOptions.Builder launchOptions) {
+        launchOptions.getGameArguments().addAll(launchInfo.getLaunchArguments());
+        launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
     }
 
     public static final class Origin {
@@ -417,22 +436,6 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         public String getAuthlibInjectorServer() {
             return authlibInjectorServer;
         }
-    }
-
-    public Modpack toModpack(Charset encoding) throws IOException {
-        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
-                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
-            @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {
-                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
-            }
-        };
-    }
-
-    public void injectLaunchOptions(LaunchOptions.Builder launchOptions) {
-        launchOptions.getGameArguments().addAll(launchInfo.getLaunchArguments());
-        launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
     }
 
 }

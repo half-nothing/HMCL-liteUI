@@ -54,7 +54,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version           the <b>resolved</b> version
      */
     public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloading) {
         this.dependencyManager = dependencyManager;

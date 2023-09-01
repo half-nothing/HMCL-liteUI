@@ -51,6 +51,10 @@ public final class ModpackConfiguration<T> implements Validation {
         return manifest;
     }
 
+    public ModpackConfiguration<T> setManifest(T manifest) {
+        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
+    }
+
     public String getType() {
         return type;
     }
@@ -64,20 +68,16 @@ public final class ModpackConfiguration<T> implements Validation {
         return version;
     }
 
-    public ModpackConfiguration<T> setManifest(T manifest) {
-        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
-    }
-
-    public ModpackConfiguration<T> setOverrides(List<FileInformation> overrides) {
-        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
-    }
-
     public ModpackConfiguration<T> setVersion(String version) {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
     public List<FileInformation> getOverrides() {
         return Collections.unmodifiableList(overrides);
+    }
+
+    public ModpackConfiguration<T> setOverrides(List<FileInformation> overrides) {
+        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
     @Override

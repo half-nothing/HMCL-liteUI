@@ -148,13 +148,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         setCenter(transitionPane);
     }
 
-    private void selectTabIfCurseForgeAvailable(TabControl.Tab<?> newTab) {
-        if (CurseForgeRemoteModRepository.isAvailable())
-            tab.select(newTab);
-        else
-            Controllers.dialog(i18n("download.curseforge.unavailable"));
-    }
-
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
@@ -196,6 +189,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             resolve.run();
         }, file.getFile().getFilename());
 
+    }
+
+    private void selectTabIfCurseForgeAvailable(TabControl.Tab<?> newTab) {
+        if (CurseForgeRemoteModRepository.isAvailable())
+            tab.select(newTab);
+        else
+            Controllers.dialog(i18n("download.curseforge.unavailable"));
     }
 
     private void loadVersions(Profile profile) {
@@ -292,6 +292,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private static class VanillaInstallWizardProvider implements WizardProvider {
+        public static final String PROFILE = "PROFILE";
         private final Profile profile;
         private final DefaultDependencyManager dependencyManager;
         private final DownloadProvider downloadProvider;
@@ -348,7 +349,5 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public boolean cancel() {
             return true;
         }
-
-        public static final String PROFILE = "PROFILE";
     }
 }

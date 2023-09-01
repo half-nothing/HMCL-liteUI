@@ -35,42 +35,37 @@ import java.util.ResourceBundle;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Locales {
-    private Locales() {
-    }
-
     public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault(), "lang.default");
-
     /**
      * English
      */
     public static final SupportedLocale EN = new SupportedLocale(Locale.ROOT);
-
     /**
      * Traditional Chinese
      */
     public static final SupportedLocale ZH = new SupportedLocale(Locale.TRADITIONAL_CHINESE);
-
     /**
      * Simplified Chinese
      */
     public static final SupportedLocale ZH_CN = new SupportedLocale(Locale.SIMPLIFIED_CHINESE);
-
     /**
      * Spanish
      */
     public static final SupportedLocale ES = new SupportedLocale(Locale.forLanguageTag("es"));
-
     /**
      * Russian
      */
     public static final SupportedLocale RU = new SupportedLocale(Locale.forLanguageTag("ru"));
-
     /**
      * Japanese
      */
     public static final SupportedLocale JA = new SupportedLocale(Locale.JAPANESE);
-
     public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH, ES, RU, JA);
+    public static final Lazy<SimpleDateFormat> SIMPLE_DATE_FORMAT = new Lazy<>(() -> new SimpleDateFormat(i18n("world.time")));
+    public static final Lazy<DateTimeFormatter> DATE_TIME_FORMATTER = new Lazy<>(() -> DateTimeFormatter.ofPattern(i18n("world.time")).withZone(ZoneId.systemDefault()));
+
+    private Locales() {
+    }
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -149,7 +144,4 @@ public final class Locales {
             }
         }
     }
-
-    public static final Lazy<SimpleDateFormat> SIMPLE_DATE_FORMAT = new Lazy<>(() -> new SimpleDateFormat(i18n("world.time")));
-    public static final Lazy<DateTimeFormatter> DATE_TIME_FORMATTER = new Lazy<>(() -> DateTimeFormatter.ofPattern(i18n("world.time")).withZone(ZoneId.systemDefault()));
 }

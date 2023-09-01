@@ -27,20 +27,6 @@ import java.util.List;
  */
 public interface ModAdviser {
 
-    /**
-     * Suggests the file should be displayed, hidden, or included by default.
-     * @param fileName full path of fileName
-     * @param isDirectory whether the path is directory
-     * @return the suggestion to the file
-     */
-    ModSuggestion advise(String fileName, boolean isDirectory);
-
-    enum ModSuggestion {
-        SUGGESTED,
-        NORMAL,
-        HIDDEN
-    }
-
     List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
             "regex:(.*?)\\.log",
             "usernamecache.json", "usercache.json", // Minecraft
@@ -54,7 +40,6 @@ public interface ModAdviser {
             "downloads", // Curse
             "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches" // Mods
     );
-
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
             "fonts", // BetterFonts
             "saves", "servers.dat", "options.txt", // Minecraft
@@ -88,5 +73,20 @@ public interface ModAdviser {
                 }
             }
         return false;
+    }
+
+    /**
+     * Suggests the file should be displayed, hidden, or included by default.
+     *
+     * @param fileName    full path of fileName
+     * @param isDirectory whether the path is directory
+     * @return the suggestion to the file
+     */
+    ModSuggestion advise(String fileName, boolean isDirectory);
+
+    enum ModSuggestion {
+        SUGGESTED,
+        NORMAL,
+        HIDDEN
     }
 }

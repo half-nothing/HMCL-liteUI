@@ -36,6 +36,13 @@ public class ChecksumMismatchException extends ArtifactMalformedException {
         this.actualChecksum = actualChecksum;
     }
 
+    public static void verifyChecksum(Path file, String algorithm, String expectedChecksum) throws IOException {
+        String checksum = DigestUtils.digestToString(algorithm, file);
+        if (!checksum.equalsIgnoreCase(expectedChecksum)) {
+            throw new ChecksumMismatchException(algorithm, expectedChecksum, checksum);
+        }
+    }
+
     public String getAlgorithm() {
         return algorithm;
     }
@@ -46,12 +53,5 @@ public class ChecksumMismatchException extends ArtifactMalformedException {
 
     public String getActualChecksum() {
         return actualChecksum;
-    }
-
-    public static void verifyChecksum(Path file, String algorithm, String expectedChecksum) throws IOException {
-        String checksum = DigestUtils.digestToString(algorithm, file);
-        if (!checksum.equalsIgnoreCase(expectedChecksum)) {
-            throw new ChecksumMismatchException(algorithm, expectedChecksum, checksum);
-        }
     }
 }

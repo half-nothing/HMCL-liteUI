@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import org.jackhuang.hmcl.util.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 

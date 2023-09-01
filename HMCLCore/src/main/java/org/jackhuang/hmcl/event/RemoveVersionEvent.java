@@ -31,8 +31,7 @@ public class RemoveVersionEvent extends Event {
     private final String version;
 
     /**
-     *
-     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param source  {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the version id.
      */
     public RemoveVersionEvent(Object source, String version) {

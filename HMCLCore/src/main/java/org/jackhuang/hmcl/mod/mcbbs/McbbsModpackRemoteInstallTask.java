@@ -35,6 +35,7 @@ import java.util.List;
 
 public class McbbsModpackRemoteInstallTask extends Task<Void> {
 
+    public static final String MODPACK_TYPE = "Server";
     private final String name;
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
@@ -90,6 +91,4 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
     public void execute() throws Exception {
         dependencies.add(new McbbsModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
     }
-
-    public static final String MODPACK_TYPE = "Server";
 }

@@ -53,6 +53,48 @@ public enum Architecture {
     LOONGARCH64(BIT_64, "LoongArch64"),
     UNKNOWN(Bits.UNKNOWN, "Unknown");
 
+    public static final String CURRENT_ARCH_NAME;
+    public static final String SYSTEM_ARCH_NAME;
+    public static final Architecture CURRENT_ARCH;
+    public static final Architecture SYSTEM_ARCH;
+
+    static {
+        CURRENT_ARCH_NAME = System.getProperty("os.arch");
+        CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
+
+        String sysArchName = null;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArchName = processorIdentifier.substring(0, idx);
+                }
+            }
+        } else {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"/bin/uname", "-m"});
+                if (process.waitFor(3, TimeUnit.SECONDS)) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
+                        sysArchName = reader.readLine().trim();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        Architecture sysArch = parseArchName(sysArchName);
+        if (sysArch == UNKNOWN) {
+            SYSTEM_ARCH_NAME = CURRENT_ARCH_NAME;
+            SYSTEM_ARCH = CURRENT_ARCH;
+        } else {
+            SYSTEM_ARCH_NAME = sysArchName;
+            SYSTEM_ARCH = sysArch;
+        }
+    }
+
     private final String checkedName;
     private final String displayName;
     private final Bits bits;
@@ -68,27 +110,6 @@ public enum Architecture {
         this.displayName = displayName;
         this.bits = bits;
     }
-
-    public Bits getBits() {
-        return bits;
-    }
-
-    public String getCheckedName() {
-        return checkedName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public boolean isX86() {
-        return this == X86 || this == X86_64;
-    }
-
-    public static final String CURRENT_ARCH_NAME;
-    public static final String SYSTEM_ARCH_NAME;
-    public static final Architecture CURRENT_ARCH;
-    public static final Architecture SYSTEM_ARCH;
 
     public static Architecture parseArchName(String value) {
         if (value == null) {
@@ -187,40 +208,19 @@ public enum Architecture {
         }
     }
 
-    static {
-        CURRENT_ARCH_NAME = System.getProperty("os.arch");
-        CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
+    public Bits getBits() {
+        return bits;
+    }
 
-        String sysArchName = null;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
-            if (processorIdentifier != null) {
-                int idx = processorIdentifier.indexOf(' ');
-                if (idx > 0) {
-                    sysArchName = processorIdentifier.substring(0, idx);
-                }
-            }
-        } else {
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"/bin/uname", "-m"});
-                if (process.waitFor(3, TimeUnit.SECONDS)) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                        sysArchName = reader.readLine().trim();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
-        }
+    public String getCheckedName() {
+        return checkedName;
+    }
 
-        Architecture sysArch = parseArchName(sysArchName);
-        if (sysArch == UNKNOWN) {
-            SYSTEM_ARCH_NAME = CURRENT_ARCH_NAME;
-            SYSTEM_ARCH = CURRENT_ARCH;
-        } else {
-            SYSTEM_ARCH_NAME = sysArchName;
-            SYSTEM_ARCH = sysArch;
-        }
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public boolean isX86() {
+        return this == X86 || this == X86_64;
     }
 }

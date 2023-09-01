@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import java.util.Map;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

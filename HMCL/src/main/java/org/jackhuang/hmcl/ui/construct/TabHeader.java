@@ -42,6 +42,10 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 @SuppressWarnings("deprecation")
 public class TabHeader extends Control implements TabControl, PageAware {
 
+    private final ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControlSelectionModel(this));
+    private ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
+    private ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
+
     public TabHeader(Tab<?>... tabs) {
         getStyleClass().setAll("tab-header");
         if (tabs != null) {
@@ -49,26 +53,21 @@ public class TabHeader extends Control implements TabControl, PageAware {
         }
     }
 
-    private ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
-    private ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
-
     @Override
     public ObservableList<Tab<?>> getTabs() {
         return tabs;
     }
 
-    private final ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControlSelectionModel(this));
-
     public SingleSelectionModel<Tab<?>> getSelectionModel() {
         return selectionModel.get();
     }
 
-    public ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModelProperty() {
-        return selectionModel;
-    }
-
     public void setSelectionModel(SingleSelectionModel<Tab<?>> selectionModel) {
         this.selectionModel.set(selectionModel);
+    }
+
+    public ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModelProperty() {
+        return selectionModel;
     }
 
     public void select(Tab<?> tab) {
@@ -115,17 +114,17 @@ public class TabHeader extends Control implements TabControl, PageAware {
     }
 
     /**
-     * The position of the tabs.
-     */
-    public ObjectProperty<Side> sideProperty() {
-        return side;
-    }
-
-    /**
      * The position the place the tabs in this TabHeader.
      */
     public void setSide(Side side) {
         this.side.set(side);
+    }
+
+    /**
+     * The position of the tabs.
+     */
+    public ObjectProperty<Side> sideProperty() {
+        return side;
     }
 
     @Override
@@ -234,11 +233,20 @@ public class TabHeader extends Control implements TabControl, PageAware {
                         super.invalidated();
 
                         switch (get()) {
-                            case TOP: action = new Top(); break;
-                            case BOTTOM: action = new Bottom(); break;
-                            case LEFT: action = new Left(); break;
-                            case RIGHT: action = new Right(); break;
-                            default: throw new InternalError();
+                            case TOP:
+                                action = new Top();
+                                break;
+                            case BOTTOM:
+                                action = new Bottom();
+                                break;
+                            case LEFT:
+                                action = new Left();
+                                break;
+                            case RIGHT:
+                                action = new Right();
+                                break;
+                            default:
+                                throw new InternalError();
                         }
                     }
                 };
@@ -247,12 +255,12 @@ public class TabHeader extends Control implements TabControl, PageAware {
                     return side.get();
                 }
 
-                public ObjectProperty<Side> sideProperty() {
-                    return side;
-                }
-
                 public void setSide(Side side) {
                     this.side.set(side);
+                }
+
+                public ObjectProperty<Side> sideProperty() {
+                    return side;
                 }
 
                 @Override

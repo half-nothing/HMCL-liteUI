@@ -45,7 +45,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @see <a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a>
  * @see <a href="https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp">
- *   Original MurmurHash2 c++ code</a>
+ * Original MurmurHash2 c++ code</a>
  * @since 1.13
  */
 public final class MurmurHash2 {

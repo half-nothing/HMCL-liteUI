@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.Immutable;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

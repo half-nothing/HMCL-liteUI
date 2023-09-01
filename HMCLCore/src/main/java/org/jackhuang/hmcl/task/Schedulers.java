@@ -20,25 +20,27 @@ package org.jackhuang.hmcl.task;
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Logging;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 
 /**
- *
  * @author huangyuhui
  */
 public final class Schedulers {
 
+    private static volatile ExecutorService IO_EXECUTOR;
+
     private Schedulers() {
     }
-
-    private static volatile ExecutorService IO_EXECUTOR;
 
     /**
      * Get singleton instance of the thread pool for I/O operations,
      * usually for reading files from disk, or Internet connections.
-     *
+     * <p>
      * This thread pool has no more than 4 threads, and number of threads will get
      * reduced if concurrency is less than thread number.
      *

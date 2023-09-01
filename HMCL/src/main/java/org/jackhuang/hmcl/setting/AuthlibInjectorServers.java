@@ -39,25 +39,13 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public class AuthlibInjectorServers implements Validation {
 
     public static final String CONFIG_FILENAME = "authlib-injectors.json";
-
+    private static final Path configLocation = Paths.get(CONFIG_FILENAME);
+    private static AuthlibInjectorServers configInstance;
     private final List<String> urls;
 
     public AuthlibInjectorServers(List<String> urls) {
         this.urls = urls;
     }
-
-    public List<String> getUrls() {
-        return urls;
-    }
-
-    @Override
-    public void validate() throws JsonParseException {
-        if (urls == null)
-            throw new JsonParseException("authlib-injectors.json -> urls cannot be null");
-    }
-
-    private static final Path configLocation = Paths.get(CONFIG_FILENAME);
-    private static AuthlibInjectorServers configInstance;
 
     public synchronized static void init() {
         if (configInstance != null) {
@@ -87,5 +75,15 @@ public class AuthlibInjectorServers implements Validation {
 
     public static AuthlibInjectorServers getConfigInstance() {
         return configInstance;
+    }
+
+    public List<String> getUrls() {
+        return urls;
+    }
+
+    @Override
+    public void validate() throws JsonParseException {
+        if (urls == null)
+            throw new JsonParseException("authlib-injectors.json -> urls cannot be null");
     }
 }

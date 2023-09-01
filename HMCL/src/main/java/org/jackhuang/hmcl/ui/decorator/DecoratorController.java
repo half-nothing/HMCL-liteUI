@@ -71,12 +71,18 @@ import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 
 public class DecoratorController {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = DecoratorController.class.getName() + ".dialog.closeListener";
-
+    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
     private final Decorator decorator;
     private final Navigator navigator;
-
+    @SuppressWarnings("FieldCanBeLocal") // Strong reference
+    private final InvalidationListener changeBackgroundListener;
     private JFXDialog dialog;
     private StackContainerPane dialogPane;
+
+    // ==== Background ====
+    //FXThread
+    private int changeBackgroundCount = 0;
+    private volatile Image defaultBackground;
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
@@ -148,14 +154,6 @@ public class DecoratorController {
         return decorator;
     }
 
-    // ==== Background ====
-
-    //FXThread
-    private int changeBackgroundCount = 0;
-
-    @SuppressWarnings("FieldCanBeLocal") // Strong reference
-    private final InvalidationListener changeBackgroundListener;
-
     private Background getBackground() {
         EnumBackgroundImage imageType = config().getBackgroundImageType();
 
@@ -182,8 +180,6 @@ public class DecoratorController {
         }
         return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
     }
-
-    private volatile Image defaultBackground;
 
     /**
      * Load background image from bg/, background.png, background.jpg, background.gif
@@ -246,6 +242,8 @@ public class DecoratorController {
         return tryLoadImage(path.toAbsolutePath().toUri().toString());
     }
 
+    // ==== Navigation ====
+
     private Optional<Image> tryLoadImage(String url) {
         Image img;
         try {
@@ -262,10 +260,6 @@ public class DecoratorController {
 
         return Optional.of(img);
     }
-
-    // ==== Navigation ====
-
-    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
 
     public void navigate(Node node) {
         navigator.navigate(node, animation);

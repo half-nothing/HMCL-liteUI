@@ -92,10 +92,6 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         });
     }
 
-    public ObjectProperty<Account> accountProperty() {
-        return account;
-    }
-
     private static ObservableValue<String> accountSubtitle(Account account) {
         if (account instanceof AuthlibInjectorAccount) {
             return BindingMapping.of(((AuthlibInjectorAccount) account).getServer(), AuthlibInjectorServer::getName);
@@ -118,6 +114,10 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         } else {
             return BindingMapping.of(account, Account::getCharacter);
         }
+    }
+
+    public ObjectProperty<Account> accountProperty() {
+        return account;
     }
 
 }

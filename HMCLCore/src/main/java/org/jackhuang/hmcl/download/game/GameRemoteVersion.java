@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -40,6 +39,20 @@ public final class GameRemoteVersion extends RemoteVersion {
     public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Date releaseDate) {
         super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, releaseDate, getReleaseType(type), url);
         this.type = type;
+    }
+
+    private static Type getReleaseType(ReleaseType type) {
+        if (type == null) return Type.UNCATEGORIZED;
+        switch (type) {
+            case RELEASE:
+                return Type.RELEASE;
+            case SNAPSHOT:
+                return Type.SNAPSHOT;
+            case UNKNOWN:
+                return Type.UNCATEGORIZED;
+            default:
+                return Type.OLD;
+        }
     }
 
     public ReleaseType getType() {
@@ -57,19 +70,5 @@ public final class GameRemoteVersion extends RemoteVersion {
             return 0;
 
         return o.getReleaseDate().compareTo(getReleaseDate());
-    }
-
-    private static Type getReleaseType(ReleaseType type) {
-        if (type == null) return Type.UNCATEGORIZED;
-        switch (type) {
-            case RELEASE:
-                return Type.RELEASE;
-            case SNAPSHOT:
-                return Type.SNAPSHOT;
-            case UNKNOWN:
-                return Type.UNCATEGORIZED;
-            default:
-                return Type.OLD;
-        }
     }
 }

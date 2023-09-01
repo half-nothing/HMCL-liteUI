@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.Buffer;
@@ -29,8 +31,6 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.jackhuang.hmcl.util.io.IOUtils;
-
 import static java.nio.file.StandardOpenOption.*;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -41,12 +41,13 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * @author yushijinhun
  */
 final class ExecutableHeaderHelper {
-    private ExecutableHeaderHelper() {}
-
     private static Map<String, String> suffix2header = mapOf(
             pair("exe", "assets/HMCLauncher.exe"),
             pair("sh", "assets/HMCLauncher.sh")
     );
+
+    private ExecutableHeaderHelper() {
+    }
 
     private static Optional<String> getSuffix(Path file) {
         String filename = file.getFileName().toString();
@@ -73,7 +74,8 @@ final class ExecutableHeaderHelper {
 
     private static int detectHeaderLength(ZipFile zip, FileChannel channel) throws IOException {
         ByteBuffer buf = channel.map(MapMode.READ_ONLY, 0, channel.size());
-        suffixLoop: for (String suffix : suffix2header.keySet()) {
+        suffixLoop:
+        for (String suffix : suffix2header.keySet()) {
             Optional<byte[]> header = readHeader(zip, suffix);
             if (header.isPresent()) {
                 ((Buffer) buf).rewind();

@@ -22,11 +22,11 @@ import org.jackhuang.hmcl.util.Logging;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
  * @author huangyuhui
  */
 public final class EventBus {
 
+    public static final EventBus EVENT_BUS = new EventBus();
     private final ConcurrentHashMap<Class<?>, EventManager<?>> events = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
@@ -40,6 +40,4 @@ public final class EventBus {
 
         return channel((Class<Event>) obj.getClass()).fireEvent(obj);
     }
-
-    public static final EventBus EVENT_BUS = new EventBus();
 }

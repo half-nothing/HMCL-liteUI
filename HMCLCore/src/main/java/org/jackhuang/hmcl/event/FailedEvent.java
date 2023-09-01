@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 /**
- *
  * @author huang
  */
 public class FailedEvent<T> extends Event {

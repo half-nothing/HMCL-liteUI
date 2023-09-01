@@ -11,46 +11,46 @@ buildscript {
 val jfxVersion = "19.0.2.1"
 
 data class Platform(
-    val name: String,
-    val classifier: String,
-    val groupId: String = "org.openjfx",
-    val version: String = jfxVersion,
-    val unsupportedModules: List<String> = listOf()
+        val name: String,
+        val classifier: String,
+        val groupId: String = "org.openjfx",
+        val version: String = jfxVersion,
+        val unsupportedModules: List<String> = listOf()
 ) {
     val modules: List<String> = jfxModules.filter { it !in unsupportedModules }
 
     fun fileUrl(
-        module: String, classifier: String, ext: String,
-        repo: String = "https://repo1.maven.org/maven2"
+            module: String, classifier: String, ext: String,
+            repo: String = "https://repo1.maven.org/maven2"
     ): java.net.URL =
-        java.net.URL(
-            "$repo/${groupId.replace('.', '/')}/javafx-$module/$version/javafx-$module-$version-$classifier.$ext"
-        )
+            java.net.URL(
+                    "$repo/${groupId.replace('.', '/')}/javafx-$module/$version/javafx-$module-$version-$classifier.$ext"
+            )
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
 val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
 val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxPlatforms = listOf(
-    Platform("windows-x86", "win-x86"),
-    Platform("windows-x86_64", "win"),
-    Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64", unsupportedModules = listOf("media", "web")),
-    Platform("osx-x86_64", "mac"),
-    Platform("osx-arm64", "mac-aarch64"),
-    Platform("linux-x86_64", "linux"),
-    Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
-    Platform("linux-arm64", "linux-aarch64"),
-    Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
-    Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
+        Platform("windows-x86", "win-x86"),
+        Platform("windows-x86_64", "win"),
+        Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64", unsupportedModules = listOf("media", "web")),
+        Platform("osx-x86_64", "mac"),
+        Platform("osx-arm64", "mac-aarch64"),
+        Platform("linux-x86_64", "linux"),
+        Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
+        Platform("linux-arm64", "linux-aarch64"),
+        Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
+        Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
-    try {
-        Class.forName("javafx.application.Application", false, this.javaClass.classLoader)
-        true
-    } catch (ignored: Throwable) {
-        false
-    }
+        try {
+            Class.forName("javafx.application.Application", false, this.javaClass.classLoader)
+            true
+        } catch (ignored: Throwable) {
+            false
+        }
 
 if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
     val os = System.getProperty("os.name").toLowerCase().let { osName ->
@@ -92,19 +92,19 @@ rootProject.tasks.create("generateOpenJFXDependencies") {
         val jfxDependencies = jfxPlatforms.associate { platform ->
             platform.name to platform.modules.map { module ->
                 mapOf(
-                    "module" to "javafx.$module",
-                    "groupId" to platform.groupId,
-                    "artifactId" to "javafx-$module",
-                    "version" to platform.version,
-                    "classifier" to platform.classifier,
-                    "sha1" to platform.fileUrl(module, platform.classifier, "jar.sha1").readText()
+                        "module" to "javafx.$module",
+                        "groupId" to platform.groupId,
+                        "artifactId" to "javafx-$module",
+                        "version" to platform.version,
+                        "classifier" to platform.classifier,
+                        "sha1" to platform.fileUrl(module, platform.classifier, "jar.sha1").readText()
                 )
             }
         }
 
         jfxDependenciesFile.parentFile.mkdirs()
         jfxDependenciesFile.writeText(
-            com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
+                com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
         )
     }
 }

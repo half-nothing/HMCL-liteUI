@@ -48,10 +48,10 @@ public class ServerModpackCompletionTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
     private final String version;
+    private final List<Task<?>> dependencies = new ArrayList<>();
     private ModpackConfiguration<ServerModpackManifest> manifest;
     private GetTask dependent;
     private ServerModpackManifest remoteManifest;
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
         this(dependencyManager, version, null);

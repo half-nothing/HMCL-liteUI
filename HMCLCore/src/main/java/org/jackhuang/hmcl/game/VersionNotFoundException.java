@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 /**
- *
  * @author huangyuhui
  */
 public final class VersionNotFoundException extends RuntimeException {

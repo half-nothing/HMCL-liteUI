@@ -41,6 +41,9 @@ public final class ExtendedProperties {
 
     private static final String PROP_PREFIX = ExtendedProperties.class.getName();
 
+    private ExtendedProperties() {
+    }
+
     // ==== ComboBox ====
     @SuppressWarnings("unchecked")
     public static <T> ObjectProperty<T> selectedItemPropertyFor(ComboBox<T> comboBox) {
@@ -48,6 +51,7 @@ public final class ExtendedProperties {
                 PROP_PREFIX + ".comboxBox.selectedItem",
                 any -> createPropertyForSelectionModel(comboBox, comboBox.selectionModelProperty()));
     }
+    // ====
 
     private static <T> ObjectProperty<T> createPropertyForSelectionModel(Object bean, Property<? extends SelectionModel<T>> modelProperty) {
         return new ReadWriteComposedProperty<>(bean, "extra.selectedItem",
@@ -55,7 +59,6 @@ public final class ExtendedProperties {
                         .flatMap(SelectionModel::selectedItemProperty),
                 obj -> modelProperty.getValue().select(obj));
     }
-    // ====
 
     // ==== Toggle ====
     @SuppressWarnings("unchecked")
@@ -83,6 +86,7 @@ public final class ExtendedProperties {
                         toggleGroup,
                         toggle -> toggle == null ? null : userdataType.cast(toggle.getUserData())));
     }
+    // ====
 
     private static <T> ObjectProperty<T> createMappedPropertyForToggleGroup(ToggleGroup toggleGroup, Function<Toggle, T> mapper) {
         ObjectProperty<Toggle> selectedToggle = selectedTogglePropertyFor(toggleGroup);
@@ -151,9 +155,5 @@ public final class ExtendedProperties {
                                 }
                             });
                 });
-    }
-    // ====
-
-    private ExtendedProperties() {
     }
 }

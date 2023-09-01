@@ -39,6 +39,10 @@ import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO_OPTION;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
+    public static final String MODPACK_TYPE = "modpack.type";
+    public static final String MODPACK_TYPE_MCBBS = "mcbbs";
+    public static final String MODPACK_TYPE_MULTIMC = "multimc";
+    public static final String MODPACK_TYPE_SERVER = "server";
     private final WizardController controller;
 
     public ModpackTypeSelectionPage(WizardController controller) {
@@ -89,10 +93,4 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     public String getTitle() {
         return i18n("modpack.wizard.step.3.title");
     }
-
-    public static final String MODPACK_TYPE = "modpack.type";
-
-    public static final String MODPACK_TYPE_MCBBS = "mcbbs";
-    public static final String MODPACK_TYPE_MULTIMC = "multimc";
-    public static final String MODPACK_TYPE_SERVER = "server";
 }

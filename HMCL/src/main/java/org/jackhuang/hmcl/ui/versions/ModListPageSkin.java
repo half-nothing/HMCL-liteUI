@@ -73,14 +73,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
 
+    private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final HBox toolbarNormal;
     private final HBox toolbarSelecting;
-
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
-
     // FXThread
     private boolean isSearching = false;
 
@@ -355,9 +355,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             onEscPressed(this, okButton::fire);
         }
     }
-
-    private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
-    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();

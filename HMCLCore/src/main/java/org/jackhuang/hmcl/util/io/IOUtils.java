@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -26,10 +29,10 @@ import java.io.*;
  */
 public final class IOUtils {
 
+    public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+
     private IOUtils() {
     }
-
-    public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
 
     /**
      * Read all bytes to a buffer from given input stream. The stream will not be closed.

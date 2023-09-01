@@ -37,19 +37,19 @@ public interface YggdrasilProvider {
 
     /**
      * URL to upload skin.
-     *
+     * <p>
      * Headers:
-     *     Authentication: Bearer &lt;access token&gt;
-     *
+     * Authentication: Bearer &lt;access token&gt;
+     * <p>
      * Payload:
-     *     The payload for this API consists of multipart form data. There are two parts (order does not matter b/c of boundary):
-     *     model: Empty string for the default model and "slim" for the slim model
-     *     file: Raw image file data
+     * The payload for this API consists of multipart form data. There are two parts (order does not matter b/c of boundary):
+     * model: Empty string for the default model and "slim" for the slim model
+     * file: Raw image file data
      *
-     * @see <a href="https://wiki.vg/Mojang_API#Upload_Skin">https://wiki.vg/Mojang_API#Upload_Skin</a>
      * @return url to upload skin
-     * @throws AuthenticationException if url cannot be generated. e.g. some parameter or query is malformed.
+     * @throws AuthenticationException       if url cannot be generated. e.g. some parameter or query is malformed.
      * @throws UnsupportedOperationException if the Yggdrasil provider does not support third-party skin uploading.
+     * @see <a href="https://wiki.vg/Mojang_API#Upload_Skin">https://wiki.vg/Mojang_API#Upload_Skin</a>
      */
     URL getSkinUploadURL(UUID uuid) throws AuthenticationException, UnsupportedOperationException;
 

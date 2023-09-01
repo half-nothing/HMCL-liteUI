@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 public final class VersionJsonDownloadTask extends Task<String> {

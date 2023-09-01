@@ -17,17 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import static javafx.collections.FXCollections.emptyObservableList;
-import static javafx.collections.FXCollections.observableList;
-import static javafx.collections.FXCollections.singletonObservableList;
-
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
-
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
-
 import javafx.beans.binding.Bindings;
 import javafx.scene.text.Font;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
+
+import static javafx.collections.FXCollections.*;
 
 public class FontComboBox extends JFXComboBox<String> {
 
@@ -49,7 +45,7 @@ public class FontComboBox extends JFXComboBox<String> {
         });
 
         itemsProperty().bind(BindingMapping.of(valueProperty())
-                        .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
+                .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
 
         setOnMouseClicked(e -> {
             if (loaded)

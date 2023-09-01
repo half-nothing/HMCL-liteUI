@@ -50,10 +50,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LocalModpackPage extends ModpackPage {
 
+    public static final String MODPACK_FILE = "MODPACK_FILE";
+    public static final String MODPACK_NAME = "MODPACK_NAME";
+    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
+    public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
+    public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Modpack manifest = null;
     private Charset charset;
-
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
@@ -116,7 +120,8 @@ public final class LocalModpackPage extends ModpackPage {
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
+                                () -> {
+                                },
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
@@ -158,10 +163,4 @@ public final class LocalModpackPage extends ModpackPage {
             FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
         }
     }
-
-    public static final String MODPACK_FILE = "MODPACK_FILE";
-    public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
-    public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
-    public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
 }

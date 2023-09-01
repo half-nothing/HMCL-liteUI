@@ -29,7 +29,8 @@ public class ModpackExportInfo {
 
     private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
-    public ModpackExportInfo() {}
+    public ModpackExportInfo() {
+    }
 
     public List<String> getWhitelist() {
         return whitelist;
@@ -79,7 +80,7 @@ public class ModpackExportInfo {
 
     /**
      * Description of this modpack.
-     *
+     * <p>
      * Supports plain HTML text.
      */
     public String getDescription() {

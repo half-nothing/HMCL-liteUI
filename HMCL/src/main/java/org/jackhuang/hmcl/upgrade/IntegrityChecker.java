@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -44,10 +43,12 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * @author yushijinhun
  */
 public final class IntegrityChecker {
-    private IntegrityChecker() {}
-
     private static final String SIGNATURE_FILE = "META-INF/hmcl_signature";
     private static final String PUBLIC_KEY_FILE = "assets/hmcl_signature_publickey.der";
+    private static volatile Boolean selfVerified = null;
+
+    private IntegrityChecker() {
+    }
 
     private static PublicKey getPublicKey() throws IOException {
         try (InputStream in = IntegrityChecker.class.getResourceAsStream("/" + PUBLIC_KEY_FILE)) {
@@ -107,8 +108,6 @@ public final class IntegrityChecker {
             throw new IOException("Invalid signature: " + jar);
         }
     }
-
-    private static volatile Boolean selfVerified = null;
 
     /**
      * Checks whether the current application is verified.

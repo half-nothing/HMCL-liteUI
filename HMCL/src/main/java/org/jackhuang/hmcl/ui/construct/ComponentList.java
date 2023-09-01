@@ -43,11 +43,11 @@ import java.util.function.Supplier;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {
+    public final ObservableList<Node> content = FXCollections.observableArrayList();
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
-    public final ObservableList<Node> content = FXCollections.observableArrayList();
     private Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentList() {
@@ -59,40 +59,55 @@ public class ComponentList extends Control {
         this.lazyInitializer = lazyInitializer;
     }
 
-    public String getTitle() {
-        return title.get();
+    public static Node createComponentListTitle(String title) {
+        HBox node = new HBox();
+        node.setAlignment(Pos.CENTER_LEFT);
+        node.setPadding(new Insets(8, 0, 0, 0));
+        {
+            Label advanced = new Label(title);
+            node.getChildren().setAll(advanced);
+        }
+        return node;
     }
 
-    public StringProperty titleProperty() {
-        return title;
+    public static void setVgrow(Node node, Priority priority) {
+        node.getProperties().put("ComponentList.vgrow", priority);
+    }
+
+    public String getTitle() {
+        return title.get();
     }
 
     public void setTitle(String title) {
         this.title.set(title);
     }
 
-    public String getSubtitle() {
-        return subtitle.get();
+    public StringProperty titleProperty() {
+        return title;
     }
 
-    public StringProperty subtitleProperty() {
-        return subtitle;
+    public String getSubtitle() {
+        return subtitle.get();
     }
 
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
     }
 
+    public StringProperty subtitleProperty() {
+        return subtitle;
+    }
+
     public int getDepth() {
         return depth.get();
     }
 
-    public IntegerProperty depthProperty() {
-        return depth;
-    }
-
     public void setDepth(int depth) {
         this.depth.set(depth);
+    }
+
+    public IntegerProperty depthProperty() {
+        return depth;
     }
 
     public boolean isHasSubtitle() {
@@ -173,20 +188,5 @@ public class ComponentList extends Control {
             Bindings.bindContent(vbox.getChildren(), list);
             node = vbox;
         }
-    }
-
-    public static Node createComponentListTitle(String title) {
-        HBox node = new HBox();
-        node.setAlignment(Pos.CENTER_LEFT);
-        node.setPadding(new Insets(8, 0, 0, 0));
-        {
-            Label advanced = new Label(title);
-            node.getChildren().setAll(advanced);
-        }
-        return node;
-    }
-
-    public static void setVgrow(Node node, Priority priority) {
-        node.getProperties().put("ComponentList.vgrow", priority);
     }
 }

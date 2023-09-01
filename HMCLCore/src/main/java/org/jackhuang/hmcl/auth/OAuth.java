@@ -50,6 +50,22 @@ public class OAuth {
         this.tokenURL = tokenURL;
     }
 
+    private static void handleErrorResponse(ErrorResponse response) throws AuthenticationException {
+        if (response.error == null || response.errorDescription == null) {
+            return;
+        }
+
+        switch (response.error) {
+            case "invalid_grant":
+                if (response.errorDescription.contains("AADSTS70000")) {
+                    throw new CredentialExpiredException();
+                }
+                break;
+        }
+
+        throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
+    }
+
     public Result authenticate(GrantFlow grantFlow, Options options) throws AuthenticationException {
         try {
             switch (grantFlow) {
@@ -174,36 +190,9 @@ public class OAuth {
         }
     }
 
-    private static void handleErrorResponse(ErrorResponse response) throws AuthenticationException {
-        if (response.error == null || response.errorDescription == null) {
-            return;
-        }
-
-        switch (response.error) {
-            case "invalid_grant":
-                if (response.errorDescription.contains("AADSTS70000")) {
-                    throw new CredentialExpiredException();
-                }
-                break;
-        }
-
-        throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
-    }
-
-    public static class Options {
-        private String userAgent;
-        private final String scope;
-        private final Callback callback;
-
-        public Options(String scope, Callback callback) {
-            this.scope = scope;
-            this.callback = callback;
-        }
-
-        public Options setUserAgent(String userAgent) {
-            this.userAgent = userAgent;
-            return this;
-        }
+    public enum GrantFlow {
+        AUTHORIZATION_CODE,
+        DEVICE,
     }
 
     public interface Session {
@@ -248,9 +237,20 @@ public class OAuth {
         boolean isPublicClient();
     }
 
-    public enum GrantFlow {
-        AUTHORIZATION_CODE,
-        DEVICE,
+    public static class Options {
+        private final String scope;
+        private final Callback callback;
+        private String userAgent;
+
+        public Options(String scope, Callback callback) {
+            this.scope = scope;
+            this.callback = callback;
+        }
+
+        public Options setUserAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
     }
 
     public static final class Result {

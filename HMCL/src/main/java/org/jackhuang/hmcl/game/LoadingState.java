@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public enum LoadingState {
+    CHECK_CONFIG("launch.state.mods"),
     DEPENDENCIES("launch.state.dependencies"),
     MODS("launch.state.modpack"),
     LOGGING_IN("launch.state.logging_in"),

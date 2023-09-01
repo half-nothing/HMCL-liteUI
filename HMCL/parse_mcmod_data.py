@@ -16,8 +16,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import json
 import codecs
+import json
 import re
 import sys
 from urllib.parse import urlparse, parse_qs
@@ -87,11 +87,11 @@ skip = [
     'The Building Game'
 ]
 
-
 if __name__ == '__main__':
     json_name = sys.argv[1] or 'data.json'
 
-    with codecs.open(json_name, mode='r', encoding='utf-8-sig') as jsonfile, codecs.open('data.csv', mode='w', encoding='utf-8') as outfile:
+    with codecs.open(json_name, mode='r', encoding='utf-8-sig') as jsonfile, codecs.open('data.csv', mode='w',
+                                                                                         encoding='utf-8') as outfile:
         data = json.load(jsonfile)
 
         for mod in data:
@@ -118,7 +118,8 @@ if __name__ == '__main__':
             mcmod_id = ''
             mcbbs_id = ''
             links = mod['links']['list']
-            if 'curseforge' in links and links['curseforge'] and sub_name not in black_lists and chinese_name not in black_lists:
+            if 'curseforge' in links and links[
+                'curseforge'] and sub_name not in black_lists and chinese_name not in black_lists:
                 for link in links['curseforge']:
                     curseforge_id = parseCurseforge(link['url'])
                     if curseforge_id != '':

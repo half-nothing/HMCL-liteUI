@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OSRestriction {

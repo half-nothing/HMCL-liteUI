@@ -57,7 +57,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 scrollPane.setContent(content);
                 FXUtils.smoothScrolling(scrollPane);
             }
-            
+
             VBox vBox = new VBox();
             {
                 vBox.getStyleClass().add("card-list");

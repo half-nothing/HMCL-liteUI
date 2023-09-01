@@ -29,7 +29,95 @@ import java.util.regex.Pattern;
 
 public final class CrashReportAnalyzer {
 
+    private static final Pattern CRASH_REPORT_LOCATION_PATTERN = Pattern.compile("#@!@# Game crashed! Crash report saved to: #@!@# (?<location>.*)");
+    private static final Pattern CRASH_REPORT_STACK_TRACE_PATTERN = Pattern.compile("Description: (.*?)[\\n\\r]+(?<stacktrace>[\\w\\W\\n\\r]+)A detailed walkthrough of the error");
+    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
+    private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
+    private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
+            "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
+            "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
+            "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
+            "storage",
+            "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jar", "jdk", "nashorn", "scripts", "runtime", "internal", // java
+            "mods", "mod", "impl", "org", "com", "cn", "cc", "jp", // title
+            "core", "config", "registries", "lib", "ruby", "mc", "codec", "recipe", "channel", "embedded", "done", "net", "netty", "network", "load", "github", "handler", "content", "feature", // misc
+            "file", "machine", "shader", "general", "helper", "init", "library", "api", "integration", "engine", "preload", "preinit",
+            "hellominecraft", "jackhuang", // hmcl
+            "fml", "minecraftforge", "forge", "cpw", "modlauncher", "launchwrapper", "objectweb", "asm", "event", "eventhandler", "handshake", "modapi", "kcauldron", // forge
+            "fabricmc", "loader", "game", "knot", "launch", "mixin" // fabric
+    ));
+
     private CrashReportAnalyzer() {
+    }
+
+    public static List<Result> anaylze(String log) {
+        List<Result> results = new ArrayList<>();
+        for (Rule rule : Rule.values()) {
+            Matcher matcher = rule.pattern.matcher(log);
+            if (matcher.find()) {
+                results.add(new Result(rule, log, matcher));
+            }
+        }
+        return results;
+    }
+
+    @Nullable
+    public static String findCrashReport(String log) throws IOException, InvalidPathException {
+        Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
+        if (matcher.find()) {
+            return FileUtils.readText(Paths.get(matcher.group("location")));
+        } else {
+            return null;
+        }
+    }
+
+    public static String extractCrashReport(String rawLog) {
+        int begin = rawLog.lastIndexOf("---- Minecraft Crash Report ----");
+        int end = rawLog.lastIndexOf("#@!@# Game crashed! Crash report saved to");
+        if (begin == -1 || end == -1 || begin >= end) return null;
+        return rawLog.substring(begin, end);
+    }
+
+    public static Set<String> findKeywordsFromCrashReport(String crashReport) {
+        Matcher matcher = CRASH_REPORT_STACK_TRACE_PATTERN.matcher(crashReport);
+        Set<String> result = new HashSet<>();
+        if (matcher.find()) {
+            for (String line : matcher.group("stacktrace").split("\\n")) {
+                Matcher lineMatcher = STACK_TRACE_LINE_PATTERN.matcher(line);
+                if (lineMatcher.find()) {
+                    String[] method = lineMatcher.group("method").split("\\.");
+                    for (int i = 0; i < method.length - 2; i++) {
+                        if (PACKAGE_KEYWORD_BLACK_LIST.contains(method[i])) {
+                            continue;
+                        }
+                        result.add(method[i]);
+                    }
+
+                    Matcher moduleMatcher = STACK_TRACE_LINE_MODULE_PATTERN.matcher(line);
+                    if (moduleMatcher.find()) {
+                        for (String module : moduleMatcher.group("tokens").split(",")) {
+                            String[] split = module.split(":");
+                            if (split.length >= 2 && "xf".equals(split[0])) {
+                                if (PACKAGE_KEYWORD_BLACK_LIST.contains(split[1])) {
+                                    continue;
+                                }
+
+                                result.add(split[1]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public static int getJavaVersionFromMajorVersion(int majorVersion) {
+        if (majorVersion >= 46) {
+            return majorVersion - 44;
+        } else {
+            return -1;
+        }
     }
 
     public enum Rule {
@@ -113,7 +201,7 @@ public final class CrashReportAnalyzer {
         FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
-        
+
         //Forge 默认会把每一个 mod jar 都当做一个 JPMS 的模块（Module）加载。在这个 jar 没有给出 module-info 声明的情况下，JPMS 会采用这样的顺序决定 module 名字：
         //1. META-INF/MANIFEST.MF 里的 Automatic-Module-Name
         //2. 根据文件名生成。文件名里的 .jar 后缀名先去掉，然后检查是否有 -(\\d+(\\.|$)) 的部分，有的话只取 - 前面的部分，- 后面的部分成为 module 的版本号（即尝试判断文件名里是否有版本号，有的话去掉），然后把不是拉丁字母和数字的字符（正则表达式 [^A-Za-z0-9]）都换成点，然后把连续的多个点换成一个点，最后去掉开头和结尾的点。那么
@@ -164,95 +252,6 @@ public final class CrashReportAnalyzer {
 
         public Matcher getMatcher() {
             return matcher;
-        }
-    }
-
-    public static List<Result> anaylze(String log) {
-        List<Result> results = new ArrayList<>();
-        for (Rule rule : Rule.values()) {
-            Matcher matcher = rule.pattern.matcher(log);
-            if (matcher.find()) {
-                results.add(new Result(rule, log, matcher));
-            }
-        }
-        return results;
-    }
-
-    private static final Pattern CRASH_REPORT_LOCATION_PATTERN = Pattern.compile("#@!@# Game crashed! Crash report saved to: #@!@# (?<location>.*)");
-
-    @Nullable
-    public static String findCrashReport(String log) throws IOException, InvalidPathException {
-        Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
-        if (matcher.find()) {
-            return FileUtils.readText(Paths.get(matcher.group("location")));
-        } else {
-            return null;
-        }
-    }
-
-    public static String extractCrashReport(String rawLog) {
-        int begin = rawLog.lastIndexOf("---- Minecraft Crash Report ----");
-        int end = rawLog.lastIndexOf("#@!@# Game crashed! Crash report saved to");
-        if (begin == -1 || end == -1 || begin >= end) return null;
-        return rawLog.substring(begin, end);
-    }
-
-    private static final Pattern CRASH_REPORT_STACK_TRACE_PATTERN = Pattern.compile("Description: (.*?)[\\n\\r]+(?<stacktrace>[\\w\\W\\n\\r]+)A detailed walkthrough of the error");
-    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
-    private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
-    private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
-            "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
-            "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
-            "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
-            "storage",
-            "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jar", "jdk", "nashorn", "scripts", "runtime", "internal", // java
-            "mods", "mod", "impl", "org", "com", "cn", "cc", "jp", // title
-            "core", "config", "registries", "lib", "ruby", "mc", "codec", "recipe", "channel", "embedded", "done", "net", "netty", "network", "load", "github", "handler", "content", "feature", // misc
-            "file", "machine", "shader", "general", "helper", "init", "library", "api", "integration", "engine", "preload", "preinit",
-            "hellominecraft", "jackhuang", // hmcl
-            "fml", "minecraftforge", "forge", "cpw", "modlauncher", "launchwrapper", "objectweb", "asm", "event", "eventhandler", "handshake", "modapi", "kcauldron", // forge
-            "fabricmc", "loader", "game", "knot", "launch", "mixin" // fabric
-    ));
-
-    public static Set<String> findKeywordsFromCrashReport(String crashReport) {
-        Matcher matcher = CRASH_REPORT_STACK_TRACE_PATTERN.matcher(crashReport);
-        Set<String> result = new HashSet<>();
-        if (matcher.find()) {
-            for (String line : matcher.group("stacktrace").split("\\n")) {
-                Matcher lineMatcher = STACK_TRACE_LINE_PATTERN.matcher(line);
-                if (lineMatcher.find()) {
-                    String[] method = lineMatcher.group("method").split("\\.");
-                    for (int i = 0; i < method.length - 2; i++) {
-                        if (PACKAGE_KEYWORD_BLACK_LIST.contains(method[i])) {
-                            continue;
-                        }
-                        result.add(method[i]);
-                    }
-
-                    Matcher moduleMatcher = STACK_TRACE_LINE_MODULE_PATTERN.matcher(line);
-                    if (moduleMatcher.find()) {
-                        for (String module : moduleMatcher.group("tokens").split(",")) {
-                            String[] split = module.split(":");
-                            if (split.length >= 2 && "xf".equals(split[0])) {
-                                if (PACKAGE_KEYWORD_BLACK_LIST.contains(split[1])) {
-                                    continue;
-                                }
-
-                                result.add(split[1]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    public static int getJavaVersionFromMajorVersion(int majorVersion) {
-        if (majorVersion >= 46) {
-            return majorVersion - 44;
-        } else {
-            return -1;
         }
     }
 }

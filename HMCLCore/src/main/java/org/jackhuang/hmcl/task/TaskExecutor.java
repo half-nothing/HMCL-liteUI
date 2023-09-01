@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,8 +30,8 @@ public abstract class TaskExecutor {
     protected final List<TaskListener> taskListeners = new ArrayList<>();
     protected final AtomicInteger totTask = new AtomicInteger(0);
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
-    protected Exception exception;
     private final List<String> stages;
+    protected Exception exception;
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;

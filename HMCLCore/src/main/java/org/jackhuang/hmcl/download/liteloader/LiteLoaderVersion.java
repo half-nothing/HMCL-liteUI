@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -82,5 +81,5 @@ public final class LiteLoaderVersion {
     public Collection<Library> getLibraries() {
         return Collections.unmodifiableCollection(libraries);
     }
-    
+
 }

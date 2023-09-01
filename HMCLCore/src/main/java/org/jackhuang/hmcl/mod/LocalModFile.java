@@ -29,12 +29,10 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LocalModFile implements Comparable<LocalModFile> {
 
-    private Path file;
     private final ModManager modManager;
     private final LocalMod mod;
     private final String name;
@@ -46,6 +44,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     private final String fileName;
     private final String logoPath;
     private final BooleanProperty activeProperty;
+    private Path file;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");

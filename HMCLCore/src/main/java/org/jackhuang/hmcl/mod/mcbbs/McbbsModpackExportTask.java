@@ -44,6 +44,15 @@ import java.util.List;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 
 public class McbbsModpackExportTask extends Task<Void> {
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireFileApi(true)
+            .requireUrl()
+            .requireForceUpdate()
+            .requireMinMemory()
+            .requireAuthlibInjectorServer()
+            .requireJavaArguments()
+            .requireLaunchArguments()
+            .requireOrigins();
     private final DefaultGameRepository repository;
     private final String version;
     private final ModpackExportInfo info;
@@ -121,15 +130,5 @@ public class McbbsModpackExportTask extends Task<Void> {
             zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }
     }
-
-    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
-            .requireFileApi(true)
-            .requireUrl()
-            .requireForceUpdate()
-            .requireMinMemory()
-            .requireAuthlibInjectorServer()
-            .requireJavaArguments()
-            .requireLaunchArguments()
-            .requireOrigins();
 
 }

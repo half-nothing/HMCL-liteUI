@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
@@ -102,6 +102,10 @@ public class Library implements Comparable<Library>, Validation {
             return artifact.getClassifier();
     }
 
+    public Library setClassifier(String classifier) {
+        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, fileName);
+    }
+
     public ExtractRules getExtract() {
         return extract == null ? ExtractRules.EMPTY : extract;
     }
@@ -159,6 +163,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Hint for how to locate the library file.
+     *
      * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
      */
     @Nullable
@@ -168,6 +173,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Available when hint is "local"
+     *
      * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
      */
     @Nullable
@@ -204,10 +210,6 @@ public class Library implements Comparable<Library>, Validation {
     @Override
     public int hashCode() {
         return Objects.hash(getName(), isNative());
-    }
-
-    public Library setClassifier(String classifier) {
-        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, fileName);
     }
 
     @Override

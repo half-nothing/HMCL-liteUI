@@ -83,6 +83,20 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }
 
+    public static Node wrap(Node node) {
+        StackPane stackPane = new StackPane();
+        stackPane.setAlignment(Pos.CENTER);
+        FXUtils.setLimitWidth(stackPane, 30);
+        FXUtils.setLimitHeight(stackPane, 20);
+        stackPane.setPadding(new Insets(0, 0, 0, 0));
+        stackPane.getChildren().setAll(node);
+        return stackPane;
+    }
+
+    public static Node wrap(SVG.SVGIcon svg) {
+        return wrap(svg.createIcon(null, 20, 20));
+    }
+
     private void checkSelectedVersion() {
         runInFX(() -> {
             if (this.version.get() == null) return;
@@ -218,6 +232,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         return state.getReadOnlyProperty();
     }
 
+    public interface VersionLoadable {
+        void loadVersion(Profile profile, String version);
+    }
+
     public static class Skin extends DecoratorAnimatedPageSkin<VersionPage> {
 
         /**
@@ -336,23 +354,5 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             //FXUtils.setOverflowHidden(control.transitionPane, 8);
             setCenter(control.transitionPane);
         }
-    }
-
-    public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(stackPane, 30);
-        FXUtils.setLimitHeight(stackPane, 20);
-        stackPane.setPadding(new Insets(0, 0, 0, 0));
-        stackPane.getChildren().setAll(node);
-        return stackPane;
-    }
-
-    public static Node wrap(SVG.SVGIcon svg) {
-        return wrap(svg.createIcon(null, 20, 20));
-    }
-
-    public interface VersionLoadable {
-        void loadVersion(Profile profile, String version);
     }
 }

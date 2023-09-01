@@ -43,6 +43,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private final Path artifactLocation;
     private final Supplier<DownloadProvider> downloadProvider;
+    private final AtomicBoolean updateChecked = new AtomicBoolean(false);
 
     /**
      * @param artifactsDirectory where to save authlib-injector artifacts
@@ -50,6 +51,18 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     public AuthlibInjectorDownloader(Path artifactLocation, Supplier<DownloadProvider> downloadProvider) {
         this.artifactLocation = artifactLocation;
         this.downloadProvider = downloadProvider;
+    }
+
+    protected static Optional<AuthlibInjectorArtifactInfo> parseArtifact(Path path) {
+        if (!Files.isRegularFile(path)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(AuthlibInjectorArtifactInfo.from(path));
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Bad authlib-injector artifact", e);
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -77,8 +90,6 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         return getLocalArtifact();
     }
 
-    private final AtomicBoolean updateChecked = new AtomicBoolean(false);
-
     public void checkUpdate() throws IOException {
         // this method runs only once
         if (updateChecked.compareAndSet(false, true)) {
@@ -102,7 +113,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
                     Optional.ofNullable(latest.checksums.get("sha256"))
                             .map(checksum -> new IntegrityCheck("SHA-256", checksum))
                             .orElse(null))
-                                    .run();
+                    .run();
         } catch (Exception e) {
             throw new IOException("Failed to download authlib-injector", e);
         }
@@ -123,18 +134,6 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private Optional<AuthlibInjectorArtifactInfo> getLocalArtifact() {
         return parseArtifact(artifactLocation);
-    }
-
-    protected static Optional<AuthlibInjectorArtifactInfo> parseArtifact(Path path) {
-        if (!Files.isRegularFile(path)) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(AuthlibInjectorArtifactInfo.from(path));
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Bad authlib-injector artifact", e);
-            return Optional.empty();
-        }
     }
 
     private static class AuthlibInjectorVersionInfo {

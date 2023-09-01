@@ -193,7 +193,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -206,7 +206,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */

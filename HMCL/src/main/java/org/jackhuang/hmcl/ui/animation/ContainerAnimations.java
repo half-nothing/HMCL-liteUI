@@ -217,6 +217,17 @@ public enum ContainerAnimations {
                             new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH))));
 
+    static {
+        NONE.opposite = NONE;
+        FADE.opposite = FADE;
+        SWIPE_LEFT.opposite = SWIPE_RIGHT;
+        SWIPE_RIGHT.opposite = SWIPE_LEFT;
+        FADE_IN.opposite = FADE_OUT;
+        FADE_OUT.opposite = FADE_IN;
+        ZOOM_IN.opposite = ZOOM_OUT;
+        ZOOM_OUT.opposite = ZOOM_IN;
+    }
+
     private final AnimationProducer animationProducer;
     private ContainerAnimations opposite;
 
@@ -245,16 +256,5 @@ public enum ContainerAnimations {
 
     public ContainerAnimations getOpposite() {
         return opposite;
-    }
-
-    static {
-        NONE.opposite = NONE;
-        FADE.opposite = FADE;
-        SWIPE_LEFT.opposite = SWIPE_RIGHT;
-        SWIPE_RIGHT.opposite = SWIPE_LEFT;
-        FADE_IN.opposite = FADE_OUT;
-        FADE_OUT.opposite = FADE_IN;
-        ZOOM_IN.opposite = ZOOM_OUT;
-        ZOOM_OUT.opposite = ZOOM_IN;
     }
 }

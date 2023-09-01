@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 /**
- *
  * @author huang
  */
 public class ClassicLibrary {

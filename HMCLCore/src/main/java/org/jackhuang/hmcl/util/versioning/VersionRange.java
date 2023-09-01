@@ -5,6 +5,13 @@ import java.util.Objects;
 public final class VersionRange {
     private static final VersionRange EMPTY = new VersionRange(null, null);
     private static final VersionRange ALL = new VersionRange(null, null);
+    private final VersionNumber minimum;
+    private final VersionNumber maximum;
+
+    private VersionRange(VersionNumber minimum, VersionNumber maximum) {
+        this.minimum = minimum;
+        this.maximum = maximum;
+    }
 
     public static VersionRange empty() {
         return EMPTY;
@@ -39,14 +46,6 @@ public final class VersionRange {
     public static VersionRange atMost(VersionNumber maximum) {
         assert maximum != null;
         return new VersionRange(null, maximum);
-    }
-
-    private final VersionNumber minimum;
-    private final VersionNumber maximum;
-
-    private VersionRange(VersionNumber minimum, VersionNumber maximum) {
-        this.minimum = minimum;
-        this.maximum = maximum;
     }
 
     public VersionNumber getMinimum() {

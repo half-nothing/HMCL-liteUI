@@ -35,6 +35,14 @@ public class ClassicVersion extends Version {
                 null, null, null, ReleaseType.UNKNOWN, new Date(), new Date(), 0, false, false, null);
     }
 
+    public static boolean hasClassicVersion(File baseDirectory) {
+        File bin = new File(baseDirectory, "bin");
+        return bin.exists()
+                && new File(bin, "lwjgl.jar").exists()
+                && new File(bin, "jinput.jar").exists()
+                && new File(bin, "lwjgl_util.jar").exists();
+    }
+
     private static class ClassicLibrary extends Library {
 
         public ClassicLibrary(String name) {
@@ -42,13 +50,5 @@ public class ClassicVersion extends Version {
                     new LibrariesDownloadInfo(new LibraryDownloadInfo("bin/" + name + ".jar"), null),
                     null, null, null, null, null, null);
         }
-    }
-
-    public static boolean hasClassicVersion(File baseDirectory) {
-        File bin = new File(baseDirectory, "bin");
-        return bin.exists()
-                && new File(bin, "lwjgl.jar").exists()
-                && new File(bin, "jinput.jar").exists()
-                && new File(bin, "lwjgl_util.jar").exists();
     }
 }

@@ -32,15 +32,11 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * @author Glavo
  */
 public final class Pack200Utils {
-    private Pack200Utils() {
-    }
-
     private static final String[] IMPL_NAMES = {
             "java.util.jar.Pack200",
             "org.glavo.pack200.Pack200",
             "io.pack200.Pack200"
     };
-
     private static final MethodHandle newUnpackerHandle;
     private static final MethodHandle unpackHandle;
     private static final MethodHandle unpackFileHandle;
@@ -87,6 +83,9 @@ public final class Pack200Utils {
             }
         }
 
+    }
+
+    private Pack200Utils() {
     }
 
     public static boolean isSupported() {

@@ -4,6 +4,8 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 
 public final class AnimationUtils {
 
+    private static final boolean enabled = !ConfigHolder.config().isAnimationDisabled();
+
     private AnimationUtils() {
     }
 
@@ -14,8 +16,6 @@ public final class AnimationUtils {
     @SuppressWarnings("JavadocReference")
     public static void init() {
     }
-
-    private static final boolean enabled = !ConfigHolder.config().isAnimationDisabled();
 
     public static boolean isAnimationEnabled() {
         return enabled;

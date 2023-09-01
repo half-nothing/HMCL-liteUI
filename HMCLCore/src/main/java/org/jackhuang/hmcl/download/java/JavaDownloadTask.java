@@ -48,11 +48,11 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public class JavaDownloadTask extends Task<Void> {
     private final GameJavaVersion javaVersion;
     private final Path rootDir;
-    private String platform;
     private final Task<RemoteFiles> javaDownloadsTask;
-    private JavaDownloads.JavaDownload download;
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DownloadProvider downloadProvider;
+    private String platform;
+    private JavaDownloads.JavaDownload download;
 
     public JavaDownloadTask(GameJavaVersion javaVersion, Path rootDir, DownloadProvider downloadProvider) {
         this.javaVersion = javaVersion;
@@ -60,21 +60,21 @@ public class JavaDownloadTask extends Task<Void> {
         this.downloadProvider = downloadProvider;
         this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(
                 "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
-        .thenComposeAsync(javaDownloadsJson -> {
-            JavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, JavaDownloads.class);
-            if (!allDownloads.getDownloads().containsKey(platform)) throw new UnsupportedPlatformException();
-            Map<String, List<JavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
-            if (!osDownloads.containsKey(javaVersion.getComponent())) throw new UnsupportedPlatformException();
-            List<JavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
-            for (JavaDownloads.JavaDownload download : candidates) {
-                if (VersionNumber.VERSION_COMPARATOR.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
-                    this.download = download;
-                    return new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getManifest().getUrl())));
-                }
-            }
-            throw new UnsupportedPlatformException();
-        })
-        .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, RemoteFiles.class));
+                .thenComposeAsync(javaDownloadsJson -> {
+                    JavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, JavaDownloads.class);
+                    if (!allDownloads.getDownloads().containsKey(platform)) throw new UnsupportedPlatformException();
+                    Map<String, List<JavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
+                    if (!osDownloads.containsKey(javaVersion.getComponent())) throw new UnsupportedPlatformException();
+                    List<JavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
+                    for (JavaDownloads.JavaDownload download : candidates) {
+                        if (VersionNumber.VERSION_COMPARATOR.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
+                            this.download = download;
+                            return new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getManifest().getUrl())));
+                        }
+                    }
+                    throw new UnsupportedPlatformException();
+                })
+                .thenApplyAsync(javaDownloadJson -> JsonUtils.fromNonNullJson(javaDownloadJson, RemoteFiles.class));
     }
 
     @Override
@@ -178,5 +178,6 @@ public class JavaDownloadTask extends Task<Void> {
                         .collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
     }
 
-    public static class UnsupportedPlatformException extends Exception {}
+    public static class UnsupportedPlatformException extends Exception {
+    }
 }

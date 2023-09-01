@@ -75,7 +75,8 @@ public interface TabControl {
         }
 
         // API Implementation
-        @Override public void select(int index) {
+        @Override
+        public void select(int index) {
             if (index < 0 || (getItemCount() > 0 && index >= getItemCount()) ||
                     (index == getSelectedIndex() && getModelItem(index).isSelected())) {
                 return;
@@ -102,7 +103,8 @@ public interface TabControl {
             ((Node) tabHeader).notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
         }
 
-        @Override public void select(Tab tab) {
+        @Override
+        public void select(Tab tab) {
             final int itemCount = getItemCount();
 
             for (int i = 0; i < itemCount; i++) {
@@ -117,14 +119,16 @@ public interface TabControl {
             }
         }
 
-        @Override protected Tab<?> getModelItem(int index) {
+        @Override
+        protected Tab<?> getModelItem(int index) {
             final ObservableList<Tab<?>> items = tabHeader.getTabs();
             if (items == null) return null;
             if (index < 0 || index >= items.size()) return null;
             return items.get(index);
         }
 
-        @Override protected int getItemCount() {
+        @Override
+        protected int getItemCount() {
             final ObservableList<Tab<?>> items = tabHeader.getTabs();
             return items == null ? 0 : items.size();
         }
@@ -203,60 +207,60 @@ public interface TabControl {
             return id.get();
         }
 
-        public StringProperty idProperty() {
-            return id;
-        }
-
         public void setId(String id) {
             this.id.set(id);
+        }
+
+        public StringProperty idProperty() {
+            return id;
         }
 
         public String getText() {
             return text.get();
         }
 
-        public StringProperty textProperty() {
-            return text;
-        }
-
         public void setText(String text) {
             this.text.set(text);
+        }
+
+        public StringProperty textProperty() {
+            return text;
         }
 
         public boolean isSelected() {
             return selected.get();
         }
 
-        public ReadOnlyBooleanProperty selectedProperty() {
-            return selected.getReadOnlyProperty();
-        }
-
         private void setSelected(boolean selected) {
             this.selected.set(selected);
+        }
+
+        public ReadOnlyBooleanProperty selectedProperty() {
+            return selected.getReadOnlyProperty();
         }
 
         public T getNode() {
             return node.get();
         }
 
-        public ObjectProperty<T> nodeProperty() {
-            return node;
-        }
-
         public void setNode(T node) {
             this.node.set(node);
+        }
+
+        public ObjectProperty<T> nodeProperty() {
+            return node;
         }
 
         public Object getUserData() {
             return userData.get();
         }
 
-        public ObjectProperty<?> userDataProperty() {
-            return userData;
-        }
-
         public void setUserData(Object userData) {
             this.userData.set(userData);
+        }
+
+        public ObjectProperty<?> userDataProperty() {
+            return userData;
         }
 
         public boolean isInitialized() {

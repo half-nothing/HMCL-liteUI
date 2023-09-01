@@ -22,7 +22,7 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -56,6 +56,34 @@ public class World {
             loadFromZip();
         else
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
+    }
+
+    private static CompoundTag parseLevelDat(Path path) throws IOException {
+        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
+            Tag nbt = NBTIO.readTag(is);
+            if (nbt instanceof CompoundTag)
+                return (CompoundTag) nbt;
+            else
+                throw new IOException("level.dat malformed");
+        }
+    }
+
+    public static Stream<World> getWorlds(Path savesDir) {
+        try {
+            if (Files.exists(savesDir)) {
+                return Files.list(savesDir).flatMap(world -> {
+                    try {
+                        return Stream.of(new World(world));
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
+                        return Stream.empty();
+                    }
+                });
+            }
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
+        }
+        return Stream.empty();
     }
 
     private void loadFromDirectory() throws IOException {
@@ -218,33 +246,5 @@ public class World {
                 NBTIO.writeTag(gos, nbt);
             }
         });
-    }
-
-    private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
-            Tag nbt = NBTIO.readTag(is);
-            if (nbt instanceof CompoundTag)
-                return (CompoundTag) nbt;
-            else
-                throw new IOException("level.dat malformed");
-        }
-    }
-
-    public static Stream<World> getWorlds(Path savesDir) {
-        try {
-            if (Files.exists(savesDir)) {
-                return Files.list(savesDir).flatMap(world -> {
-                    try {
-                        return Stream.of(new World(world));
-                    } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
-                        return Stream.empty();
-                    }
-                });
-            }
-        } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
-        }
-        return Stream.empty();
     }
 }

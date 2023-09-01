@@ -46,20 +46,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MessageDialogPane extends HBox {
 
-    public enum MessageType {
-        ERROR,
-        INFO,
-        WARNING,
-        QUESTION,
-        SUCCESS;
-
-        public String getDisplayName() {
-            return i18n("message." + name().toLowerCase(Locale.ROOT));
-        }
-    }
-
     private final HBox actions;
-
     private @Nullable ButtonBase cancelButton;
 
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
@@ -132,12 +119,24 @@ public final class MessageDialogPane extends HBox {
         actions.getChildren().add(btn);
     }
 
+    public ButtonBase getCancelButton() {
+        return cancelButton;
+    }
+
     public void setCancelButton(@Nullable ButtonBase btn) {
         cancelButton = btn;
     }
 
-    public ButtonBase getCancelButton() {
-        return cancelButton;
+    public enum MessageType {
+        ERROR,
+        INFO,
+        WARNING,
+        QUESTION,
+        SUCCESS;
+
+        public String getDisplayName() {
+            return i18n("message." + name().toLowerCase(Locale.ROOT));
+        }
     }
 
     private static final class EnhancedTextFlow extends TextFlow {

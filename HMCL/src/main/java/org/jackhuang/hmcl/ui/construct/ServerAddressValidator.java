@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ServerAddressValidator extends ValidatorBase {
+    private static final Pattern PATTERN = Pattern.compile("[-a-zA-Z0-9@:%._+~#=]{1,256}(:\\d+)?");
     private final boolean nullable;
 
     public ServerAddressValidator() {
@@ -48,8 +49,6 @@ public class ServerAddressValidator extends ValidatorBase {
             evalTextInputField();
         }
     }
-
-    private static final Pattern PATTERN = Pattern.compile("[-a-zA-Z0-9@:%._+~#=]{1,256}(:\\d+)?");
 
     private void evalTextInputField() {
         TextInputControl textField = ((TextInputControl) srcControl.get());

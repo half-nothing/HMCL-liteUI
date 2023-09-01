@@ -22,6 +22,10 @@ public class Test extends Application {
         return canvas;
     }
 
+    public static void main(String... args) {
+        launch(args);
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
         stage.setTitle(TITLE);
@@ -29,10 +33,6 @@ public class Test extends Application {
         stage.setScene(scene);
         stage.show();
 
-    }
-
-    public static void main(String... args) {
-        launch(args);
     }
 
 }

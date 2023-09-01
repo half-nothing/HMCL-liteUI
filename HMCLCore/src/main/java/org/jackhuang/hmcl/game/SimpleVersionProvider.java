@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author huangyuhui
  */
 public class SimpleVersionProvider implements VersionProvider {

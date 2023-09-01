@@ -40,6 +40,7 @@ import java.util.Optional;
 
 public class McbbsModpackLocalInstallTask extends Task<Void> {
 
+    private static final String PATCH_NAME = "mcbbs";
     private final DefaultDependencyManager dependencyManager;
     private final File zipFile;
     private final Modpack modpack;
@@ -121,6 +122,4 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
 
         dependencies.add(new McbbsModpackCompletionTask(dependencyManager, name, instanceTask.getResult()));
     }
-
-    private static final String PATCH_NAME = "mcbbs";
 }

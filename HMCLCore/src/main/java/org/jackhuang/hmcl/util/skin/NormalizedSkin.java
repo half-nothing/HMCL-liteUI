@@ -30,23 +30,10 @@ import javafx.scene.image.WritableImage;
  */
 public class NormalizedSkin {
 
-    private static void copyImage(Image src, WritableImage dst, int sx, int sy, int dx, int dy, int w, int h, boolean flipHorizontal) {
-        PixelReader reader = src.getPixelReader();
-        PixelWriter writer = dst.getPixelWriter();
-
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                int pixel = reader.getArgb(sx + x, sy + y);
-                writer.setArgb(dx + (flipHorizontal ? w - x - 1 : x), dy + y, pixel);
-            }
-        }
-    }
-
     private final Image texture;
     private final WritableImage normalizedTexture;
     private final int scale;
     private final boolean oldFormat;
-
     public NormalizedSkin(Image texture) throws InvalidSkinException {
         this.texture = texture;
 
@@ -71,6 +58,18 @@ public class NormalizedSkin {
         copyImage(texture, normalizedTexture, 0, 0, 0, 0, w, h, false);
         if (oldFormat) {
             convertOldSkin();
+        }
+    }
+
+    private static void copyImage(Image src, WritableImage dst, int sx, int sy, int dx, int dy, int w, int h, boolean flipHorizontal) {
+        PixelReader reader = src.getPixelReader();
+        PixelWriter writer = dst.getPixelWriter();
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int pixel = reader.getArgb(sx + x, sy + y);
+                writer.setArgb(dx + (flipHorizontal ? w - x - 1 : x), dy + y, pixel);
+            }
         }
     }
 

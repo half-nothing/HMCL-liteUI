@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GameVersionList extends VersionList<GameRemoteVersion> {

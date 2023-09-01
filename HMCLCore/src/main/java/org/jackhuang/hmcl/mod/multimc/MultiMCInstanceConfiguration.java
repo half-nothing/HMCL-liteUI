@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.Properties;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCInstanceConfiguration implements ModpackManifest {

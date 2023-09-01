@@ -40,25 +40,10 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
-    // Lazy initialization resources
-    private static final class Hole {
-        @SuppressWarnings("unchecked")
-        static final Pair<String, String>[] SOURCE = (Pair<String, String>[]) new Pair<?, ?>[]{
-                pair("Location is not set", i18n("crash.NoClassDefFound")),
-                pair("UnsatisfiedLinkError", i18n("crash.user_fault")),
-                pair("java.time.zone.ZoneRulesException: Unable to load TZDB time-zone rules", i18n("crash.user_fault")),
-                pair("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound")),
-                pair("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound")),
-                pair("java.lang.VerifyError", i18n("crash.NoClassDefFound")),
-                pair("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound")),
-                pair("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound")),
-                pair("javax.imageio.IIOException", i18n("crash.NoClassDefFound")),
-                pair("netscape.javascript.JSException", i18n("crash.NoClassDefFound")),
-                pair("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound")),
-                pair("java.lang.ClassFormatError", i18n("crash.NoClassDefFound")),
-                pair("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java")),
-                pair("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?")
-        };
+    private final boolean showCrashWindow;
+
+    public CrashReporter(boolean showCrashWindow) {
+        this.showCrashWindow = showCrashWindow;
     }
 
     private boolean checkThrowable(Throwable e) {
@@ -80,12 +65,6 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 return false;
             }
         return true;
-    }
-
-    private final boolean showCrashWindow;
-
-    public CrashReporter(boolean showCrashWindow) {
-        this.showCrashWindow = showCrashWindow;
     }
 
     @Override
@@ -131,5 +110,26 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         });
         t.setDaemon(true);
         t.start();
+    }
+
+    // Lazy initialization resources
+    private static final class Hole {
+        @SuppressWarnings("unchecked")
+        static final Pair<String, String>[] SOURCE = (Pair<String, String>[]) new Pair<?, ?>[]{
+                pair("Location is not set", i18n("crash.NoClassDefFound")),
+                pair("UnsatisfiedLinkError", i18n("crash.user_fault")),
+                pair("java.time.zone.ZoneRulesException: Unable to load TZDB time-zone rules", i18n("crash.user_fault")),
+                pair("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound")),
+                pair("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.VerifyError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound")),
+                pair("javax.imageio.IIOException", i18n("crash.NoClassDefFound")),
+                pair("netscape.javascript.JSException", i18n("crash.NoClassDefFound")),
+                pair("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.ClassFormatError", i18n("crash.NoClassDefFound")),
+                pair("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java")),
+                pair("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?")
+        };
     }
 }

@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
@@ -43,6 +43,7 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ModpackInstallWizardProvider implements WizardProvider {
+    public static final String PROFILE = "PROFILE";
     private final Profile profile;
     private final File file;
     private final String updateVersion;
@@ -161,6 +162,4 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

@@ -36,9 +36,10 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class Datapack {
-    private boolean isMultiple;
+    private static final String DISABLED_EXT = "disabled";
     private final Path path;
     private final ObservableList<Pack> info = FXCollections.observableArrayList();
+    private boolean isMultiple;
 
     public Datapack(Path path) {
         this.path = path;
@@ -199,11 +200,11 @@ public class Datapack {
     }
 
     public static class Pack {
-        private Path file;
         private final BooleanProperty active;
         private final String id;
         private final LocalModFile.Description description;
         private final Datapack datapack;
+        private Path file;
 
         public Pack(Path file, String id, LocalModFile.Description description, Datapack datapack) {
             this.file = file;
@@ -255,7 +256,4 @@ public class Datapack {
             this.active.set(active);
         }
     }
-
-
-    private static final String DISABLED_EXT = "disabled";
 }

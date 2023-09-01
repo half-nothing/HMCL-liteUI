@@ -173,60 +173,60 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             return enabled.get();
         }
 
-        public BooleanProperty enabledProperty() {
-            return enabled;
-        }
-
         public void setEnabled(boolean enabled) {
             this.enabled.set(enabled);
+        }
+
+        public BooleanProperty enabledProperty() {
+            return enabled;
         }
 
         public String getFileName() {
             return fileName.get();
         }
 
-        public StringProperty fileNameProperty() {
-            return fileName;
-        }
-
         public void setFileName(String fileName) {
             this.fileName.set(fileName);
+        }
+
+        public StringProperty fileNameProperty() {
+            return fileName;
         }
 
         public String getCurrentVersion() {
             return currentVersion.get();
         }
 
-        public StringProperty currentVersionProperty() {
-            return currentVersion;
-        }
-
         public void setCurrentVersion(String currentVersion) {
             this.currentVersion.set(currentVersion);
+        }
+
+        public StringProperty currentVersionProperty() {
+            return currentVersion;
         }
 
         public String getTargetVersion() {
             return targetVersion.get();
         }
 
-        public StringProperty targetVersionProperty() {
-            return targetVersion;
-        }
-
         public void setTargetVersion(String targetVersion) {
             this.targetVersion.set(targetVersion);
+        }
+
+        public StringProperty targetVersionProperty() {
+            return targetVersion;
         }
 
         public String getSource() {
             return source.get();
         }
 
-        public StringProperty sourceProperty() {
-            return source;
-        }
-
         public void setSource(String source) {
             this.source.set(source);
+        }
+
+        public StringProperty sourceProperty() {
+            return source;
         }
     }
 

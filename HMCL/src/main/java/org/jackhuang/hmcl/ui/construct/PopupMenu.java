@@ -41,6 +41,14 @@ public class PopupMenu extends Control {
         getStyleClass().add("popup-menu");
     }
 
+    public static Node wrapPopupMenuItem(Node node) {
+        StackPane pane = new StackPane();
+        pane.getChildren().setAll(node);
+        pane.getStyleClass().add("menu-container");
+        node.setMouseTransparent(true);
+        return new RipplerContainer(pane);
+    }
+
     public ObservableList<Node> getContent() {
         return content;
     }
@@ -49,25 +57,17 @@ public class PopupMenu extends Control {
         return alwaysShowingVBar.get();
     }
 
-    public BooleanProperty alwaysShowingVBarProperty() {
-        return alwaysShowingVBar;
-    }
-
     public void setAlwaysShowingVBar(boolean alwaysShowingVBar) {
         this.alwaysShowingVBar.set(alwaysShowingVBar);
+    }
+
+    public BooleanProperty alwaysShowingVBarProperty() {
+        return alwaysShowingVBar;
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
         return new PopupMenuSkin();
-    }
-
-    public static Node wrapPopupMenuItem(Node node) {
-        StackPane pane = new StackPane();
-        pane.getChildren().setAll(node);
-        pane.getStyleClass().add("menu-container");
-        node.setMouseTransparent(true);
-        return new RipplerContainer(pane);
     }
 
     private class PopupMenuSkin extends SkinBase<PopupMenu> {

@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
@@ -51,7 +50,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     @Override
     public CompletableFuture<?> refreshAsync() {
         return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
-        }.getType())
+                }.getType())
                 .thenAcceptAsync(root -> {
                     lock.writeLock().lock();
 

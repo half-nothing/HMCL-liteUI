@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -50,6 +51,24 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         super(server.getYggdrasilService(), username, session);
         this.server = server;
         this.downloader = downloader;
+    }
+
+    public static Set<TextureType> getUploadableTextures(CompleteGameProfile profile) {
+        String prop = profile.getProperties().get("uploadableTextures");
+        if (prop == null)
+            return emptySet();
+        Set<TextureType> result = EnumSet.noneOf(TextureType.class);
+        for (String val : prop.split(",")) {
+            val = val.toUpperCase(Locale.ROOT);
+            TextureType parsed;
+            try {
+                parsed = TextureType.valueOf(val);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            result.add(parsed);
+        }
+        return unmodifiableSet(result);
     }
 
     @Override
@@ -113,29 +132,6 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return new AuthlibInjectorAuthInfo(auth, artifact, server, prefetchedMeta);
     }
 
-    private static class AuthlibInjectorAuthInfo extends AuthInfo {
-
-        private final AuthlibInjectorArtifactInfo artifact;
-        private final AuthlibInjectorServer server;
-        private final String prefetchedMeta;
-
-        public AuthlibInjectorAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
-            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserType(), authInfo.getUserProperties());
-
-            this.artifact = artifact;
-            this.server = server;
-            this.prefetchedMeta = prefetchedMeta;
-        }
-
-        @Override
-        public Arguments getLaunchArguments(LaunchOptions options) {
-            return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
-                    "-Dauthlibinjector.side=client",
-                    "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
-        }
-    }
-
     @Override
     public Map<Object, Object> toStorage() {
         Map<Object, Object> map = super.toStorage();
@@ -181,21 +177,26 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
                 .toString();
     }
 
-    public static Set<TextureType> getUploadableTextures(CompleteGameProfile profile) {
-        String prop = profile.getProperties().get("uploadableTextures");
-        if (prop == null)
-            return emptySet();
-        Set<TextureType> result = EnumSet.noneOf(TextureType.class);
-        for (String val : prop.split(",")) {
-            val = val.toUpperCase(Locale.ROOT);
-            TextureType parsed;
-            try {
-                parsed = TextureType.valueOf(val);
-            } catch (IllegalArgumentException e) {
-                continue;
-            }
-            result.add(parsed);
+    private static class AuthlibInjectorAuthInfo extends AuthInfo {
+
+        private final AuthlibInjectorArtifactInfo artifact;
+        private final AuthlibInjectorServer server;
+        private final String prefetchedMeta;
+
+        public AuthlibInjectorAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserType(), authInfo.getUserProperties());
+
+            this.artifact = artifact;
+            this.server = server;
+            this.prefetchedMeta = prefetchedMeta;
         }
-        return unmodifiableSet(result);
+
+        @Override
+        public Arguments getLaunchArguments(LaunchOptions options) {
+            return new Arguments().addJVMArguments(
+                    "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
+                    "-Dauthlibinjector.side=client",
+                    "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+        }
     }
 }

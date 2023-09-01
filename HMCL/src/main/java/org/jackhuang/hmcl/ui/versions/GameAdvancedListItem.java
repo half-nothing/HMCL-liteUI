@@ -69,7 +69,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
             tooltip.setText(version);
         } else {
-            Tooltip.uninstall(this,tooltip);
+            Tooltip.uninstall(this, tooltip);
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
             imageView.setImage(newImage("/assets/img/grass.png"));

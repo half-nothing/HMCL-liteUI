@@ -27,7 +27,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -60,6 +59,19 @@ public final class LiteModMetadata {
         this.modpackVersion = modpackVersion;
         this.checkUpdateUrl = checkUpdateUrl;
         this.updateURI = updateURI;
+    }
+
+    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+        try (ZipFile zipFile = new ZipFile(modFile.toFile())) {
+            ZipEntry entry = zipFile.getEntry("litemod.json");
+            if (entry == null)
+                throw new IOException("File " + modFile + "is not a LiteLoader mod.");
+            LiteModMetadata metadata = JsonUtils.fromJsonFully(zipFile.getInputStream(entry), LiteModMetadata.class);
+            if (metadata == null)
+                throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
+            return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),
+                    metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
+        }
     }
 
     public String getName() {
@@ -105,18 +117,5 @@ public final class LiteModMetadata {
     public String getUpdateURI() {
         return updateURI;
     }
-    
-    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
-        try (ZipFile zipFile = new ZipFile(modFile.toFile())) {
-            ZipEntry entry = zipFile.getEntry("litemod.json");
-            if (entry == null)
-                throw new IOException("File " + modFile + "is not a LiteLoader mod.");
-            LiteModMetadata metadata = JsonUtils.fromJsonFully(zipFile.getInputStream(entry), LiteModMetadata.class);
-            if (metadata == null)
-                throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
-            return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),
-                    metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
-        }
-    }
-    
+
 }

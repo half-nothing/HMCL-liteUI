@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -35,8 +34,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -60,6 +57,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
+    private boolean checkedModpack = false;
 
     public RootPage() {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
@@ -114,6 +112,31 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             this.mainPage = mainPage;
         }
         return mainPage;
+    }
+
+    private void onRefreshedVersions(HMCLGameRepository repository) {
+        runInFX(() -> {
+            if (!checkedModpack) {
+                checkedModpack = true;
+
+                if (repository.getVersionCount() == 0) {
+                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
+                    if (modpackFile.exists()) {
+                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                                .thenApplyAsync(
+                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenApplyAsync(modpack -> ModpackHelper
+                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
+                                                modpack)
+                                        .executor())
+                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
+                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
+                                    executor.start();
+                                }).start();
+                    }
+                }
+            }
+        });
     }
 
     private static class Skin extends DecoratorAnimatedPageSkin<RootPage> {
@@ -189,32 +212,5 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-    }
-
-    private boolean checkedModpack = false;
-
-    private void onRefreshedVersions(HMCLGameRepository repository) {
-        runInFX(() -> {
-            if (!checkedModpack) {
-                checkedModpack = true;
-
-                if (repository.getVersionCount() == 0) {
-                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
-                    if (modpackFile.exists()) {
-                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
-                                                modpack)
-                                        .executor())
-                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                                    executor.start();
-                                }).start();
-                    }
-                }
-            }
-        });
     }
 }

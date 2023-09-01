@@ -60,12 +60,12 @@ public class IconedTwoLineListItem extends HBox {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public ObservableList<String> getTags() {
@@ -76,36 +76,36 @@ public class IconedTwoLineListItem extends HBox {
         return subtitle.get();
     }
 
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
+    }
+
+    public StringProperty subtitleProperty() {
+        return subtitle;
     }
 
     public String getExternalLink() {
         return externalLink.get();
     }
 
-    public StringProperty externalLinkProperty() {
-        return externalLink;
-    }
-
     public void setExternalLink(String externalLink) {
         this.externalLink.set(externalLink);
+    }
+
+    public StringProperty externalLinkProperty() {
+        return externalLink;
     }
 
     public Image getImage() {
         return image.get();
     }
 
-    public ObjectProperty<Image> imageProperty() {
-        return image;
-    }
-
     public void setImage(Image image) {
         this.image.set(image);
+    }
+
+    public ObjectProperty<Image> imageProperty() {
+        return image;
     }
 
     public ImageView getImageView() {

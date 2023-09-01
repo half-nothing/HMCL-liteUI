@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 /**
  * The visibility of launcher.
+ *
  * @author huangyuhui
  */
 public enum LauncherVisibility {

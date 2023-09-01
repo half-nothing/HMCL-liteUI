@@ -21,8 +21,6 @@ package org.jackhuang.hmcl.util.function;
  * @author huangyuhui
  */
 public interface ExceptionalConsumer<T, E extends Exception> {
-    void accept(T t) throws E;
-
     static <T, E extends Exception> ExceptionalConsumer<T, E> fromRunnable(ExceptionalRunnable<E> runnable) {
         return new ExceptionalConsumer<T, E>() {
             @Override
@@ -41,4 +39,6 @@ public interface ExceptionalConsumer<T, E extends Exception> {
         return s -> {
         };
     }
+
+    void accept(T t) throws E;
 }

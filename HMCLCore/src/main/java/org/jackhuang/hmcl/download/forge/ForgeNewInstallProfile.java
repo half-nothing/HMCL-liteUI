@@ -67,6 +67,7 @@ public class ForgeNewInstallProfile implements Validation {
 
     /**
      * Version json to be installed.
+     *
      * @return path of the version json relative to the installer JAR file.
      */
     public String getJson() {
@@ -74,7 +75,6 @@ public class ForgeNewInstallProfile implements Validation {
     }
 
     /**
-     *
      * @return forge version.
      */
     public String getVersion() {
@@ -83,6 +83,7 @@ public class ForgeNewInstallProfile implements Validation {
 
     /**
      * Maven artifact path for the main jar to install.
+     *
      * @return artifact path of the main jar.
      */
     public Optional<Artifact> getPath() {
@@ -91,6 +92,7 @@ public class ForgeNewInstallProfile implements Validation {
 
     /**
      * Libraries that processors depend on.
+     *
      * @return the required dependencies.
      */
     public List<Library> getLibraries() {
@@ -140,6 +142,7 @@ public class ForgeNewInstallProfile implements Validation {
 
         /**
          * Check which side this processor should be run on. We only support client install currently.
+         *
          * @param side can be one of "client", "server", "extract".
          * @return true if the processor can run on the side.
          */
@@ -149,6 +152,7 @@ public class ForgeNewInstallProfile implements Validation {
 
         /**
          * The executable jar of this processor task. Will be executed in installation process.
+         *
          * @return the artifact path of executable jar.
          */
         public Artifact getJar() {
@@ -157,6 +161,7 @@ public class ForgeNewInstallProfile implements Validation {
 
         /**
          * The dependencies of this processor task.
+         *
          * @return the artifact path of dependencies.
          */
         public List<Artifact> getClasspath() {
@@ -170,6 +175,7 @@ public class ForgeNewInstallProfile implements Validation {
          * {entry}: Get corresponding value of the entry in {@link ForgeNewInstallProfile#getData()}
          * {MINECRAFT_JAR}: path of the Minecraft jar.
          * {SIDE}: values other than "client" will be ignored.
+         *
          * @return arguments to pass to the processor jar.
          * @see ForgeNewInstallTask#parseLiteral(String, Map, ExceptionalFunction)
          */
@@ -182,6 +188,7 @@ public class ForgeNewInstallProfile implements Validation {
          * Arguments to pass to the processor jar.
          * Keys can be in one of [artifact] or {entry}. Should be file path.
          * Values can be in one of {entry} or 'literal'. Should be SHA-1 checksum.
+         *
          * @return files output from this processor.
          * @see ForgeNewInstallTask#parseLiteral(String, Map, ExceptionalFunction)
          */
@@ -208,6 +215,7 @@ public class ForgeNewInstallProfile implements Validation {
          * [value]: An artifact path.
          * 'value': A string literal.
          * value: A file in the installer package, to be extracted to a temp folder, and then have the absolute path in replacements.
+         *
          * @return Value to use for the client install
          */
         public String getClient() {

@@ -28,8 +28,9 @@ Legend:
 
   HMCL can run on this platform and has some basic support.
   However, launching the game directly is not yet available.
-  If you want to start the game, 
-  you'll need to get the native libraries needed by Minecraft in other way and specify the native path in the instance settings.
+  If you want to start the game,
+  you'll need to get the native libraries needed by Minecraft in other way and specify the native path in the instance
+  settings.
 
 * /: Not applicable.
 

@@ -25,7 +25,7 @@ import java.io.File;
  * This event gets fired when json of a game version is malformed. You can do something here.
  * auto making up for the missing json, don't forget to set result to {@link Event.Result#ALLOW}.
  * and even asking for removing the redundant version folder.
- *
+ * <p>
  * The result ALLOW means you have corrected the json.
  */
 public final class GameJsonParseFailedEvent extends Event {
@@ -33,10 +33,9 @@ public final class GameJsonParseFailedEvent extends Event {
     private final File jsonFile;
 
     /**
-     *
-     * @param source {@link org.jackhuang.hmcl.game.DefaultGameRepository}
+     * @param source   {@link org.jackhuang.hmcl.game.DefaultGameRepository}
      * @param jsonFile the minecraft.json file.
-     * @param version the version name
+     * @param version  the version name
      */
     public GameJsonParseFailedEvent(Object source, File jsonFile, String version) {
         super(source);

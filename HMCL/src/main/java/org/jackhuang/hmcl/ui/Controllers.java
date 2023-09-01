@@ -64,7 +64,8 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.*;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -75,6 +76,8 @@ public final class Controllers {
     private static Scene scene;
     private static Stage stage;
     private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
+    private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
+    private static DecoratorController decorator;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -85,8 +88,6 @@ public final class Controllers {
         });
         return gameListPage;
     });
-    private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
-    private static DecoratorController decorator;
     private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();

@@ -23,9 +23,6 @@ import java.lang.invoke.MethodType;
 
 public final class JavaFXLauncher {
 
-    private JavaFXLauncher() {
-    }
-
     private static boolean started = false;
 
     static {
@@ -51,6 +48,9 @@ public final class JavaFXLauncher {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+    }
+
+    private JavaFXLauncher() {
     }
 
     public static void start() {

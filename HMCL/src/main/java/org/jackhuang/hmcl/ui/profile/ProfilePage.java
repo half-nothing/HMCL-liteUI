@@ -174,11 +174,11 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
         return location.get();
     }
 
-    public StringProperty locationProperty() {
-        return location;
-    }
-
     public void setLocation(String location) {
         this.location.set(location);
+    }
+
+    public StringProperty locationProperty() {
+        return location;
     }
 }

@@ -39,19 +39,32 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
+    public static final int SECTION_BUKKIT_PLUGIN = 5;
+    public static final int SECTION_MOD = 6;
+    public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_WORLD = 17;
+    public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_CUSTOMIZATION = 4546;
+    public static final int SECTION_ADDONS = 4559; // For Pocket Edition
+    public static final int SECTION_UNKNOWN1 = 4944;
+    public static final int SECTION_UNKNOWN2 = 4979;
+    public static final int SECTION_UNKNOWN3 = 4984;
+    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MOD, SECTION_MOD);
+    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MODPACK, SECTION_MODPACK);
+    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
+    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
-
-    public static boolean isAvailable() {
-        return !apiKey.isEmpty();
-    }
-
     private final Type type;
     private final int section;
-
     public CurseForgeRemoteModRepository(Type type, int section) {
         this.type = type;
         this.section = section;
+    }
+
+    public static boolean isAvailable() {
+        return !apiKey.isEmpty();
     }
 
     @Override
@@ -203,23 +216,6 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
         return result;
     }
-
-    public static final int SECTION_BUKKIT_PLUGIN = 5;
-    public static final int SECTION_MOD = 6;
-    public static final int SECTION_RESOURCE_PACK = 12;
-    public static final int SECTION_WORLD = 17;
-    public static final int SECTION_MODPACK = 4471;
-    public static final int SECTION_CUSTOMIZATION = 4546;
-    public static final int SECTION_ADDONS = 4559; // For Pocket Edition
-    public static final int SECTION_UNKNOWN1 = 4944;
-    public static final int SECTION_UNKNOWN2 = 4979;
-    public static final int SECTION_UNKNOWN3 = 4984;
-
-    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MOD, SECTION_MOD);
-    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MODPACK, SECTION_MODPACK);
-    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
-    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
-    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
 
     public static class Pagination {
         private final int index;

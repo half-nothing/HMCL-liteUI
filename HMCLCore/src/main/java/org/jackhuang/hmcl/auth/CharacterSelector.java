@@ -30,9 +30,10 @@ public interface CharacterSelector {
 
     /**
      * Select one of {@code names} GameProfiles to login.
+     *
      * @param names available game profiles.
-     * @throws NoSelectedCharacterException if cannot select any character may because user close the selection window or cancel the selection.
      * @return your choice of game profile.
+     * @throws NoSelectedCharacterException if cannot select any character may because user close the selection window or cancel the selection.
      */
     GameProfile select(YggdrasilService yggdrasilService, List<GameProfile> names) throws NoSelectedCharacterException;
 

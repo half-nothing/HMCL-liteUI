@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LoggingInfo implements Validation {

@@ -48,6 +48,23 @@ public class MicrosoftSession {
         if (accessToken != null) Logging.registerAccessToken(accessToken);
     }
 
+    public static MicrosoftSession fromStorage(Map<?, ?> storage) {
+        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
+                .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
+        String name = tryCast(storage.get("displayName"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
+        String tokenType = tryCast(storage.get("tokenType"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
+        String accessToken = tryCast(storage.get("accessToken"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
+        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
+        Long notAfter = tryCast(storage.get("notAfter"), Long.class).orElse(0L);
+        String userId = tryCast(storage.get("userid"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
+        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
+    }
+
     public String getTokenType() {
         return tokenType;
     }
@@ -74,23 +91,6 @@ public class MicrosoftSession {
 
     public GameProfile getProfile() {
         return profile;
-    }
-
-    public static MicrosoftSession fromStorage(Map<?, ?> storage) {
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
-        String tokenType = tryCast(storage.get("tokenType"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
-        Long notAfter = tryCast(storage.get("notAfter"), Long.class).orElse(0L);
-        String userId = tryCast(storage.get("userid"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
     }
 
     public Map<Object, Object> toStorage() {

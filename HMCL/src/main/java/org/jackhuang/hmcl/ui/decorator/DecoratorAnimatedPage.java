@@ -35,20 +35,20 @@ public class DecoratorAnimatedPage extends Control {
         getStyleClass().add("gray-background");
     }
 
-    protected void setLeft(Node... children) {
-        left.getChildren().setAll(children);
-    }
-
-    protected void setCenter(Node... children) {
-        center.getChildren().setAll(children);
-    }
-
     public VBox getLeft() {
         return left;
     }
 
+    protected void setLeft(Node... children) {
+        left.getChildren().setAll(children);
+    }
+
     public StackPane getCenter() {
         return center;
+    }
+
+    protected void setCenter(Node... children) {
+        center.getChildren().setAll(children);
     }
 
     @Override

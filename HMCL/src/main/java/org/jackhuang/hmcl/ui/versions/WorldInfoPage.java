@@ -430,12 +430,46 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         return stateProperty;
     }
 
+    private enum Difficulty {
+        PEACEFUL, EASY, NORMAL, HARD;
+
+        static final ObservableList<Difficulty> items = FXCollections.observableList(Arrays.asList(values()));
+
+        static Difficulty of(int d) {
+            return d >= 0 && d <= items.size() ? items.get(d) : null;
+        }
+
+        @Override
+        public String toString() {
+            return i18n("world.info.difficulty." + name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private enum GameType {
+        SURVIVAL, CREATIVE, ADVENTURE, SPECTATOR;
+
+        static final ObservableList<GameType> items = FXCollections.observableList(Arrays.asList(values()));
+
+        static GameType of(int d) {
+            return d >= 0 && d <= items.size() ? items.get(d) : null;
+        }
+
+        @Override
+        public String toString() {
+            return i18n("world.info.player.game_type." + name().toLowerCase(Locale.ROOT));
+        }
+    }
+
     private static final class Dimension {
         static final Dimension OVERWORLD = new Dimension(null);
         static final Dimension THE_NETHER = new Dimension(i18n("world.info.dimension.the_nether"));
         static final Dimension THE_END = new Dimension(i18n("world.info.dimension.the_end"));
 
         final String name;
+
+        private Dimension(String name) {
+            this.name = name;
+        }
 
         static Dimension of(Tag tag) {
             if (tag instanceof IntTag) {
@@ -467,10 +501,6 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
             } else {
                 return null;
             }
-        }
-
-        private Dimension(String name) {
-            this.name = name;
         }
 
         String formatPosition(Tag tag) {
@@ -518,36 +548,6 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
             return this == OVERWORLD
                     ? String.format("(%.2f, %.2f, %.2f)", x, y, z)
                     : String.format("%s (%.2f, %.2f, %.2f)", name, x, y, z);
-        }
-    }
-
-    private enum Difficulty {
-        PEACEFUL, EASY, NORMAL, HARD;
-
-        static final ObservableList<Difficulty> items = FXCollections.observableList(Arrays.asList(values()));
-
-        static Difficulty of(int d) {
-            return d >= 0 && d <= items.size() ? items.get(d) : null;
-        }
-
-        @Override
-        public String toString() {
-            return i18n("world.info.difficulty." + name().toLowerCase(Locale.ROOT));
-        }
-    }
-
-    private enum GameType {
-        SURVIVAL, CREATIVE, ADVENTURE, SPECTATOR;
-
-        static final ObservableList<GameType> items = FXCollections.observableList(Arrays.asList(values()));
-
-        static GameType of(int d) {
-            return d >= 0 && d <= items.size() ? items.get(d) : null;
-        }
-
-        @Override
-        public String toString() {
-            return i18n("world.info.player.game_type." + name().toLowerCase(Locale.ROOT));
         }
     }
 }

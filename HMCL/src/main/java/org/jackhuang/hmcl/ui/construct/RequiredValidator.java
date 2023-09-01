@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
-
 import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;

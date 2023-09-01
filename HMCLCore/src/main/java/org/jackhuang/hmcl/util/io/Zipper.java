@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -72,7 +75,7 @@ public final class Zipper implements Closeable {
     /**
      * Compress all the files in sourceDir
      *
-     * @param source  the file in basePath to be compressed
+     * @param source    the file in basePath to be compressed
      * @param targetDir the path of the directory in this zip file.
      */
     public void putDirectory(Path source, String targetDir) throws IOException {
@@ -82,9 +85,9 @@ public final class Zipper implements Closeable {
     /**
      * Compress all the files in sourceDir
      *
-     * @param source  the file in basePath to be compressed
+     * @param source    the file in basePath to be compressed
      * @param targetDir the path of the directory in this zip file.
-     * @param filter  returns false if you do not want that file or directory
+     * @param filter    returns false if you do not want that file or directory
      */
     public void putDirectory(Path source, String targetDir, ExceptionalPredicate<String, IOException> filter) throws IOException {
         String root = normalize(targetDir);

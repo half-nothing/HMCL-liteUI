@@ -58,14 +58,15 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
+    public static final String MODPACK_INFO = "modpack.info";
+    public static final String MODPACK_FILE = "modpack.file";
+    public static final String MODPACK_INFO_OPTION = "modpack.info.option";
     private final WizardController controller;
     private final HMCLGameRepository gameRepository;
     private final ModpackExportInfo.Options options;
     private final String versionName;
     private final boolean canIncludeLauncher;
-
     private final ModpackExportInfo exportInfo = new ModpackExportInfo();
-
     private final SimpleStringProperty name = new SimpleStringProperty("");
     private final SimpleStringProperty author = new SimpleStringProperty("");
     private final SimpleStringProperty version = new SimpleStringProperty("1.0");
@@ -150,10 +151,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     protected Skin<?> createDefaultSkin() {
         return new ModpackInfoPageSkin(this);
     }
-
-    public static final String MODPACK_INFO = "modpack.info";
-    public static final String MODPACK_FILE = "modpack.file";
-    public static final String MODPACK_INFO_OPTION = "modpack.info.option";
 
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
         private ObservableList<Node> originList;

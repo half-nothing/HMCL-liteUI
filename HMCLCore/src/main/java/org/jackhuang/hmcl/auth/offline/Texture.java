@@ -31,6 +31,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 public final class Texture {
+    private static final Map<String, Texture> textures = new HashMap<>();
     private final String hash;
     private final Image image;
 
@@ -38,16 +39,6 @@ public final class Texture {
         this.hash = requireNonNull(hash);
         this.image = requireNonNull(image);
     }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public Image getImage() {
-        return image;
-    }
-
-    private static final Map<String, Texture> textures = new HashMap<>();
 
     public static boolean hasTexture(String hash) {
         return textures.containsKey(hash);
@@ -130,6 +121,14 @@ public final class Texture {
             return existent;
         }
         return texture;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public Image getImage() {
+        return image;
     }
 
 }

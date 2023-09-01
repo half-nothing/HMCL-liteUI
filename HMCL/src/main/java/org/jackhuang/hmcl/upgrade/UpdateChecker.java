@@ -35,8 +35,6 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.versioning.VersionNumber.asVersion;
 
 public final class UpdateChecker {
-    private UpdateChecker() {}
-
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
@@ -51,6 +49,8 @@ public final class UpdateChecker {
             },
             latestVersion);
     private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private UpdateChecker() {
+    }
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel());

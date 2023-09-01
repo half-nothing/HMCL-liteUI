@@ -72,6 +72,9 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemProp
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
+    protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
+    protected final ListProperty<String> downloadSources = new SimpleListProperty<>(this, "downloadSources", FXCollections.observableArrayList());
+    protected final StringProperty downloadSource = new SimpleStringProperty();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
@@ -80,15 +83,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final DownloadPage.DownloadCallback callback;
-    private boolean searchInitialized = false;
-    protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
     private final ObservableList<Node> actions = FXCollections.observableArrayList();
-    protected final ListProperty<String> downloadSources = new SimpleListProperty<>(this, "downloadSources", FXCollections.observableArrayList());
-    protected final StringProperty downloadSource = new SimpleStringProperty();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-    private TaskExecutor executor;
     protected RemoteModRepository repository;
-
+    private boolean searchInitialized = false;
+    private TaskExecutor executor;
     private Runnable retrySearch;
 
     public DownloadListPage(RemoteModRepository repository) {
@@ -133,24 +132,24 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         return failed.get();
     }
 
-    public BooleanProperty failedProperty() {
-        return failed;
-    }
-
     public void setFailed(boolean failed) {
         this.failed.set(failed);
+    }
+
+    public BooleanProperty failedProperty() {
+        return failed;
     }
 
     public boolean isLoading() {
         return loading.get();
     }
 
-    public BooleanProperty loadingProperty() {
-        return loading;
-    }
-
     public void setLoading(boolean loading) {
         this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 
     public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
@@ -417,6 +416,13 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             getChildren().setAll(pane);
         }
 
+        private static void resolveCategory(RemoteModRepository.Category category, int indent, List<CategoryIndented> result) {
+            result.add(new CategoryIndented(indent, category));
+            for (RemoteModRepository.Category subcategory : category.getSubcategories()) {
+                resolveCategory(subcategory, indent + 1, result);
+            }
+        }
+
         private static class CategoryIndented {
             private final int indent;
             private final RemoteModRepository.Category category;
@@ -432,13 +438,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
             public RemoteModRepository.Category getCategory() {
                 return category;
-            }
-        }
-
-        private static void resolveCategory(RemoteModRepository.Category category, int indent, List<CategoryIndented> result) {
-            result.add(new CategoryIndented(indent, category));
-            for (RemoteModRepository.Category subcategory : category.getSubcategories()) {
-                resolveCategory(subcategory, indent + 1, result);
             }
         }
     }

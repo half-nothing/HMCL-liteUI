@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -91,10 +91,30 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class FXUtils {
+    public static final Interpolator SINE = new Interpolator() {
+        @Override
+        protected double curve(double t) {
+            return Math.sin(t * Math.PI / 2);
+        }
+
+        @Override
+        public String toString() {
+            return "Interpolator.SINE";
+        }
+    };
+    private static final String[] linuxBrowsers = {
+            "xdg-open",
+            "google-chrome",
+            "firefox",
+            "microsoft-edge",
+            "opera",
+            "konqueror",
+            "mozilla"
+    };
+    public static String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
     private FXUtils() {
     }
-
-    public static String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     public static void runInFX(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
@@ -161,24 +181,6 @@ public final class FXUtils {
                 imageView.setFitWidth(-1);
             }
         });
-    }
-
-    private static class ListenerPair<T> {
-        private final ObservableValue<T> value;
-        private final ChangeListener<? super T> listener;
-
-        ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
-            this.value = value;
-            this.listener = listener;
-        }
-
-        void bind() {
-            value.addListener(listener);
-        }
-
-        void unbind() {
-            value.removeListener(listener);
-        }
     }
 
     public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<? super T> callback) {
@@ -422,16 +424,6 @@ public final class FXUtils {
         }
     }
 
-    private static final String[] linuxBrowsers = {
-            "xdg-open",
-            "google-chrome",
-            "firefox",
-            "microsoft-edge",
-            "opera",
-            "konqueror",
-            "mozilla"
-    };
-
     /**
      * Open URL in browser
      *
@@ -449,7 +441,8 @@ public final class FXUtils {
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
-            } if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            }
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 for (String browser : linuxBrowsers) {
                     try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                         if (is.read() != -1) {
@@ -540,66 +533,6 @@ public final class FXUtils {
         TextFieldBindingListener<?> listener = new TextFieldBindingListener<>(textField, property, null);
         textField.focusedProperty().removeListener((ChangeListener<Boolean>) listener);
         property.removeListener(listener);
-    }
-
-    private static final class TextFieldBindingListener<T> implements ChangeListener<Boolean>, InvalidationListener {
-        private final int hashCode;
-        private final WeakReference<JFXTextField> textFieldRef;
-        private final WeakReference<Property<T>> propertyRef;
-        private final StringConverter<T> converter;
-
-        TextFieldBindingListener(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
-            this.textFieldRef = new WeakReference<>(textField);
-            this.propertyRef = new WeakReference<>(property);
-            this.converter = converter;
-            this.hashCode = System.identityHashCode(textField) ^ System.identityHashCode(property);
-        }
-
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean focused) { // On TextField changed
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
-
-            if (textField != null && property != null && oldValue == Boolean.TRUE && focused == Boolean.FALSE) {
-                if (textField.validate()) {
-                    String newText = textField.getText();
-                    @SuppressWarnings("unchecked")
-                    T newValue = converter == null ? (T) newText : converter.fromString(newText);
-
-                    if (!Objects.equals(newValue, property.getValue()))
-                        property.setValue(newValue);
-                } else {
-                    // Rollback to old value
-                    invalidated(null);
-                }
-            }
-        }
-
-        @Override
-        public void invalidated(Observable observable) { // On property change
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
-
-            if (textField != null && property != null) {
-                T value = property.getValue();
-                textField.setText(converter == null ? (String) value : converter.toString(value));
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof TextFieldBindingListener))
-                return false;
-            TextFieldBindingListener<?> other = (TextFieldBindingListener<?>) obj;
-            return this.hashCode == other.hashCode
-                    && this.textFieldRef.get() == other.textFieldRef.get()
-                    && this.propertyRef.get() == other.propertyRef.get();
-        }
     }
 
     public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
@@ -754,18 +687,6 @@ public final class FXUtils {
         return constraint;
     }
 
-    public static final Interpolator SINE = new Interpolator() {
-        @Override
-        protected double curve(double t) {
-            return Math.sin(t * Math.PI / 2);
-        }
-
-        @Override
-        public String toString() {
-            return "Interpolator.SINE";
-        }
-    };
-
     public static Runnable withJFXPopupClosing(Runnable runnable, JFXPopup popup) {
         return () -> {
             runnable.run();
@@ -836,6 +757,84 @@ public final class FXUtils {
         TextFlow tf = new TextFlow();
         tf.getChildren().setAll(parseSegment(segment, hyperlinkAction));
         return tf;
+    }
+
+    private static class ListenerPair<T> {
+        private final ObservableValue<T> value;
+        private final ChangeListener<? super T> listener;
+
+        ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
+            this.value = value;
+            this.listener = listener;
+        }
+
+        void bind() {
+            value.addListener(listener);
+        }
+
+        void unbind() {
+            value.removeListener(listener);
+        }
+    }
+
+    private static final class TextFieldBindingListener<T> implements ChangeListener<Boolean>, InvalidationListener {
+        private final int hashCode;
+        private final WeakReference<JFXTextField> textFieldRef;
+        private final WeakReference<Property<T>> propertyRef;
+        private final StringConverter<T> converter;
+
+        TextFieldBindingListener(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+            this.textFieldRef = new WeakReference<>(textField);
+            this.propertyRef = new WeakReference<>(property);
+            this.converter = converter;
+            this.hashCode = System.identityHashCode(textField) ^ System.identityHashCode(property);
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean focused) { // On TextField changed
+            JFXTextField textField = textFieldRef.get();
+            Property<T> property = this.propertyRef.get();
+
+            if (textField != null && property != null && oldValue == Boolean.TRUE && focused == Boolean.FALSE) {
+                if (textField.validate()) {
+                    String newText = textField.getText();
+                    @SuppressWarnings("unchecked")
+                    T newValue = converter == null ? (T) newText : converter.fromString(newText);
+
+                    if (!Objects.equals(newValue, property.getValue()))
+                        property.setValue(newValue);
+                } else {
+                    // Rollback to old value
+                    invalidated(null);
+                }
+            }
+        }
+
+        @Override
+        public void invalidated(Observable observable) { // On property change
+            JFXTextField textField = textFieldRef.get();
+            Property<T> property = this.propertyRef.get();
+
+            if (textField != null && property != null) {
+                T value = property.getValue();
+                textField.setText(converter == null ? (String) value : converter.toString(value));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof TextFieldBindingListener))
+                return false;
+            TextFieldBindingListener<?> other = (TextFieldBindingListener<?>) obj;
+            return this.hashCode == other.hashCode
+                    && this.textFieldRef.get() == other.textFieldRef.get()
+                    && this.propertyRef.get() == other.propertyRef.get();
+        }
     }
 
 }

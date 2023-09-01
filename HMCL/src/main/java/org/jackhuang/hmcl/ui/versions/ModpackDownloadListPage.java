@@ -38,23 +38,6 @@ public class ModpackDownloadListPage extends DownloadListPage {
             downloadSource.set("mods.modrinth");
     }
 
-    private class Repository extends LocalizedRemoteModRepository {
-
-        @Override
-        protected RemoteModRepository getBackedRemoteModRepository() {
-            if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.MODPACKS;
-            } else {
-                return CurseForgeRemoteModRepository.MODPACKS;
-            }
-        }
-
-        @Override
-        public Type getType() {
-            return Type.MODPACK;
-        }
-    }
-
     @Override
     protected String getLocalizedCategory(String category) {
         if ("mods.modrinth".equals(downloadSource.get())) {
@@ -70,6 +53,23 @@ public class ModpackDownloadListPage extends DownloadListPage {
             return i18n("mods.modrinth");
         } else {
             return i18n("mods.curseforge");
+        }
+    }
+
+    private class Repository extends LocalizedRemoteModRepository {
+
+        @Override
+        protected RemoteModRepository getBackedRemoteModRepository() {
+            if ("mods.modrinth".equals(downloadSource.get())) {
+                return ModrinthRemoteModRepository.MODPACKS;
+            } else {
+                return CurseForgeRemoteModRepository.MODPACKS;
+            }
+        }
+
+        @Override
+        public Type getType() {
+            return Type.MODPACK;
         }
     }
 }

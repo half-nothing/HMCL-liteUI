@@ -48,10 +48,11 @@ public class RipplerContainer extends StackPane {
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
-    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,this, "ripplerFill", null);
+    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", null);
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected", false);
 
     private final StackPane buttonContainer = new StackPane();
+    private final CornerRadii defaultRadii = new CornerRadii(3);
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
         @Override
         protected Node getMask() {
@@ -62,8 +63,6 @@ public class RipplerContainer extends StackPane {
             return mask;
         }
     };
-
-    private final CornerRadii defaultRadii = new CornerRadii(3);
 
     public RipplerContainer(@NamedArg("container") Node container) {
         setContainer(container);
@@ -134,6 +133,10 @@ public class RipplerContainer extends StackPane {
         });
     }
 
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.FACTORY.getCssMetaData();
+    }
+
     private void interpolateBackground(double frac) {
         setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, frac * 0.04), CornerRadii.EMPTY, Insets.EMPTY)));
     }
@@ -149,45 +152,41 @@ public class RipplerContainer extends StackPane {
         return container.get();
     }
 
-    public ObjectProperty<Node> containerProperty() {
-        return container;
-    }
-
     public void setContainer(Node container) {
         this.container.set(container);
+    }
+
+    public ObjectProperty<Node> containerProperty() {
+        return container;
     }
 
     public Paint getRipplerFill() {
         return ripplerFill.get();
     }
 
-    public StyleableObjectProperty<Paint> ripplerFillProperty() {
-        return ripplerFill;
-    }
-
     public void setRipplerFill(Paint ripplerFill) {
         this.ripplerFill.set(ripplerFill);
+    }
+
+    public StyleableObjectProperty<Paint> ripplerFillProperty() {
+        return ripplerFill;
     }
 
     public boolean isSelected() {
         return selected.get();
     }
 
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
     public void setSelected(boolean selected) {
         this.selected.set(selected);
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
     }
 
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
         return getClassCssMetaData();
-    }
-
-    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.FACTORY.getCssMetaData();
     }
 
     private static class StyleableProperties {

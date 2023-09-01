@@ -201,7 +201,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return encodeLocation (url);
+            return encodeLocation(url);
         }
 
         public String getFilename() {

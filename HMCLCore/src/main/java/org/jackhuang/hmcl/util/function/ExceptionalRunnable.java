@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.function;
 import java.util.concurrent.Callable;
 
 /**
- *
  * @author huangyuhui
  */
 public interface ExceptionalRunnable<E extends Exception> {

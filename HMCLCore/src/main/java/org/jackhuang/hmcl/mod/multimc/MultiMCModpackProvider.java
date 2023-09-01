@@ -39,24 +39,6 @@ import java.util.stream.Stream;
 public final class MultiMCModpackProvider implements ModpackProvider {
     public static final MultiMCModpackProvider INSTANCE = new MultiMCModpackProvider();
 
-    @Override
-    public String getName() {
-        return "MultiMC";
-    }
-
-    @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        return null;
-    }
-
-    @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
-        if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
-            throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
-
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
-    }
-
     private static boolean testPath(Path root) {
         return Files.exists(root.resolve("instance.cfg"));
     }
@@ -89,6 +71,24 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         }
 
         throw new IOException("Not a valid MultiMC modpack");
+    }
+
+    @Override
+    public String getName() {
+        return "MultiMC";
+    }
+
+    @Override
+    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version) {
+        return null;
+    }
+
+    @Override
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+        if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
+            throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
+
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
     }
 
     @Override

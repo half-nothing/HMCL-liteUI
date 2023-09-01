@@ -16,17 +16,15 @@ public final class Platform {
 
     public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
     public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
-
-    public static boolean isCompatibleWithX86Java() {
-        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == OSX_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
-    }
-
     private final OperatingSystem os;
     private final Architecture arch;
-
     private Platform(OperatingSystem os, Architecture arch) {
         this.os = os;
         this.arch = arch;
+    }
+
+    public static boolean isCompatibleWithX86Java() {
+        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == OSX_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
     }
 
     public static Platform getPlatform() {

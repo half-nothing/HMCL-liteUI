@@ -41,7 +41,7 @@ public interface DownloadProvider {
 
     /**
      * Inject into original URL provided by Mojang and Forge.
-     *
+     * <p>
      * Since there are many provided URLs that are written in JSONs and are unmodifiable,
      * this method provides a way to change them.
      *
@@ -52,7 +52,7 @@ public interface DownloadProvider {
 
     /**
      * Inject into original URL provided by Mojang and Forge.
-     *
+     * <p>
      * Since there are many provided URLs that are written in JSONs and are unmodifiable,
      * this method provides a way to change them.
      *
@@ -78,6 +78,7 @@ public interface DownloadProvider {
 
     /**
      * The maximum download concurrency that this download provider supports.
+     *
      * @return the maximum download concurrency.
      */
     int getConcurrency();

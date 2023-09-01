@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.util.Immutable;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

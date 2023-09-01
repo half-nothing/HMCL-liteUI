@@ -25,6 +25,15 @@ import java.util.jar.JarFile;
 
 public class AuthlibInjectorArtifactInfo {
 
+    private int buildNumber;
+    private String version;
+    private Path location;
+    public AuthlibInjectorArtifactInfo(int buildNumber, String version, Path location) {
+        this.buildNumber = buildNumber;
+        this.version = version;
+        this.location = location;
+    }
+
     public static AuthlibInjectorArtifactInfo from(Path location) throws IOException {
         try (JarFile jarFile = new JarFile(location.toFile())) {
             Attributes attributes = jarFile.getManifest().getMainAttributes();
@@ -48,16 +57,6 @@ public class AuthlibInjectorArtifactInfo {
             }
             return new AuthlibInjectorArtifactInfo(buildNumber, version, location.toAbsolutePath());
         }
-    }
-
-    private int buildNumber;
-    private String version;
-    private Path location;
-
-    public AuthlibInjectorArtifactInfo(int buildNumber, String version, Path location) {
-        this.buildNumber = buildNumber;
-        this.version = version;
-        this.location = location;
     }
 
     public int getBuildNumber() {

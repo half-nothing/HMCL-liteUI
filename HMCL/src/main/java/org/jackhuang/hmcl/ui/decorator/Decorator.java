@@ -54,12 +54,11 @@ public class Decorator extends Control {
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
     private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
-    private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
-    private StackPane drawerWrapper;
     private final JFXSnackbar snackbar = new JFXSnackbar();
-
     private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
     private final ReadOnlyBooleanWrapper dragging = new ReadOnlyBooleanWrapper();
+    private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
+    private StackPane drawerWrapper;
 
     public Decorator(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -85,84 +84,84 @@ public class Decorator extends Control {
         return drawer.get();
     }
 
-    public ListProperty<Node> drawerProperty() {
-        return drawer;
-    }
-
     public void setDrawer(ObservableList<Node> drawer) {
         this.drawer.set(drawer);
+    }
+
+    public ListProperty<Node> drawerProperty() {
+        return drawer;
     }
 
     public ObservableList<Node> getContent() {
         return content.get();
     }
 
-    public ListProperty<Node> contentProperty() {
-        return content;
-    }
-
     public void setContent(ObservableList<Node> content) {
         this.content.set(content);
+    }
+
+    public ListProperty<Node> contentProperty() {
+        return content;
     }
 
     public DecoratorPage.State getState() {
         return state.get();
     }
 
-    public ObjectProperty<DecoratorPage.State> stateProperty() {
-        return state;
-    }
-
     public void setState(DecoratorPage.State state) {
         this.state.set(state);
+    }
+
+    public ObjectProperty<DecoratorPage.State> stateProperty() {
+        return state;
     }
 
     public String getDrawerTitle() {
         return drawerTitle.get();
     }
 
-    public StringProperty drawerTitleProperty() {
-        return drawerTitle;
-    }
-
     public void setDrawerTitle(String drawerTitle) {
         this.drawerTitle.set(drawerTitle);
+    }
+
+    public StringProperty drawerTitleProperty() {
+        return drawerTitle;
     }
 
     public Runnable getOnCloseButtonAction() {
         return onCloseButtonAction.get();
     }
 
-    public ObjectProperty<Runnable> onCloseButtonActionProperty() {
-        return onCloseButtonAction;
-    }
-
     public void setOnCloseButtonAction(Runnable onCloseButtonAction) {
         this.onCloseButtonAction.set(onCloseButtonAction);
+    }
+
+    public ObjectProperty<Runnable> onCloseButtonActionProperty() {
+        return onCloseButtonAction;
     }
 
     public ObservableList<Node> getContainer() {
         return container.get();
     }
 
-    public ListProperty<Node> containerProperty() {
-        return container;
-    }
-
     public void setContainer(ObservableList<Node> container) {
         this.container.set(container);
+    }
+
+    public ListProperty<Node> containerProperty() {
+        return container;
     }
 
     public Background getContentBackground() {
         return contentBackground.get();
     }
 
-    public ObjectProperty<Background> contentBackgroundProperty() {
-        return contentBackground;
-    }
-
     public void setContentBackground(Background contentBackground) {
         this.contentBackground.set(contentBackground);
+    }
+
+    public ObjectProperty<Background> contentBackgroundProperty() {
+        return contentBackground;
     }
 
     public BooleanProperty canRefreshProperty() {
@@ -185,36 +184,36 @@ public class Decorator extends Control {
         return allowMove.get();
     }
 
-    public ReadOnlyBooleanProperty allowMoveProperty() {
-        return allowMove.getReadOnlyProperty();
-    }
-
     void setAllowMove(boolean allowMove) {
         this.allowMove.set(allowMove);
+    }
+
+    public ReadOnlyBooleanProperty allowMoveProperty() {
+        return allowMove.getReadOnlyProperty();
     }
 
     public boolean isDragging() {
         return dragging.get();
     }
 
-    public ReadOnlyBooleanProperty draggingProperty() {
-        return dragging.getReadOnlyProperty();
-    }
-
     void setDragging(boolean dragging) {
         this.dragging.set(dragging);
+    }
+
+    public ReadOnlyBooleanProperty draggingProperty() {
+        return dragging.getReadOnlyProperty();
     }
 
     public boolean isTitleTransparent() {
         return titleTransparent.get();
     }
 
-    public BooleanProperty titleTransparentProperty() {
-        return titleTransparent;
-    }
-
     public void setTitleTransparent(boolean titleTransparent) {
         this.titleTransparent.set(titleTransparent);
+    }
+
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
     }
 
     public ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonActionProperty() {

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author huangyuhui
  */
 public final class VersionLibraryBuilder {
@@ -80,7 +79,7 @@ public final class VersionLibraryBuilder {
      * If the tweak class does not exist, the new tweak class will be appended to the end of argument list.
      * If the tweak class appears more than one time, the tweak classes will be removed excluding the first one.
      *
-     * @param target the tweak class to replace
+     * @param target      the tweak class to replace
      * @param replacement the new tweak class to be replaced with
      */
     public void replaceTweakClass(String target, String replacement) {
@@ -90,7 +89,7 @@ public final class VersionLibraryBuilder {
     /**
      * Replace existing tweak class and add the new tweak class to the end of argument list.
      *
-     * @param target the tweak class to replace
+     * @param target      the tweak class to replace
      * @param replacement the new tweak class to be replaced with
      */
     public void addTweakClass(String target, String replacement) {
@@ -102,9 +101,9 @@ public final class VersionLibraryBuilder {
      * If the tweak class does not exist, the new tweak class will be appended to the end of argument list.
      * If the tweak class appears more than one time, the tweak classes will be removed excluding the first one.
      *
-     * @param target the tweak class to replace
+     * @param target      the tweak class to replace
      * @param replacement the new tweak class to be replaced with, if null, remove the tweak class only
-     * @param inPlace if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
+     * @param inPlace     if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
      */
     public void replaceTweakClass(String target, String replacement, boolean inPlace) {
         replaceTweakClass(target, replacement, inPlace, false);
@@ -115,10 +114,10 @@ public final class VersionLibraryBuilder {
      * If the tweak class does not exist, the new tweak class will be added to argument list.
      * If the tweak class appears more than one time, the tweak classes will be removed excluding the first one.
      *
-     * @param target the tweak class to replace
+     * @param target      the tweak class to replace
      * @param replacement the new tweak class to be replaced with, if null, remove the tweak class only
-     * @param inPlace if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
-     * @param reserve if true, add the tweak class to the start of the argument list.
+     * @param inPlace     if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
+     * @param reserve     if true, add the tweak class to the start of the argument list.
      */
     public void replaceTweakClass(String target, String replacement, boolean inPlace, boolean reserve) {
         if (replacement == null && inPlace)

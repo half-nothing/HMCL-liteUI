@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util;
 import java.util.function.Predicate;
 
 /**
- *
  * @author huangyuhui
  */
 public final class ReflectionHelper {

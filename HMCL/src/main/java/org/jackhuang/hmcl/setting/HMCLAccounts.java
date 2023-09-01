@@ -44,12 +44,12 @@ public final class HMCLAccounts {
         return account.get();
     }
 
-    public static ObjectProperty<HMCLAccount> accountProperty() {
-        return account;
-    }
-
     public static void setAccount(HMCLAccount account) {
         HMCLAccounts.account.set(account);
+    }
+
+    public static ObjectProperty<HMCLAccount> accountProperty() {
+        return account;
     }
 
     public static Task<Void> login() {

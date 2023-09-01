@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author huangyuhui
  */
 public final class AssetIndex {

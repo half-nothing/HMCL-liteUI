@@ -28,7 +28,10 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.zip.ZipError;
@@ -71,7 +74,7 @@ public final class CompressingUtils {
 
             cd.reset();
             byte[] ba = entry.getRawName();
-            int clen = (int)(ba.length * cd.maxCharsPerByte());
+            int clen = (int) (ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
                 ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
@@ -121,49 +124,6 @@ public final class CompressingUtils {
 
     public static ZipFile openZipFile(Path zipFile, Charset charset) throws IOException {
         return new ZipFile(Files.newByteChannel(zipFile), charset.name());
-    }
-
-    public static final class Builder {
-        private boolean autoDetectEncoding = false;
-        private Collection<Charset> charsetCandidates;
-        private Charset encoding = StandardCharsets.UTF_8;
-        private boolean useTempFile = false;
-        private final boolean create;
-        private final Path zip;
-
-        public Builder(Path zip, boolean create) {
-            this.zip = zip;
-            this.create = create;
-        }
-
-        public Builder setAutoDetectEncoding(boolean autoDetectEncoding) {
-            this.autoDetectEncoding = autoDetectEncoding;
-            return this;
-        }
-
-        public Builder setCharsetCandidates(Collection<Charset> charsetCandidates) {
-            this.charsetCandidates = charsetCandidates;
-            return this;
-        }
-
-        public Builder setEncoding(Charset encoding) {
-            this.encoding = encoding;
-            return this;
-        }
-
-        public Builder setUseTempFile(boolean useTempFile) {
-            this.useTempFile = useTempFile;
-            return this;
-        }
-
-        public FileSystem build() throws IOException {
-            if (autoDetectEncoding) {
-                if (!testEncoding(zip, encoding)) {
-                    encoding = findSuitableEncoding(zip, charsetCandidates);
-                }
-            }
-            return createZipFileSystem(zip, create, useTempFile, encoding);
-        }
     }
 
     public static Builder readonly(Path zipFile) {
@@ -217,9 +177,9 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
         try (ZipFile s = new ZipFile(zipFile)) {
@@ -231,9 +191,9 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
     public static String readTextZipEntry(ZipFile zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
@@ -243,9 +203,9 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipFile s = openZipFile(zipFile, encoding)) {
@@ -280,6 +240,49 @@ public final class CompressingUtils {
             return Optional.of(readTextZipEntry(file, name, encoding));
         } catch (IOException | NullPointerException e) {
             return Optional.empty();
+        }
+    }
+
+    public static final class Builder {
+        private final boolean create;
+        private final Path zip;
+        private boolean autoDetectEncoding = false;
+        private Collection<Charset> charsetCandidates;
+        private Charset encoding = StandardCharsets.UTF_8;
+        private boolean useTempFile = false;
+
+        public Builder(Path zip, boolean create) {
+            this.zip = zip;
+            this.create = create;
+        }
+
+        public Builder setAutoDetectEncoding(boolean autoDetectEncoding) {
+            this.autoDetectEncoding = autoDetectEncoding;
+            return this;
+        }
+
+        public Builder setCharsetCandidates(Collection<Charset> charsetCandidates) {
+            this.charsetCandidates = charsetCandidates;
+            return this;
+        }
+
+        public Builder setEncoding(Charset encoding) {
+            this.encoding = encoding;
+            return this;
+        }
+
+        public Builder setUseTempFile(boolean useTempFile) {
+            this.useTempFile = useTempFile;
+            return this;
+        }
+
+        public FileSystem build() throws IOException {
+            if (autoDetectEncoding) {
+                if (!testEncoding(zip, encoding)) {
+                    encoding = findSuitableEncoding(zip, charsetCandidates);
+                }
+            }
+            return createZipFileSystem(zip, create, useTempFile, encoding);
         }
     }
 }

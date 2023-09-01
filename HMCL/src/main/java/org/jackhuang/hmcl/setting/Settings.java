@@ -32,20 +32,6 @@ public final class Settings {
 
     private static Settings instance;
 
-    public static Settings instance() {
-        if (instance == null) {
-            throw new IllegalStateException("Settings hasn't been initialized");
-        }
-        return instance;
-    }
-
-    /**
-     * Should be called from {@link ConfigHolder#init()}.
-     */
-    static void init() {
-        instance = new Settings();
-    }
-
     private Settings() {
         config().localizationProperty().addListener(unused -> updateSystemLocale());
         updateSystemLocale();
@@ -67,8 +53,26 @@ public final class Settings {
         }, config().commonDirectoryProperty(), config().commonDirTypeProperty()));
     }
 
+    public static Settings instance() {
+        if (instance == null) {
+            throw new IllegalStateException("Settings hasn't been initialized");
+        }
+        return instance;
+    }
+
+    /**
+     * Should be called from {@link ConfigHolder#init()}.
+     */
+    static void init() {
+        instance = new Settings();
+    }
+
     public static String getDefaultCommonDirectory() {
         return Metadata.MINECRAFT_DIRECTORY.toString();
+    }
+
+    private static void updateSystemLocale() {
+        Locale.setDefault(config().getLocalization().getLocale());
     }
 
     public String getCommonDirectory() {
@@ -80,9 +84,5 @@ public final class Settings {
             default:
                 return null;
         }
-    }
-
-    private static void updateSystemLocale() {
-        Locale.setDefault(config().getLocalization().getLocale());
     }
 }

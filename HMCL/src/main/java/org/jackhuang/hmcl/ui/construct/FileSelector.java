@@ -38,43 +38,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FileSelector extends HBox {
     private final StringProperty value = new SimpleStringProperty();
+    private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
     private String chooserTitle = i18n("selector.choose_file");
     private boolean directory = false;
-    private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
-
-    public String getValue() {
-        return value.get();
-    }
-
-    public StringProperty valueProperty() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value.set(value);
-    }
-
-    public String getChooserTitle() {
-        return chooserTitle;
-    }
-
-    public FileSelector setChooserTitle(String chooserTitle) {
-        this.chooserTitle = chooserTitle;
-        return this;
-    }
-
-    public boolean isDirectory() {
-        return directory;
-    }
-
-    public FileSelector setDirectory(boolean directory) {
-        this.directory = directory;
-        return this;
-    }
-
-    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
-        return extensionFilters;
-    }
 
     public FileSelector() {
         JFXTextField customField = new JFXTextField();
@@ -108,5 +74,39 @@ public class FileSelector extends HBox {
         setAlignment(Pos.CENTER_LEFT);
         setSpacing(3);
         getChildren().addAll(customField, selectButton);
+    }
+
+    public String getValue() {
+        return value.get();
+    }
+
+    public void setValue(String value) {
+        this.value.set(value);
+    }
+
+    public StringProperty valueProperty() {
+        return value;
+    }
+
+    public String getChooserTitle() {
+        return chooserTitle;
+    }
+
+    public FileSelector setChooserTitle(String chooserTitle) {
+        this.chooserTitle = chooserTitle;
+        return this;
+    }
+
+    public boolean isDirectory() {
+        return directory;
+    }
+
+    public FileSelector setDirectory(boolean directory) {
+        this.directory = directory;
+        return this;
+    }
+
+    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
+        return extensionFilters;
     }
 }

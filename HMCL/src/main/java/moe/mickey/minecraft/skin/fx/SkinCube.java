@@ -6,6 +6,54 @@ import javafx.scene.shape.TriangleMesh;
 
 public class SkinCube extends MeshView {
 
+    private double width, height, depth;
+    private boolean isSlim;
+    private Mesh model;
+    public SkinCube(float width, float height, float depth, float scaleX, float scaleY, float startX, float startY, float enlarge, boolean isSlim) {
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+        this.isSlim = isSlim;
+        setMesh(model = new Model(width + enlarge, height + enlarge, depth + enlarge, scaleX, scaleY, startX, startY, isSlim));
+    }
+
+    public double getWidth() {
+        return width;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public double getDepth() {
+        return depth;
+    }
+
+    public void setDepth(double depth) {
+        this.depth = depth;
+    }
+
+    public boolean isSlim() {
+        return isSlim;
+    }
+
+    public Mesh getModel() {
+        return model;
+    }
+
+    public void setModel(Mesh model) {
+        this.model = model;
+        setMesh(model);
+    }
+
     public static class Model extends TriangleMesh {
 
         public Model(float width, float height, float depth, float scaleX, float scaleY, float startX, float startY, boolean isSlim) {
@@ -31,7 +79,7 @@ public class SkinCube extends MeshView {
         }
 
         public static float[] createTexCoords(float width, float height, float depth, float scaleX, float scaleY,
-                float startX, float startY, boolean isSlim) {
+                                              float startX, float startY, boolean isSlim) {
             float x = (width + depth) * 2, y = height + depth, half_width = width / x * scaleX, half_depth = depth / x * scaleX,
                     top_x = depth / x * scaleX + startX, top_y = startY, arm4 = isSlim ? half_depth : half_width,
                     bottom_x = startX, middle_y = depth / y * scaleY + top_y, bottom_y = scaleY + top_y;
@@ -94,55 +142,6 @@ public class SkinCube extends MeshView {
             return result;
         }
 
-    }
-
-    private double width, height, depth;
-    private boolean isSlim;
-    private Mesh model;
-
-    public SkinCube(float width, float height, float depth, float scaleX, float scaleY, float startX, float startY, float enlarge, boolean isSlim) {
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
-        this.isSlim = isSlim;
-        setMesh(model = new Model(width + enlarge, height + enlarge, depth + enlarge, scaleX, scaleY, startX, startY, isSlim));
-    }
-
-    public void setWidth(double width) {
-        this.width = width;
-    }
-
-    public double getWidth() {
-        return width;
-    }
-
-    public void setHeight(double height) {
-        this.height = height;
-    }
-
-    public double getHeight() {
-        return height;
-    }
-
-    public void setDepth(double depth) {
-        this.depth = depth;
-    }
-
-    public double getDepth() {
-        return depth;
-    }
-
-    public boolean isSlim() {
-        return isSlim;
-    }
-
-    public Mesh getModel() {
-        return model;
-    }
-
-    public void setModel(Mesh model) {
-        this.model = model;
-        setMesh(model);
     }
 
 }

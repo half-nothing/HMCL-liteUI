@@ -159,12 +159,12 @@ public class PromptDialogPane extends DialogPane {
                 return question.get();
             }
 
-            public StringProperty questionProperty() {
-                return question;
-            }
-
             public void setQuestion(String question) {
                 this.question.set(question);
+            }
+
+            public StringProperty questionProperty() {
+                return question;
             }
         }
 

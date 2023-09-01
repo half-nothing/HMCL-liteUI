@@ -99,6 +99,17 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
             throw new JsonParseException("ServerModpackManifest.files cannot be null");
     }
 
+    public Modpack toModpack(Charset encoding) throws IOException {
+        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
+                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
+        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
+            }
+        };
+    }
+
     public static final class Addon {
         private final String id;
         private final String version;
@@ -119,17 +130,6 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         public String getVersion() {
             return version;
         }
-    }
-
-    public Modpack toModpack(Charset encoding) throws IOException {
-        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
-                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
-            @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
-                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
-            }
-        };
     }
 
 }

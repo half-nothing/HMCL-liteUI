@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download;
 
 /**
- *
  * @author huangyuhui
  */
 public abstract class AbstractDependencyManager implements DependencyManager {

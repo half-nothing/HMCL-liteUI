@@ -16,10 +16,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class CrashReport {
 
+    private static final Long BYTES_IN_MB = 1024L * 1024;
     private final Thread thread;
     private final Throwable throwable;
     private final String stackTrace;
-
     private boolean nonFatal;
 
     public CrashReport(Thread thread, Throwable throwable) {
@@ -27,6 +27,29 @@ public class CrashReport {
         this.throwable = throwable;
         stackTrace = StringUtils.getStackTrace(throwable);
         nonFatal = false;
+    }
+
+    private static long getMemoryAvailable() {
+        Long total = Runtime.getRuntime().totalMemory();
+        Long availMem = Runtime.getRuntime().freeMemory();
+        return (total - availMem) / BYTES_IN_MB;
+    }
+
+    private static long getDiskAvailable() {
+        long total = 0, free = 0;
+        for (File f : File.listRoots()) {
+            total += f.getTotalSpace();
+            free += f.getUsableSpace();
+        }
+        return (total - free) / BYTES_IN_MB;
+    }
+
+    private static long getDiskTotal() {
+        long total = 0;
+        for (File f : File.listRoots()) {
+            total += f.getTotalSpace();
+        }
+        return total / BYTES_IN_MB;
     }
 
     public CrashReport setNonFatal() {
@@ -74,30 +97,5 @@ public class CrashReport {
                 "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +
                 "  JVM Total Memory: " + Runtime.getRuntime().totalMemory() + "\n" +
                 "  JVM Free Memory: " + Runtime.getRuntime().freeMemory() + "\n";
-    }
-
-    private static final Long BYTES_IN_MB = 1024L * 1024;
-
-    private static long getMemoryAvailable() {
-        Long total = Runtime.getRuntime().totalMemory();
-        Long availMem = Runtime.getRuntime().freeMemory();
-        return (total - availMem) / BYTES_IN_MB;
-    }
-
-    private static long getDiskAvailable() {
-        long total = 0, free = 0;
-        for (File f : File.listRoots()) {
-            total += f.getTotalSpace();
-            free += f.getUsableSpace();
-        }
-        return (total - free) / BYTES_IN_MB;
-    }
-
-    private static long getDiskTotal() {
-        long total = 0;
-        for (File f : File.listRoots()) {
-            total += f.getTotalSpace();
-        }
-        return total / BYTES_IN_MB;
     }
 }

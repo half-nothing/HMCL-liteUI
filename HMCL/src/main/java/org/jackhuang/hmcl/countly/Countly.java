@@ -29,25 +29,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class Countly {
 
+    private static final String APP_KEY = "";
     private String deviceId;
     private String endpoint;
     private String serverURL;
-
-    public void sendMetric(String metrics) throws IOException {
-        HttpRequest.GET(serverURL + endpoint,
-                pair("begin_session", "1"),
-                pair("session_id", "1"),
-                pair("metrics", metrics),
-                pair("device_id", deviceId),
-                pair("timestamp", Long.toString(System.currentTimeMillis())),
-                pair("tz", Integer.toString(TimeZone.getDefault().getOffset(new Date().getTime()) / 60000)),
-                pair("hour", Integer.toString(currentHour())),
-                pair("dow", Integer.toString(currentDayOfWeek())),
-                pair("app_key", APP_KEY),
-                pair("sdk_name", "java-native"),
-                pair("sdk_version", "20.11.1"))
-                .getString();
-    }
 
     private static int getTimezoneOffset() {
         return TimeZone.getDefault().getOffset(new Date().getTime()) / 60000;
@@ -60,6 +45,22 @@ public class Countly {
 
     private static int currentHour() {
         return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+    }
+
+    public void sendMetric(String metrics) throws IOException {
+        HttpRequest.GET(serverURL + endpoint,
+                        pair("begin_session", "1"),
+                        pair("session_id", "1"),
+                        pair("metrics", metrics),
+                        pair("device_id", deviceId),
+                        pair("timestamp", Long.toString(System.currentTimeMillis())),
+                        pair("tz", Integer.toString(TimeZone.getDefault().getOffset(new Date().getTime()) / 60000)),
+                        pair("hour", Integer.toString(currentHour())),
+                        pair("dow", Integer.toString(currentDayOfWeek())),
+                        pair("app_key", APP_KEY),
+                        pair("sdk_name", "java-native"),
+                        pair("sdk_version", "20.11.1"))
+                .getString();
     }
 
     private int currentDayOfWeek() {
@@ -82,6 +83,4 @@ public class Countly {
         }
         return 0;
     }
-
-    private static final String APP_KEY = "";
 }

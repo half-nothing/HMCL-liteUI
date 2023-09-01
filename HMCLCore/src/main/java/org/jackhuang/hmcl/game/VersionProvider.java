@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.game;
 /**
  * Supports version accessing.
  *
- * @see Version#resolve
  * @author huangyuhui
+ * @see Version#resolve
  */
 public interface VersionProvider {
 

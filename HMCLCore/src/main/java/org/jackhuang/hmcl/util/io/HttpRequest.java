@@ -48,14 +48,41 @@ public abstract class HttpRequest {
     protected final String url;
     protected final String method;
     protected final Map<String, String> headers = new HashMap<>();
-    protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
     protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
+    protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
     protected int retryTimes = 1;
     protected boolean ignoreHttpCode;
 
     private HttpRequest(String url, String method) {
         this.url = url;
         this.method = method;
+    }
+
+    public static HttpGetRequest GET(String url) {
+        return new HttpGetRequest(url);
+    }
+
+    @SafeVarargs
+    public static HttpGetRequest GET(String url, Pair<String, String>... query) {
+        return GET(NetworkUtils.withQuery(url, mapOf(query)));
+    }
+
+    public static HttpPostRequest POST(String url) throws MalformedURLException {
+        return new HttpPostRequest(url);
+    }
+
+    private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
+        SocketTimeoutException exception = null;
+        for (int i = 0; i < retryTimes; i++) {
+            try {
+                return supplier.get();
+            } catch (SocketTimeoutException e) {
+                exception = e;
+            }
+        }
+        if (exception != null)
+            throw exception;
+        throw new IOException("retry 0");
     }
 
     public HttpRequest accept(String contentType) {
@@ -133,6 +160,12 @@ public abstract class HttpRequest {
         return con;
     }
 
+    public interface Authorization {
+        String getTokenType();
+
+        String getAccessToken();
+    }
+
     public static class HttpGetRequest extends HttpRequest {
         public HttpGetRequest(String url) {
             super(url, "GET");
@@ -202,38 +235,5 @@ public abstract class HttpRequest {
                 return NetworkUtils.readData(con);
             }, retryTimes);
         }
-    }
-
-    public static HttpGetRequest GET(String url) {
-        return new HttpGetRequest(url);
-    }
-
-    @SafeVarargs
-    public static HttpGetRequest GET(String url, Pair<String, String>... query) {
-        return GET(NetworkUtils.withQuery(url, mapOf(query)));
-    }
-
-    public static HttpPostRequest POST(String url) throws MalformedURLException {
-        return new HttpPostRequest(url);
-    }
-
-    private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
-        SocketTimeoutException exception = null;
-        for (int i = 0; i < retryTimes; i++) {
-            try {
-                return supplier.get();
-            } catch (SocketTimeoutException e) {
-                exception = e;
-            }
-        }
-        if (exception != null)
-            throw exception;
-        throw new IOException("retry 0");
-    }
-
-    public interface Authorization {
-        String getTokenType();
-
-        String getAccessToken();
     }
 }

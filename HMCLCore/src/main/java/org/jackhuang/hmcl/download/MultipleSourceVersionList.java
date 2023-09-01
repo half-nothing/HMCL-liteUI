@@ -52,15 +52,15 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
         versions.clear(gameVersion);
         return CompletableFuture.anyOf(backends.stream()
                 .map(versionList -> versionList.refreshAsync(gameVersion)
-                .thenRunAsync(() -> {
-                    lock.writeLock().lock();
+                        .thenRunAsync(() -> {
+                            lock.writeLock().lock();
 
-                    try {
-                        versions.putAll(gameVersion, versionList.getVersions(gameVersion));
-                    } finally {
-                        lock.writeLock().unlock();
-                    }
-                }))
+                            try {
+                                versions.putAll(gameVersion, versionList.getVersions(gameVersion));
+                            } finally {
+                                lock.writeLock().unlock();
+                            }
+                        }))
                 .toArray(CompletableFuture[]::new));
     }
 }

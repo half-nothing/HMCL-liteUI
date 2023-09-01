@@ -44,12 +44,66 @@ import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author huangyuhui
  */
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable {
 
+    private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
+    private final StringProperty javaProperty = new SimpleStringProperty(this, "java", "");
+    private final StringProperty defaultJavaPathProperty = new SimpleStringProperty(this, "defaultJavaPath", "");
+    /**
+     * 0 - .minecraft/versions/&lt;version&gt;/natives/<br/>
+     */
+    private final ObjectProperty<NativesDirectoryType> nativesDirTypeProperty = new SimpleObjectProperty<>(this, "nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+    private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty", "");
+    private final StringProperty javaDirProperty = new SimpleStringProperty(this, "javaDir", "");
+    private final StringProperty wrapperProperty = new SimpleStringProperty(this, "wrapper", "");
+
+    // java
+    private final StringProperty permSizeProperty = new SimpleStringProperty(this, "permSize", "");
+    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
+    /**
+     * The minimum memory that JVM can allocate for heap.
+     */
+    private final ObjectProperty<Integer> minMemoryProperty = new SimpleObjectProperty<>(this, "minMemory", null);
+    private final BooleanProperty autoMemory = new SimpleBooleanProperty(this, "autoMemory", true);
+    private final StringProperty preLaunchCommandProperty = new SimpleStringProperty(this, "precalledCommand", "");
+    private final StringProperty postExitCommand = new SimpleStringProperty(this, "postExitCommand", "");
+    private final StringProperty javaArgsProperty = new SimpleStringProperty(this, "javaArgs", "");
+    private final StringProperty minecraftArgsProperty = new SimpleStringProperty(this, "minecraftArgs", "");
+    private final StringProperty environmentVariablesProperty = new SimpleStringProperty(this, "environmentVariables", "");
+    private final BooleanProperty noJVMArgsProperty = new SimpleBooleanProperty(this, "noJVMArgs", false);
+    private final BooleanProperty notCheckJVMProperty = new SimpleBooleanProperty(this, "notCheckJVM", false);
+    private final BooleanProperty notCheckGameProperty = new SimpleBooleanProperty(this, "notCheckGame", false);
+    private final BooleanProperty notPatchNativesProperty = new SimpleBooleanProperty(this, "notPatchNatives", false);
+    private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
+    private final StringProperty serverIpProperty = new SimpleStringProperty(this, "serverIp", "");
+    private final BooleanProperty fullscreenProperty = new SimpleBooleanProperty(this, "fullscreen", false);
+
+    // Path to lwjgl natives directory
+    private final IntegerProperty widthProperty = new SimpleIntegerProperty(this, "width", 854);
+    private final IntegerProperty heightProperty = new SimpleIntegerProperty(this, "height", 480);
+    /**
+     * 0 - .minecraft<br/>
+     * 1 - .minecraft/versions/&lt;version&gt;/<br/>
+     */
+    private final ObjectProperty<GameDirectoryType> gameDirTypeProperty = new SimpleObjectProperty<>(this, "gameDirType", GameDirectoryType.ROOT_FOLDER);
+    /**
+     * Your custom gameDir
+     */
+    private final StringProperty gameDirProperty = new SimpleStringProperty(this, "gameDir", "");
+    private final ObjectProperty<ProcessPriority> processPriorityProperty = new SimpleObjectProperty<>(this, "processPriority", ProcessPriority.NORMAL);
+    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
+    private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
+    private final BooleanProperty useNativeOpenAL = new SimpleBooleanProperty(this, "nativeOpenAL", false);
+    private final ObjectProperty<VersionIconType> versionIcon = new SimpleObjectProperty<>(this, "versionIcon", VersionIconType.DEFAULT);
+    /**
+     * 0 - Close the launcher when the game starts.<br/>
+     * 1 - Hide the launcher when the game starts.<br/>
+     * 2 - Keep the launcher open.<br/>
+     */
+    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
     private boolean global = false;
 
     public boolean isGlobal() {
@@ -59,8 +113,6 @@ public final class VersionSetting implements Cloneable {
     public void setGlobal(boolean global) {
         this.global = global;
     }
-
-    private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
 
     public BooleanProperty usesGlobalProperty() {
         return usesGlobalProperty;
@@ -81,10 +133,6 @@ public final class VersionSetting implements Cloneable {
     public void setUsesGlobal(boolean usesGlobal) {
         usesGlobalProperty.set(usesGlobal);
     }
-
-    // java
-
-    private final StringProperty javaProperty = new SimpleStringProperty(this, "java", "");
 
     public StringProperty javaProperty() {
         return javaProperty;
@@ -119,8 +167,6 @@ public final class VersionSetting implements Cloneable {
         setDefaultJavaPath(null);
     }
 
-    private final StringProperty defaultJavaPathProperty = new SimpleStringProperty(this, "defaultJavaPath", "");
-
     /**
      * Path to Java executable, or null if user customizes java directory.
      * It's used to determine which JRE to use when multiple JREs match the selected Java version.
@@ -129,18 +175,13 @@ public final class VersionSetting implements Cloneable {
         return defaultJavaPathProperty.get();
     }
 
-    public StringProperty defaultJavaPathPropertyProperty() {
-        return defaultJavaPathProperty;
-    }
-
     public void setDefaultJavaPath(String defaultJavaPath) {
         defaultJavaPathProperty.set(defaultJavaPath);
     }
 
-    /**
-     * 0 - .minecraft/versions/&lt;version&gt;/natives/<br/>
-     */
-    private final ObjectProperty<NativesDirectoryType> nativesDirTypeProperty = new SimpleObjectProperty<>(this, "nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+    public StringProperty defaultJavaPathPropertyProperty() {
+        return defaultJavaPathProperty;
+    }
 
     public ObjectProperty<NativesDirectoryType> nativesDirTypeProperty() {
         return nativesDirTypeProperty;
@@ -154,10 +195,6 @@ public final class VersionSetting implements Cloneable {
         nativesDirTypeProperty.set(nativesDirType);
     }
 
-    // Path to lwjgl natives directory
-
-    private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty", "");
-
     public StringProperty nativesDirProperty() {
         return nativesDirProperty;
     }
@@ -169,8 +206,6 @@ public final class VersionSetting implements Cloneable {
     public void setNativesDir(String nativesDir) {
         nativesDirProperty.set(nativesDir);
     }
-
-    private final StringProperty javaDirProperty = new SimpleStringProperty(this, "javaDir", "");
 
     public StringProperty javaDirProperty() {
         return javaDirProperty;
@@ -187,11 +222,11 @@ public final class VersionSetting implements Cloneable {
         javaDirProperty.set(javaDir);
     }
 
-    private final StringProperty wrapperProperty = new SimpleStringProperty(this, "wrapper", "");
-
     public StringProperty wrapperProperty() {
         return wrapperProperty;
     }
+
+    // options
 
     /**
      * The command to launch java, i.e. optirun.
@@ -203,8 +238,6 @@ public final class VersionSetting implements Cloneable {
     public void setWrapper(String wrapper) {
         wrapperProperty.set(wrapper);
     }
-
-    private final StringProperty permSizeProperty = new SimpleStringProperty(this, "permSize", "");
 
     public StringProperty permSizeProperty() {
         return permSizeProperty;
@@ -221,8 +254,6 @@ public final class VersionSetting implements Cloneable {
         permSizeProperty.set(permSize);
     }
 
-    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
-
     public IntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
     }
@@ -238,11 +269,6 @@ public final class VersionSetting implements Cloneable {
         maxMemoryProperty.set(maxMemory);
     }
 
-    /**
-     * The minimum memory that JVM can allocate for heap.
-     */
-    private final ObjectProperty<Integer> minMemoryProperty = new SimpleObjectProperty<>(this, "minMemory", null);
-
     public ObjectProperty<Integer> minMemoryProperty() {
         return minMemoryProperty;
     }
@@ -255,21 +281,17 @@ public final class VersionSetting implements Cloneable {
         minMemoryProperty.set(minMemory);
     }
 
-    private final BooleanProperty autoMemory = new SimpleBooleanProperty(this, "autoMemory", true);
-
     public boolean isAutoMemory() {
         return autoMemory.get();
-    }
-
-    public BooleanProperty autoMemoryProperty() {
-        return autoMemory;
     }
 
     public void setAutoMemory(boolean autoMemory) {
         this.autoMemory.set(autoMemory);
     }
 
-    private final StringProperty preLaunchCommandProperty = new SimpleStringProperty(this, "precalledCommand", "");
+    public BooleanProperty autoMemoryProperty() {
+        return autoMemory;
+    }
 
     public StringProperty preLaunchCommandProperty() {
         return preLaunchCommandProperty;
@@ -287,8 +309,6 @@ public final class VersionSetting implements Cloneable {
         preLaunchCommandProperty.set(preLaunchCommand);
     }
 
-    private final StringProperty postExitCommand = new SimpleStringProperty(this, "postExitCommand", "");
-
     public StringProperty postExitCommandProperty() {
         return postExitCommand;
     }
@@ -305,10 +325,6 @@ public final class VersionSetting implements Cloneable {
         this.postExitCommand.set(postExitCommand);
     }
 
-    // options
-
-    private final StringProperty javaArgsProperty = new SimpleStringProperty(this, "javaArgs", "");
-
     public StringProperty javaArgsProperty() {
         return javaArgsProperty;
     }
@@ -323,8 +339,6 @@ public final class VersionSetting implements Cloneable {
     public void setJavaArgs(String javaArgs) {
         javaArgsProperty.set(javaArgs);
     }
-
-    private final StringProperty minecraftArgsProperty = new SimpleStringProperty(this, "minecraftArgs", "");
 
     public StringProperty minecraftArgsProperty() {
         return minecraftArgsProperty;
@@ -341,8 +355,6 @@ public final class VersionSetting implements Cloneable {
         minecraftArgsProperty.set(minecraftArgs);
     }
 
-    private final StringProperty environmentVariablesProperty = new SimpleStringProperty(this, "environmentVariables", "");
-
     public StringProperty environmentVariablesProperty() {
         return environmentVariablesProperty;
     }
@@ -354,8 +366,6 @@ public final class VersionSetting implements Cloneable {
     public void setEnvironmentVariables(String env) {
         environmentVariablesProperty.set(env);
     }
-
-    private final BooleanProperty noJVMArgsProperty = new SimpleBooleanProperty(this, "noJVMArgs", false);
 
     public BooleanProperty noJVMArgsProperty() {
         return noJVMArgsProperty;
@@ -372,7 +382,7 @@ public final class VersionSetting implements Cloneable {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
-    private final BooleanProperty notCheckJVMProperty = new SimpleBooleanProperty(this, "notCheckJVM", false);
+    // Minecraft settings.
 
     public BooleanProperty notCheckJVMProperty() {
         return notCheckJVMProperty;
@@ -389,8 +399,6 @@ public final class VersionSetting implements Cloneable {
         notCheckJVMProperty.set(notCheckJVM);
     }
 
-    private final BooleanProperty notCheckGameProperty = new SimpleBooleanProperty(this, "notCheckGame", false);
-
     public BooleanProperty notCheckGameProperty() {
         return notCheckGameProperty;
     }
@@ -406,8 +414,6 @@ public final class VersionSetting implements Cloneable {
         notCheckGameProperty.set(notCheckGame);
     }
 
-    private final BooleanProperty notPatchNativesProperty = new SimpleBooleanProperty(this, "notPatchNatives", false);
-
     public BooleanProperty notPatchNativesProperty() {
         return notPatchNativesProperty;
     }
@@ -419,8 +425,6 @@ public final class VersionSetting implements Cloneable {
     public void setNotPatchNatives(boolean notPatchNatives) {
         notPatchNativesProperty.set(notPatchNatives);
     }
-
-    private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
 
     public BooleanProperty showLogsProperty() {
         return showLogsProperty;
@@ -436,10 +440,6 @@ public final class VersionSetting implements Cloneable {
     public void setShowLogs(boolean showLogs) {
         showLogsProperty.set(showLogs);
     }
-
-    // Minecraft settings.
-
-    private final StringProperty serverIpProperty = new SimpleStringProperty(this, "serverIp", "");
 
     public StringProperty serverIpProperty() {
         return serverIpProperty;
@@ -458,9 +458,6 @@ public final class VersionSetting implements Cloneable {
         serverIpProperty.set(serverIp);
     }
 
-
-    private final BooleanProperty fullscreenProperty = new SimpleBooleanProperty(this, "fullscreen", false);
-
     public BooleanProperty fullscreenProperty() {
         return fullscreenProperty;
     }
@@ -475,8 +472,6 @@ public final class VersionSetting implements Cloneable {
     public void setFullscreen(boolean fullscreen) {
         fullscreenProperty.set(fullscreen);
     }
-
-    private final IntegerProperty widthProperty = new SimpleIntegerProperty(this, "width", 854);
 
     public IntegerProperty widthProperty() {
         return widthProperty;
@@ -497,8 +492,6 @@ public final class VersionSetting implements Cloneable {
         widthProperty.set(width);
     }
 
-    private final IntegerProperty heightProperty = new SimpleIntegerProperty(this, "height", 480);
-
     public IntegerProperty heightProperty() {
         return heightProperty;
     }
@@ -518,12 +511,6 @@ public final class VersionSetting implements Cloneable {
         heightProperty.set(height);
     }
 
-    /**
-     * 0 - .minecraft<br/>
-     * 1 - .minecraft/versions/&lt;version&gt;/<br/>
-     */
-    private final ObjectProperty<GameDirectoryType> gameDirTypeProperty = new SimpleObjectProperty<>(this, "gameDirType", GameDirectoryType.ROOT_FOLDER);
-
     public ObjectProperty<GameDirectoryType> gameDirTypeProperty() {
         return gameDirTypeProperty;
     }
@@ -535,11 +522,6 @@ public final class VersionSetting implements Cloneable {
     public void setGameDirType(GameDirectoryType gameDirType) {
         gameDirTypeProperty.set(gameDirType);
     }
-
-    /**
-     * Your custom gameDir
-     */
-    private final StringProperty gameDirProperty = new SimpleStringProperty(this, "gameDir", "");
 
     public StringProperty gameDirProperty() {
         return gameDirProperty;
@@ -553,8 +535,6 @@ public final class VersionSetting implements Cloneable {
         gameDirProperty.set(gameDir);
     }
 
-    private final ObjectProperty<ProcessPriority> processPriorityProperty = new SimpleObjectProperty<>(this, "processPriority", ProcessPriority.NORMAL);
-
     public ObjectProperty<ProcessPriority> processPriorityProperty() {
         return processPriorityProperty;
     }
@@ -567,56 +547,44 @@ public final class VersionSetting implements Cloneable {
         processPriorityProperty.set(processPriority);
     }
 
-    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
-
     public Renderer getRenderer() {
         return rendererProperty.get();
-    }
-
-    public ObjectProperty<Renderer> rendererProperty() {
-        return rendererProperty;
     }
 
     public void setRenderer(Renderer renderer) {
         this.rendererProperty.set(renderer);
     }
 
-    private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
+    public ObjectProperty<Renderer> rendererProperty() {
+        return rendererProperty;
+    }
 
     public boolean isUseNativeGLFW() {
         return useNativeGLFW.get();
-    }
-
-    public BooleanProperty useNativeGLFWProperty() {
-        return useNativeGLFW;
     }
 
     public void setUseNativeGLFW(boolean useNativeGLFW) {
         this.useNativeGLFW.set(useNativeGLFW);
     }
 
-    private final BooleanProperty useNativeOpenAL = new SimpleBooleanProperty(this, "nativeOpenAL", false);
+    public BooleanProperty useNativeGLFWProperty() {
+        return useNativeGLFW;
+    }
 
     public boolean isUseNativeOpenAL() {
         return useNativeOpenAL.get();
-    }
-
-    public BooleanProperty useNativeOpenALProperty() {
-        return useNativeOpenAL;
     }
 
     public void setUseNativeOpenAL(boolean useNativeOpenAL) {
         this.useNativeOpenAL.set(useNativeOpenAL);
     }
 
-    private final ObjectProperty<VersionIconType> versionIcon = new SimpleObjectProperty<>(this, "versionIcon", VersionIconType.DEFAULT);
+    public BooleanProperty useNativeOpenALProperty() {
+        return useNativeOpenAL;
+    }
 
     public VersionIconType getVersionIcon() {
         return versionIcon.get();
-    }
-
-    public ObjectProperty<VersionIconType> versionIconProperty() {
-        return versionIcon;
     }
 
     public void setVersionIcon(VersionIconType versionIcon) {
@@ -625,12 +593,9 @@ public final class VersionSetting implements Cloneable {
 
     // launcher settings
 
-    /**
-     * 0 - Close the launcher when the game starts.<br/>
-     * 1 - Hide the launcher when the game starts.<br/>
-     * 2 - Keep the launcher open.<br/>
-     */
-    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
+    public ObjectProperty<VersionIconType> versionIconProperty() {
+        return versionIcon;
+    }
 
     public ObjectProperty<LauncherVisibility> launcherVisibilityProperty() {
         return launcherVisibilityProperty;
@@ -768,6 +733,14 @@ public final class VersionSetting implements Cloneable {
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
+        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
+            if (index == null)
+                return defaultValue;
+
+            int idx = index.getAsInt();
+            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
+        }
+
         @Override
         public JsonElement serialize(VersionSetting src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) return JsonNull.INSTANCE;
@@ -811,14 +784,6 @@ public final class VersionSetting implements Cloneable {
                 obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
-        }
-
-        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
-            if (index == null)
-                return defaultValue;
-
-            int idx = index.getAsInt();
-            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
         }
 
         @Override

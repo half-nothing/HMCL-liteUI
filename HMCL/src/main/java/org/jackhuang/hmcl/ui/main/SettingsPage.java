@@ -84,13 +84,13 @@ public final class SettingsPage extends SettingsView {
                 lblUpdateSub.setText(i18n("update.checking"));
                 lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
-                lblUpdate.setText(i18n("update"));
+                lblUpdate.setText(i18n("cn/pigeon/update"));
                 lblUpdate.getStyleClass().setAll();
             } else {
                 lblUpdateSub.setText(i18n("update.latest"));
                 lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
-                lblUpdate.setText(i18n("update"));
+                lblUpdate.setText(i18n("cn/pigeon/update"));
                 lblUpdate.getStyleClass().setAll();
             }
         };

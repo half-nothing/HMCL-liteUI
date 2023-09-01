@@ -26,21 +26,20 @@ import java.net.Proxy;
 import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public class LaunchOptions implements Serializable {
 
-    private File gameDir;
-    private JavaVersion java;
-    private String versionName;
-    private String versionType;
-    private String profileName;
     private final List<String> gameArguments = new ArrayList<>();
     private final List<String> overrideJavaArguments = new ArrayList<>();
     private final List<String> javaArguments = new ArrayList<>();
     private final List<String> javaAgents = new ArrayList<>(0);
     private final Map<String, String> environmentVariables = new LinkedHashMap<>();
+    private File gameDir;
+    private JavaVersion java;
+    private String versionName;
+    private String versionType;
+    private String profileName;
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -289,11 +288,23 @@ public class LaunchOptions implements Serializable {
             return options.gameArguments;
         }
 
+        public Builder setGameArguments(List<String> gameArguments) {
+            options.gameArguments.clear();
+            options.gameArguments.addAll(gameArguments);
+            return this;
+        }
+
         /**
          * The highest priority JVM arguments (overrides the version setting)
          */
         public List<String> getOverrideJavaArguments() {
             return options.overrideJavaArguments;
+        }
+
+        public Builder setOverrideJavaArguments(List<String> overrideJavaArguments) {
+            options.overrideJavaArguments.clear();
+            options.overrideJavaArguments.addAll(overrideJavaArguments);
+            return this;
         }
 
         /**
@@ -303,8 +314,20 @@ public class LaunchOptions implements Serializable {
             return options.javaArguments;
         }
 
+        public Builder setJavaArguments(List<String> javaArguments) {
+            options.javaArguments.clear();
+            options.javaArguments.addAll(javaArguments);
+            return this;
+        }
+
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setJavaAgents(List<String> javaAgents) {
+            options.javaAgents.clear();
+            options.javaAgents.addAll(javaAgents);
+            return this;
         }
 
         public Builder setGameDir(File gameDir) {
@@ -329,30 +352,6 @@ public class LaunchOptions implements Serializable {
 
         public Builder setProfileName(String profileName) {
             options.profileName = profileName;
-            return this;
-        }
-
-        public Builder setGameArguments(List<String> gameArguments) {
-            options.gameArguments.clear();
-            options.gameArguments.addAll(gameArguments);
-            return this;
-        }
-
-        public Builder setOverrideJavaArguments(List<String> overrideJavaArguments) {
-            options.overrideJavaArguments.clear();
-            options.overrideJavaArguments.addAll(overrideJavaArguments);
-            return this;
-        }
-
-        public Builder setJavaArguments(List<String> javaArguments) {
-            options.javaArguments.clear();
-            options.javaArguments.addAll(javaArguments);
-            return this;
-        }
-
-        public Builder setJavaAgents(List<String> javaAgents) {
-            options.javaAgents.clear();
-            options.javaAgents.addAll(javaAgents);
             return this;
         }
 

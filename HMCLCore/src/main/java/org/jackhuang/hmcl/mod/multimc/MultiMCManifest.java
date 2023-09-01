@@ -40,19 +40,12 @@ public final class MultiMCManifest {
         this.components = components;
     }
 
-    public int getFormatVersion() {
-        return formatVersion;
-    }
-
-    public List<MultiMCManifestComponent> getComponents() {
-        return components;
-    }
-
     /**
      * Read MultiMC modpack manifest from zip file
+     *
      * @param zipFile the zip file
      * @return the MultiMC modpack manifest.
-     * @throws IOException if zip file is malformed
+     * @throws IOException                        if zip file is malformed
      * @throws com.google.gson.JsonParseException if manifest is malformed.
      */
     public static MultiMCManifest readMultiMCModpackManifest(ZipFile zipFile, String rootEntryName) throws IOException {
@@ -64,6 +57,14 @@ public final class MultiMCManifest {
             throw new IOException("mmc-pack.json malformed.");
 
         return manifest;
+    }
+
+    public int getFormatVersion() {
+        return formatVersion;
+    }
+
+    public List<MultiMCManifestComponent> getComponents() {
+        return components;
     }
 
     public static final class MultiMCManifestCachedRequires {

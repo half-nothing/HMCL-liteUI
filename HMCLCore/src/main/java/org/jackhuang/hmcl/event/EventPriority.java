@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 /**
- *
  * @author huangyuhui
  */
 public enum EventPriority {

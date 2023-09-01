@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
- *
  * @author huang
  */
 public class BMCLAPIDownloadProvider implements DownloadProvider {

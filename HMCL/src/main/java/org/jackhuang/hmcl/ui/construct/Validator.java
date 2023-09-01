@@ -19,17 +19,30 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.scene.control.TextInputControl;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
-
 public final class Validator extends ValidatorBase {
+
+    private final Predicate<String> validator;
+
+    /**
+     * @param validator return true if the input string is valid.
+     */
+    public Validator(Predicate<String> validator) {
+        this.validator = validator;
+    }
+
+    public Validator(String message, Predicate<String> validator) {
+        this(validator);
+
+        setMessage(message);
+    }
 
     public static Consumer<Predicate<String>> addTo(JFXTextField control) {
         return addTo(control, null);
@@ -46,21 +59,6 @@ public final class Validator extends ValidatorBase {
             control.textProperty().addListener(new WeakInvalidationListener(listener));
             control.getValidators().add(validator);
         };
-    }
-
-    private final Predicate<String> validator;
-
-    /**
-     * @param validator return true if the input string is valid.
-     */
-    public Validator(Predicate<String> validator) {
-        this.validator = validator;
-    }
-
-    public Validator(String message, Predicate<String> validator) {
-        this(validator);
-
-        setMessage(message);
     }
 
     @Override

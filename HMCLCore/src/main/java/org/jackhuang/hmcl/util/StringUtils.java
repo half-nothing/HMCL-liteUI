@@ -19,14 +19,16 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class StringUtils {
+
+    public static int MAX_SHORT_STRING_LENGTH = 77;
 
     private StringUtils() {
     }
@@ -296,8 +298,6 @@ public final class StringUtils {
         }
         return result.toString();
     }
-
-    public static int MAX_SHORT_STRING_LENGTH = 77;
 
     public static Optional<String> truncate(String str) {
         if (str.length() <= MAX_SHORT_STRING_LENGTH) {

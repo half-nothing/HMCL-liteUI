@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * Task to download Minecraft jar
+ *
  * @author huangyuhui
  */
 public final class GameDownloadTask extends Task<Void> {
@@ -68,5 +69,5 @@ public final class GameDownloadTask extends Task<Void> {
 
         dependencies.add(task);
     }
-    
+
 }

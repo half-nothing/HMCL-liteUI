@@ -24,7 +24,8 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class SystemUtils {
-    private SystemUtils() {}
+    private SystemUtils() {
+    }
 
     public static int callExternalProcess(String... command) throws IOException, InterruptedException {
         return callExternalProcess(Arrays.asList(command));

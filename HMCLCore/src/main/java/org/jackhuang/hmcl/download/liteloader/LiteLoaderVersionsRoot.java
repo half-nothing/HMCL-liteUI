@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

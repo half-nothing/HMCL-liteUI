@@ -26,33 +26,26 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
 public final class CurseManifest implements ModpackManifest {
 
+    public static final String MINECRAFT_MODPACK = "minecraftModpack";
     @SerializedName("manifestType")
     private final String manifestType;
-
     @SerializedName("manifestVersion")
     private final int manifestVersion;
-
     @SerializedName("name")
     private final String name;
-
     @SerializedName("version")
     private final String version;
-
     @SerializedName("author")
     private final String author;
-
     @SerializedName("overrides")
     private final String overrides;
-
     @SerializedName("minecraft")
     private final CurseManifestMinecraft minecraft;
-
     @SerializedName("files")
     private final List<CurseManifestFile> files;
 
@@ -111,6 +104,4 @@ public final class CurseManifest implements ModpackManifest {
     public ModpackProvider getProvider() {
         return CurseModpackProvider.INSTANCE;
     }
-
-    public static final String MINECRAFT_MODPACK = "minecraftModpack";
 }

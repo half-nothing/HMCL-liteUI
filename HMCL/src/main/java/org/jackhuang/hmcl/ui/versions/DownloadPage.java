@@ -67,6 +67,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -78,7 +79,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
-
     private List<RemoteMod> dependencies;
     private SimpleMultimap<String, RemoteMod.Version> versions;
 
@@ -104,9 +104,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
-                Task.supplyAsync(() -> {
-                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+                        Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
+                        Task.supplyAsync(() -> {
+                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -114,8 +114,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 //                                            .filter(file -> file.getGameVersions().contains(gameVersion.get())));
 //                                }
 //                            }
-                    return sortVersions(versions);
-                }))
+                            return sortVersions(versions);
+                        }))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         @SuppressWarnings("unchecked")
@@ -163,24 +163,24 @@ public class DownloadPage extends Control implements DecoratorPage {
         return loading.get();
     }
 
-    public BooleanProperty loadingProperty() {
-        return loading;
-    }
-
     public void setLoading(boolean loading) {
         this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 
     public boolean isFailed() {
         return failed.get();
     }
 
-    public BooleanProperty failedProperty() {
-        return failed;
-    }
-
     public void setFailed(boolean failed) {
         this.failed.set(failed);
+    }
+
+    public BooleanProperty failedProperty() {
+        return failed;
     }
 
     public void download(RemoteMod.Version file) {
@@ -221,6 +221,10 @@ public class DownloadPage extends Control implements DecoratorPage {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new ModDownloadPageSkin(this);
+    }
+
+    public interface DownloadCallback {
+        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
     }
 
     private static class ModDownloadPageSkin extends SkinBase<DownloadPage> {
@@ -408,11 +412,5 @@ public class DownloadPage extends Control implements DecoratorPage {
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
             this.setMinHeight(50);
         }
-    }
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
-
-    public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
     }
 }

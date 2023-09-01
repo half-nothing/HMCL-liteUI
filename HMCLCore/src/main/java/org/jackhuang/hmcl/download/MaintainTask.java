@@ -51,11 +51,6 @@ public class MaintainTask extends Task<Version> {
             throw new IllegalArgumentException("MaintainTask requires independent game version");
     }
 
-    @Override
-    public void execute() {
-        setResult(maintain(repository, version));
-    }
-
     public static Version maintain(GameRepository repository, Version version) {
         if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
@@ -343,5 +338,10 @@ public class MaintainTask extends Task<Version> {
         }
 
         return version.setLibraries(libraries);
+    }
+
+    @Override
+    public void execute() {
+        setResult(maintain(repository, version));
     }
 }

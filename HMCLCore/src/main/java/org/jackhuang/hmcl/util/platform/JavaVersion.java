@@ -45,12 +45,42 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class JavaVersion {
 
+    public static final int UNKNOWN = -1;
+    public static final int JAVA_6 = 6;
+    public static final int JAVA_7 = 7;
+    public static final int JAVA_8 = 8;
+    public static final int JAVA_9 = 9;
+    public static final int JAVA_16 = 16;
+    public static final int JAVA_17 = 17;
+    public static final JavaVersion CURRENT_JAVA;
+    private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
+    private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
+    private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
+    private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
+    private static final String JAVA_EXECUTABLE = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
+    private static final Map<Path, JavaVersion> fromExecutableCache = new ConcurrentHashMap<>();
+    private static final CountDownLatch LATCH = new CountDownLatch(1);
+    private static Collection<JavaVersion> JAVAS;
+
+    static {
+        Path currentExecutable = getExecutable(Paths.get(System.getProperty("java.home")).toAbsolutePath());
+        try {
+            currentExecutable = currentExecutable.toRealPath();
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to resolve current Java path: " + currentExecutable, e);
+        }
+        CURRENT_JAVA = new JavaVersion(
+                currentExecutable,
+                System.getProperty("java.version"),
+                Platform.CURRENT_PLATFORM
+        );
+    }
+
     private final Path binary;
     private final String longVersion;
     private final Platform platform;
     private final int version;
     private final VersionNumber versionNumber;
-
     public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
@@ -64,62 +94,6 @@ public final class JavaVersion {
             versionNumber = null;
         }
     }
-
-    public String toString() {
-        return "JavaVersion {" + binary + ", " + longVersion + "(" + version + ")" + ", " + platform + "}";
-    }
-
-    public Path getBinary() {
-        return binary;
-    }
-
-    public String getVersion() {
-        return longVersion;
-    }
-
-    public Platform getPlatform() {
-        return platform;
-    }
-
-    public Architecture getArchitecture() {
-        return platform.getArchitecture();
-    }
-
-    public Bits getBits() {
-        return platform.getBits();
-    }
-
-    public VersionNumber getVersionNumber() {
-        return versionNumber;
-    }
-
-    /**
-     * The major version of Java installation.
-     *
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_9
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_8
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_7
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#UNKNOWN
-     */
-    public int getParsedVersion() {
-        return version;
-    }
-
-    private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
-    private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
-
-    private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
-    private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
-
-    private static final String JAVA_EXECUTABLE = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
-
-    public static final int UNKNOWN = -1;
-    public static final int JAVA_6 = 6;
-    public static final int JAVA_7 = 7;
-    public static final int JAVA_8 = 8;
-    public static final int JAVA_9 = 9;
-    public static final int JAVA_16 = 16;
-    public static final int JAVA_17 = 17;
 
     private static int parseVersion(String version) {
         Matcher matcher = VERSION.matcher(version);
@@ -136,8 +110,6 @@ public final class JavaVersion {
         else
             return UNKNOWN;
     }
-
-    private static final Map<Path, JavaVersion> fromExecutableCache = new ConcurrentHashMap<>();
 
     public static JavaVersion fromExecutable(Path executable) throws IOException {
         executable = executable.toRealPath();
@@ -214,25 +186,6 @@ public final class JavaVersion {
     public static JavaVersion fromCurrentEnvironment() {
         return CURRENT_JAVA;
     }
-
-    public static final JavaVersion CURRENT_JAVA;
-
-    static {
-        Path currentExecutable = getExecutable(Paths.get(System.getProperty("java.home")).toAbsolutePath());
-        try {
-            currentExecutable = currentExecutable.toRealPath();
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to resolve current Java path: " + currentExecutable, e);
-        }
-        CURRENT_JAVA = new JavaVersion(
-                currentExecutable,
-                System.getProperty("java.version"),
-                Platform.CURRENT_PLATFORM
-        );
-    }
-
-    private static Collection<JavaVersion> JAVAS;
-    private static final CountDownLatch LATCH = new CountDownLatch(1);
 
     public static Collection<JavaVersion> getJavas() throws InterruptedException {
         if (JAVAS != null)
@@ -402,9 +355,9 @@ public final class JavaVersion {
     private static List<String> querySubFolders(String location) throws IOException {
         List<String> res = new ArrayList<>();
 
-        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
+        Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location});
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-            for (String line; (line = reader.readLine()) != null;) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
                 }
@@ -415,10 +368,10 @@ public final class JavaVersion {
 
     private static String queryRegisterValue(String location, String name) throws IOException {
         boolean last = false;
-        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
+        Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location, "/v", name});
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-            for (String line; (line = reader.readLine()) != null;) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {
                         int begins = line.indexOf(name);
@@ -438,7 +391,6 @@ public final class JavaVersion {
         }
         return null;
     }
-    // ====
 
     public static void main(String[] args) {
         try {
@@ -448,5 +400,46 @@ public final class JavaVersion {
         } catch (Throwable e) {
             LOG.log(Level.WARNING, "Oops:", e);
         }
+    }
+
+    public String toString() {
+        return "JavaVersion {" + binary + ", " + longVersion + "(" + version + ")" + ", " + platform + "}";
+    }
+
+    public Path getBinary() {
+        return binary;
+    }
+
+    public String getVersion() {
+        return longVersion;
+    }
+
+    public Platform getPlatform() {
+        return platform;
+    }
+
+    public Architecture getArchitecture() {
+        return platform.getArchitecture();
+    }
+
+    public Bits getBits() {
+        return platform.getBits();
+    }
+
+    public VersionNumber getVersionNumber() {
+        return versionNumber;
+    }
+    // ====
+
+    /**
+     * The major version of Java installation.
+     *
+     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_9
+     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_8
+     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_7
+     * @see org.jackhuang.hmcl.util.platform.JavaVersion#UNKNOWN
+     */
+    public int getParsedVersion() {
+        return version;
     }
 }

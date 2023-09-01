@@ -45,22 +45,17 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
-    private DownloadProviders() {}
-
-    private static DownloadProvider currentDownloadProvider;
-
     public static final Map<String, DownloadProvider> providersById;
     public static final Map<String, DownloadProvider> rawProviders;
+    public static final String DEFAULT_PROVIDER_ID = "balanced";
+    public static final String DEFAULT_RAW_PROVIDER_ID = "mcbbs";
     private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
 
     private static final MojangDownloadProvider MOJANG;
     private static final BMCLAPIDownloadProvider BMCLAPI;
     private static final BMCLAPIDownloadProvider MCBBS;
-
-    public static final String DEFAULT_PROVIDER_ID = "balanced";
-    public static final String DEFAULT_RAW_PROVIDER_ID = "mcbbs";
-
     private static final InvalidationListener observer;
+    private static DownloadProvider currentDownloadProvider;
 
     static {
         String bmclapiRoot = "https://bmclapi2.bangbang93.com";
@@ -89,6 +84,9 @@ public final class DownloadProviders {
             FetchTask.setDownloadExecutorConcurrency(
                     config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
         }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
+    }
+
+    private DownloadProviders() {
     }
 
     static void init() {

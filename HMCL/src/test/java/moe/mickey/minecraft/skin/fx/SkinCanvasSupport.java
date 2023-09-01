@@ -21,7 +21,7 @@ public abstract class SkinCanvasSupport implements Consumer<SkinCanvas> {
 
         private double lastX, lastY, sensitivity;
 
-        public void setSensitivity(double sensitivity) {
+        public Mouse(double sensitivity) {
             this.sensitivity = sensitivity;
         }
 
@@ -29,7 +29,7 @@ public abstract class SkinCanvasSupport implements Consumer<SkinCanvas> {
             return sensitivity;
         }
 
-        public Mouse(double sensitivity) {
+        public void setSensitivity(double sensitivity) {
             this.sensitivity = sensitivity;
         }
 

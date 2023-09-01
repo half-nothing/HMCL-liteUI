@@ -48,6 +48,20 @@ public class PackMcMeta implements Validation {
         this.pack = packInfo;
     }
 
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+        Path mcmod = fs.getPath("pack.mcmeta");
+        if (Files.notExists(mcmod))
+            throw new IOException("File " + modFile + " is not a resource pack.");
+        PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
+        return new LocalModFile(
+                modManager,
+                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
+                modFile,
+                FileUtils.getNameWithoutExtension(modFile),
+                metadata.pack.description,
+                "", "", "", "", "");
+    }
+
     public PackInfo getPackInfo() {
         return pack;
     }
@@ -140,19 +154,5 @@ public class PackMcMeta implements Validation {
             }
             return new PackInfo(packFormat, new LocalModFile.Description(parts));
         }
-    }
-
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path mcmod = fs.getPath("pack.mcmeta");
-        if (Files.notExists(mcmod))
-            throw new IOException("File " + modFile + " is not a resource pack.");
-        PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
-        return new LocalModFile(
-                modManager,
-                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
-                modFile,
-                FileUtils.getNameWithoutExtension(modFile),
-                metadata.pack.description,
-                "", "", "", "", "");
     }
 }

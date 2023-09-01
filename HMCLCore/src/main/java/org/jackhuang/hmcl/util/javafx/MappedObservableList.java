@@ -35,6 +35,37 @@ public final class MappedObservableList {
     private MappedObservableList() {
     }
 
+    /**
+     * This methods creates a mapping of {@code origin}, using {@code mapper} as the converter.
+     * <p>
+     * If an item is added to {@code origin}, {@code mapper} will be invoked to create a corresponding item, which will also be added to the returned {@code ObservableList}.
+     * If an item is removed from {@code origin}, the corresponding item in the returned {@code ObservableList} will also be removed.
+     * If {@code origin} is permutated, the returned {@code ObservableList} will also be permutated in the same way.
+     * <p>
+     * The returned {@code ObservableList} is unmodifiable.
+     */
+    public static <T, U> ObservableList<U> create(ObservableList<T> origin, Function<T, U> mapper) {
+        // create a already-synchronized target ObservableList<U>
+        ObservableList<U> target = origin.stream()
+                .map(mapper)
+                .collect(toCollection(FXCollections::observableArrayList));
+
+        // then synchronize further changes to target
+        ListChangeListener<T> listener = new MappedObservableListUpdater<>(origin, target, mapper);
+
+        // let target hold a reference to listener to prevent listener being garbage-collected before target is garbage-collected
+        target.addListener(new ReferenceHolder(listener));
+
+        // let origin hold a weak reference to listener, so that target can be garbage-collected when it's no longer used
+        origin.addListener(new WeakListChangeListener<>(listener));
+
+        // ref graph:
+        // target ------> listener <-weak- origin
+        //        <------          ------>
+
+        return unmodifiableObservableList(target);
+    }
+
     private static class MappedObservableListUpdater<T, U> implements ListChangeListener<T> {
         private ObservableList<T> origin;
         private ObservableList<U> target;
@@ -104,36 +135,5 @@ public final class MappedObservableList {
             }
             return mapper.apply(key);
         }
-    }
-
-    /**
-     * This methods creates a mapping of {@code origin}, using {@code mapper} as the converter.
-     *
-     * If an item is added to {@code origin}, {@code mapper} will be invoked to create a corresponding item, which will also be added to the returned {@code ObservableList}.
-     * If an item is removed from {@code origin}, the corresponding item in the returned {@code ObservableList} will also be removed.
-     * If {@code origin} is permutated, the returned {@code ObservableList} will also be permutated in the same way.
-     *
-     * The returned {@code ObservableList} is unmodifiable.
-     */
-    public static <T, U> ObservableList<U> create(ObservableList<T> origin, Function<T, U> mapper) {
-        // create a already-synchronized target ObservableList<U>
-        ObservableList<U> target = origin.stream()
-                .map(mapper)
-                .collect(toCollection(FXCollections::observableArrayList));
-
-        // then synchronize further changes to target
-        ListChangeListener<T> listener = new MappedObservableListUpdater<>(origin, target, mapper);
-
-        // let target hold a reference to listener to prevent listener being garbage-collected before target is garbage-collected
-        target.addListener(new ReferenceHolder(listener));
-
-        // let origin hold a weak reference to listener, so that target can be garbage-collected when it's no longer used
-        origin.addListener(new WeakListChangeListener<>(listener));
-
-        // ref graph:
-        // target ------> listener <-weak- origin
-        //        <------          ------>
-
-        return unmodifiableObservableList(target);
     }
 }

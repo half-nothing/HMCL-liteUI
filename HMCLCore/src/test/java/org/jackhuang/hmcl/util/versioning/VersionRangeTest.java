@@ -7,6 +7,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class VersionRangeTest {
 
+    private static void assertIsOverlappedBy(boolean value, VersionRange range1, VersionRange range2) {
+        assertEquals(value, range1.isOverlappedBy(range2));
+        assertEquals(value, range2.isOverlappedBy(range1));
+    }
+
+    private static void assertIntersectionWith(VersionRange range1, VersionRange range2, VersionRange result) {
+        assertEquals(result, range1.intersectionWith(range2));
+        assertEquals(result, range2.intersectionWith(range1));
+    }
+
     @Test
     public void testContains() {
         assertTrue(between("10", "20").contains("10"));
@@ -45,11 +55,6 @@ public class VersionRangeTest {
         assertFalse(atMost("10").contains((VersionNumber) null));
     }
 
-    private static void assertIsOverlappedBy(boolean value, VersionRange range1, VersionRange range2) {
-        assertEquals(value, range1.isOverlappedBy(range2));
-        assertEquals(value, range2.isOverlappedBy(range1));
-    }
-
     @Test
     public void testIsOverlappedBy() {
         assertIsOverlappedBy(true, all(), all());
@@ -85,11 +90,6 @@ public class VersionRangeTest {
         assertIsOverlappedBy(true, atLeast("10"), atMost("10"));
         assertIsOverlappedBy(true, atLeast("10"), atMost("20"));
         assertIsOverlappedBy(false, atLeast("10"), atMost("5"));
-    }
-
-    private static void assertIntersectionWith(VersionRange range1, VersionRange range2, VersionRange result) {
-        assertEquals(result, range1.intersectionWith(range2));
-        assertEquals(result, range2.intersectionWith(range1));
     }
 
     @Test

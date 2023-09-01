@@ -43,6 +43,18 @@ public class Navigator extends TransitionPane {
     private final BooleanProperty backable = new SimpleBooleanProperty(this, "backable");
     private final Stack<Node> stack = new Stack<>();
     private boolean initialized = false;
+    private ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigated") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(NavigationEvent.NAVIGATED, get());
+        }
+    };
+    private ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigating") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(NavigationEvent.NAVIGATING, get());
+        }
+    };
 
     public void init(Node init) {
         stack.push(init);
@@ -148,12 +160,12 @@ public class Navigator extends TransitionPane {
         return backable.get();
     }
 
-    public BooleanProperty backableProperty() {
-        return backable;
-    }
-
     public void setBackable(boolean backable) {
         this.backable.set(backable);
+    }
+
+    public BooleanProperty backableProperty() {
+        return backable;
     }
 
     public int size() {
@@ -173,39 +185,25 @@ public class Navigator extends TransitionPane {
         return onNavigated.get();
     }
 
-    public ObjectProperty<EventHandler<NavigationEvent>> onNavigatedProperty() {
-        return onNavigated;
-    }
-
     public void setOnNavigated(EventHandler<NavigationEvent> onNavigated) {
         this.onNavigated.set(onNavigated);
     }
 
-    private ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigated") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(NavigationEvent.NAVIGATED, get());
-        }
-    };
+    public ObjectProperty<EventHandler<NavigationEvent>> onNavigatedProperty() {
+        return onNavigated;
+    }
 
     public EventHandler<NavigationEvent> getOnNavigating() {
         return onNavigating.get();
-    }
-
-    public ObjectProperty<EventHandler<NavigationEvent>> onNavigatingProperty() {
-        return onNavigating;
     }
 
     public void setOnNavigating(EventHandler<NavigationEvent> onNavigating) {
         this.onNavigating.set(onNavigating);
     }
 
-    private ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigating") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(NavigationEvent.NAVIGATING, get());
-        }
-    };
+    public ObjectProperty<EventHandler<NavigationEvent>> onNavigatingProperty() {
+        return onNavigating;
+    }
 
     public static class NavigationEvent extends Event {
         public static final EventType<NavigationEvent> EXITED = new EventType<>("EXITED");

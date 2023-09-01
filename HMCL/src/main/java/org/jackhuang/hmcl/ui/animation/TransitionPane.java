@@ -26,6 +26,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TransitionPane extends StackPane implements AnimationHandler {
+    private final EmptyPane EMPTY_PANE = new EmptyPane();
     private Duration duration;
     private Node previousNode, currentNode;
 
@@ -105,8 +106,6 @@ public class TransitionPane extends StackPane implements AnimationHandler {
 
         getChildren().setAll(previousNode, currentNode);
     }
-
-    private final EmptyPane EMPTY_PANE = new EmptyPane();
 
     public static class EmptyPane extends StackPane {
     }

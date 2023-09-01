@@ -35,6 +35,7 @@ import java.util.List;
 
 /**
  * Remove class digital verification file in game jar
+ *
  * @author huangyuhui
  */
 public final class GameVerificationFixTask extends Task<Void> {
@@ -72,5 +73,5 @@ public final class GameVerificationFixTask extends Task<Void> {
             }
         }
     }
-    
+
 }

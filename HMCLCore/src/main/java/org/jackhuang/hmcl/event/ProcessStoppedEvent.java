@@ -33,7 +33,7 @@ public class ProcessStoppedEvent extends Event {
     /**
      * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
+     * @param source  {@link org.jackhuang.hmcl.launch.ExitWaiter}
      * @param process minecraft process
      */
     public ProcessStoppedEvent(Object source, ManagedProcess process) {

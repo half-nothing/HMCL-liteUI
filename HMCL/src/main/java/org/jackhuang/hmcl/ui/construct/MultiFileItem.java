@@ -91,32 +91,32 @@ public class MultiFileItem<T> extends VBox {
         return selectedData.get();
     }
 
-    public ObjectProperty<T> selectedDataProperty() {
-        return selectedData;
-    }
-
     public void setSelectedData(T selectedData) {
         this.selectedData.set(selectedData);
+    }
+
+    public ObjectProperty<T> selectedDataProperty() {
+        return selectedData;
     }
 
     public T getFallbackData() {
         return fallbackData.get();
     }
 
-    public ObjectProperty<T> fallbackDataProperty() {
-        return fallbackData;
-    }
-
     public void setFallbackData(T fallbackData) {
         this.fallbackData.set(fallbackData);
     }
 
+    public ObjectProperty<T> fallbackDataProperty() {
+        return fallbackData;
+    }
+
     public static class Option<T> {
         protected final String title;
-        protected String subtitle;
         protected final T data;
         protected final BooleanProperty selected = new SimpleBooleanProperty();
         protected final JFXRadioButton left = new JFXRadioButton();
+        protected String subtitle;
 
         public Option(String title, T data) {
             this.title = title;
@@ -144,12 +144,12 @@ public class MultiFileItem<T> extends VBox {
             return left.isSelected();
         }
 
-        public BooleanProperty selectedProperty() {
-            return left.selectedProperty();
-        }
-
         public void setSelected(boolean selected) {
             left.setSelected(selected);
+        }
+
+        public BooleanProperty selectedProperty() {
+            return left.selectedProperty();
         }
 
         protected Node createItem(ToggleGroup group) {
@@ -187,12 +187,12 @@ public class MultiFileItem<T> extends VBox {
             return customField.getText();
         }
 
-        public StringProperty valueProperty() {
-            return customField.textProperty();
-        }
-
         public void setValue(String value) {
             customField.setText(value);
+        }
+
+        public StringProperty valueProperty() {
+            return customField.textProperty();
         }
 
         public StringOption<T> bindBidirectional(Property<String> property) {
@@ -241,12 +241,12 @@ public class MultiFileItem<T> extends VBox {
             return selector.getValue();
         }
 
-        public StringProperty valueProperty() {
-            return selector.valueProperty();
-        }
-
         public void setValue(String value) {
             selector.setValue(value);
+        }
+
+        public StringProperty valueProperty() {
+            return selector.valueProperty();
         }
 
         public FileOption<T> setDirectory(boolean directory) {

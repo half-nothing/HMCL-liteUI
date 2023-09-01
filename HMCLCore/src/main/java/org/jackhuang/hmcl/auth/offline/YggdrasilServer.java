@@ -41,6 +41,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilServer extends HttpServer {
 
+    private static final KeyPair keyPair = KeyUtils.generateKey();
     private final Map<UUID, Character> charactersByUuid = new HashMap<>();
     private final Map<String, Character> charactersByName = new HashMap<>();
 
@@ -54,6 +55,41 @@ public class YggdrasilServer extends HttpServer {
         addRoute(Method.POST, Pattern.compile("/sessionserver/session/minecraft/join"), this::joinServer);
         addRoute(Method.GET, Pattern.compile("/sessionserver/session/minecraft/profile/(?<uuid>[a-f0-9]{32})"), this::profile);
         addRoute(Method.GET, Pattern.compile("/textures/(?<hash>[a-f0-9]{64})"), this::texture);
+    }
+
+    public static PublicKey getSignaturePublicKey() {
+        return keyPair.getPublic();
+    }
+
+    private static String sign(String data) {
+        try {
+            Signature signature = Signature.getInstance("SHA1withRSA");
+            signature.initSign(keyPair.getPrivate(), new SecureRandom());
+            signature.update(data.getBytes(UTF_8));
+            return Base64.getEncoder().encodeToString(signature.sign());
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @SafeVarargs
+    public static List<?> properties(Map.Entry<String, String>... entries) {
+        return properties(false, entries);
+    }
+
+    @SafeVarargs
+    public static List<?> properties(boolean sign, Map.Entry<String, String>... entries) {
+        return Stream.of(entries)
+                .map(entry -> {
+                    LinkedHashMap<String, String> property = new LinkedHashMap<>();
+                    property.put("name", entry.getKey());
+                    property.put("value", entry.getValue());
+                    if (sign) {
+                        property.put("signature", sign(entry.getValue()));
+                    }
+                    return property;
+                })
+                .collect(Collectors.toList());
     }
 
     private Response root(Request request) {
@@ -124,6 +160,8 @@ public class YggdrasilServer extends HttpServer {
         }
     }
 
+    // === Signature ===
+
     private Response texture(Request request) {
         String hash = request.getPathVariables().group("hash");
 
@@ -146,6 +184,8 @@ public class YggdrasilServer extends HttpServer {
     private Optional<Character> findCharacterByName(String uuid) {
         return Optional.ofNullable(charactersByName.get(uuid));
     }
+
+    // === properties ===
 
     public void addCharacter(Character character) {
         charactersByUuid.put(character.getUUID(), character);
@@ -209,47 +249,6 @@ public class YggdrasilServer extends HttpServer {
                                     ), UTF_8))))
             );
         }
-    }
-
-    // === Signature ===
-
-    private static final KeyPair keyPair = KeyUtils.generateKey();
-
-    public static PublicKey getSignaturePublicKey() {
-        return keyPair.getPublic();
-    }
-
-    private static String sign(String data) {
-        try {
-            Signature signature = Signature.getInstance("SHA1withRSA");
-            signature.initSign(keyPair.getPrivate(), new SecureRandom());
-            signature.update(data.getBytes(UTF_8));
-            return Base64.getEncoder().encodeToString(signature.sign());
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // === properties ===
-
-    @SafeVarargs
-    public static List<?> properties(Map.Entry<String, String>... entries) {
-        return properties(false, entries);
-    }
-
-    @SafeVarargs
-    public static List<?> properties(boolean sign, Map.Entry<String, String>... entries) {
-        return Stream.of(entries)
-                .map(entry -> {
-                    LinkedHashMap<String, String> property = new LinkedHashMap<>();
-                    property.put("name", entry.getKey());
-                    property.put("value", entry.getValue());
-                    if (sign) {
-                        property.put("signature", sign(entry.getValue()));
-                    }
-                    return property;
-                })
-                .collect(Collectors.toList());
     }
 
 }

@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- *
  * @author huangyuhui
  */
 public final class AssetObject implements Validation {

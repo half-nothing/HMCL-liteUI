@@ -22,14 +22,16 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.HintPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
@@ -159,6 +161,66 @@ public class DownloadSettingsPage extends StackPane {
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+        }
+
+        {
+            VBox update = new VBox(10);
+            update.getStyleClass().add("card-non-transparent");
+
+            {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setPadding(new Insets(0, 0, 0, 30));
+                Label label = new Label(i18n("settings.launcher.pigeon.download.baseUrl"));
+                JFXTextField threadsField = new JFXTextField();
+                FXUtils.bindString(threadsField, config().baseUrlProperty());
+                HBox.setHgrow(threadsField, Priority.ALWAYS);
+                hbox.getChildren().setAll(label, threadsField);
+                update.getChildren().add(hbox);
+            }
+
+            {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                hintPane.setText(i18n("settings.launcher.pigeon.download.baseUrl.hit"));
+                update.getChildren().add(hintPane);
+            }
+
+            {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setPadding(new Insets(0, 0, 0, 30));
+                Label label = new Label(i18n("settings.launcher.pigeon.download.threads"));
+
+                JFXSlider slider = new JFXSlider(1, 64, config().getDownloadThreadsPigeon());
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                JFXTextField threadsField = new JFXTextField();
+                FXUtils.setLimitWidth(threadsField, 60);
+                FXUtils.bindInt(threadsField, config().downloadThreadsPigeonProperty());
+
+                AtomicBoolean changedByTextField = new AtomicBoolean(false);
+                FXUtils.onChangeAndOperate(config().downloadThreadsPigeonProperty(), value -> {
+                    changedByTextField.set(true);
+                    slider.setValue(value.intValue());
+                    changedByTextField.set(false);
+                });
+                slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                    if (changedByTextField.get()) return;
+                    config().downloadThreadsPigeonProperty().set(value.getValue().intValue());
+                });
+
+                hbox.getChildren().setAll(label, slider, threadsField);
+                update.getChildren().add(hbox);
+            }
+
+            {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                hintPane.setText(i18n("settings.launcher.pigeon.download.hint"));
+                update.getChildren().add(hintPane);
+            }
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.pigeon.download")), update);
         }
 
         {

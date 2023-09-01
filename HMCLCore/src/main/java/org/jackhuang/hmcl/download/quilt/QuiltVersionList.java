@@ -34,10 +34,16 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 
 public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
+    private static final String LOADER_META_URL = "https://meta.quiltmc.org/v3/versions/loader";
+    private static final String GAME_META_URL = "https://meta.quiltmc.org/v3/versions/game";
     private final DownloadProvider downloadProvider;
 
     public QuiltVersionList(DownloadProvider downloadProvider) {
         this.downloadProvider = downloadProvider;
+    }
+
+    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
+        return String.format("https://meta.quiltmc.org/v3/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
     @Override
@@ -64,17 +70,10 @@ public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
         }));
     }
 
-    private static final String LOADER_META_URL = "https://meta.quiltmc.org/v3/versions/loader";
-    private static final String GAME_META_URL = "https://meta.quiltmc.org/v3/versions/game";
-
     private List<String> getGameVersions(String metaUrl) throws IOException {
         String json = NetworkUtils.doGet(NetworkUtils.toURL(downloadProvider.injectURL(metaUrl)));
         return JsonUtils.GSON.<ArrayList<GameVersion>>fromJson(json, new TypeToken<ArrayList<GameVersion>>() {
         }.getType()).stream().map(GameVersion::getVersion).collect(Collectors.toList());
-    }
-
-    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
-        return String.format("https://meta.quiltmc.org/v3/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
     private static class GameVersion {

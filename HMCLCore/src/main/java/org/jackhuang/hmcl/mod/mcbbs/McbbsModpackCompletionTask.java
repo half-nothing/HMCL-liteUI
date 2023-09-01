@@ -22,8 +22,8 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.curse.CurseMetaMod;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -41,7 +41,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,13 +63,12 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final ModManager modManager;
     private final String version;
     private final File configurationFile;
-    private ModpackConfiguration<McbbsModpackManifest> configuration;
-    private McbbsModpackManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
-
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
     private final AtomicBoolean notFound = new AtomicBoolean(false);
+    private ModpackConfiguration<McbbsModpackManifest> configuration;
+    private McbbsModpackManifest manifest;
 
     public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
         this(dependencyManager, version, null);

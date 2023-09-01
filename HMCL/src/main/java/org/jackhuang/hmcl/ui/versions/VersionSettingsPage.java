@@ -31,7 +31,10 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -65,15 +68,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
-
-    private AdvancedVersionSettingPage advancedVersionSettingPage;
-
-    private VersionSetting lastVersionSetting = null;
-    private Profile profile;
-    private WeakListenerHolder listenerHolder;
-    private String versionId;
-    private boolean javaItemsLoaded;
-
     private final VBox rootPane;
     private final JFXTextField txtWidth;
     private final JFXTextField txtHeight;
@@ -92,17 +86,20 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
-
     private final InvalidationListener specificSettingsListener;
-
-    private final InvalidationListener javaListener = any -> initJavaSubtitle();
-
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
     private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(false);
     private final IntegerProperty maxMemory = new SimpleIntegerProperty();
     private final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
     private final BooleanProperty modpack = new SimpleBooleanProperty();
+    private AdvancedVersionSettingPage advancedVersionSettingPage;
+    private VersionSetting lastVersionSetting = null;
+    private Profile profile;
+    private WeakListenerHolder listenerHolder;
+    private String versionId;
+    private boolean javaItemsLoaded;
+    private final InvalidationListener javaListener = any -> initJavaSubtitle();
 
     public VersionSettingsPage(boolean globalSetting) {
         ScrollPane scrollPane = new ScrollPane();
@@ -611,14 +608,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         Task.composeAsync(Schedulers.javafx(), () -> {
-            if (versionId == null) {
-                return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
-            } else {
-                return versionSetting.getJavaVersion(
-                        VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
-                        profile.getRepository().getVersion(versionId));
-            }
-        }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
+                    if (versionId == null) {
+                        return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
+                    } else {
+                        return versionSetting.getJavaVersion(
+                                VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
+                                profile.getRepository().getVersion(versionId));
+                    }
+                }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
                         .map(JavaVersion::getBinary).map(Path::toString).orElseGet(() ->
                                 autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"))))
                 .start();

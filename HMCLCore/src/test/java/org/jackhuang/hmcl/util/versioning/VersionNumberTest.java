@@ -28,6 +28,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class VersionNumberTest {
 
+    private static void assertLessThan(String s1, String s2) {
+        Supplier<String> messageSupplier = () -> String.format("%s should be less than %s", s1, s2);
+
+        VersionNumber v1 = VersionNumber.asVersion(s1);
+        VersionNumber v2 = VersionNumber.asVersion(s2);
+
+        assertTrue(v1.compareTo(v2) < 0, messageSupplier);
+        assertTrue(v2.compareTo(v1) > 0, messageSupplier);
+    }
+
     @Test
     public void testCanonical() {
         assertEquals("3.2", normalize("3.2.0.0"));
@@ -66,16 +76,6 @@ public class VersionNumberTest {
         assertTrue(isIntVersionNumber("1.13.1"));
         assertTrue(isIntVersionNumber("1.999999999"));
         assertTrue(isIntVersionNumber("999999999.0"));
-    }
-
-    private static void assertLessThan(String s1, String s2) {
-        Supplier<String> messageSupplier = () -> String.format("%s should be less than %s", s1, s2);
-
-        VersionNumber v1 = VersionNumber.asVersion(s1);
-        VersionNumber v2 = VersionNumber.asVersion(s2);
-
-        assertTrue(v1.compareTo(v2) < 0, messageSupplier);
-        assertTrue(v2.compareTo(v1) > 0, messageSupplier);
     }
 
     @Test

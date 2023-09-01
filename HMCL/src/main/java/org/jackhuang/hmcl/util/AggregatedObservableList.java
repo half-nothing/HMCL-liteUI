@@ -29,9 +29,9 @@ import java.util.function.Function;
 public class AggregatedObservableList<T> {
 
     protected final List<ObservableList<T>> lists = new ArrayList<>();
+    final protected ObservableList<T> aggregatedList = FXCollections.observableArrayList();
     final private List<Integer> sizes = new ArrayList<>();
     final private List<InternalListModificationListener> listeners = new ArrayList<>();
-    final protected ObservableList<T> aggregatedList = FXCollections.observableArrayList();
 
     public AggregatedObservableList() {
 
@@ -126,6 +126,20 @@ public class AggregatedObservableList<T> {
         return startIndex + sizes.get(index) - 1;
     }
 
+    public String dump() {
+        return dump(x -> x);
+    }
+
+    public String dump(Function<T, Object> function) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        aggregatedList.forEach(el -> sb.append(function.apply(el)).append(","));
+        final int length = sb.length();
+        sb.replace(length - 1, length, "");
+        sb.append("]");
+        return sb.toString();
+    }
+
     private class InternalListModificationListener implements ListChangeListener<T> {
 
         @NotNull
@@ -185,19 +199,5 @@ public class AggregatedObservableList<T> {
             //System.out.println("listSizesMap = " + sizes);
         }
 
-    }
-
-    public String dump() {
-        return dump(x -> x);
-    }
-
-    public String dump(Function<T, Object> function) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        aggregatedList.forEach(el -> sb.append(function.apply(el)).append(","));
-        final int length = sb.length();
-        sb.replace(length - 1, length, "");
-        sb.append("]");
-        return sb.toString();
     }
 }

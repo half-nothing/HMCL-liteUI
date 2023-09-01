@@ -17,15 +17,14 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import java.util.Objects;
-import java.util.UUID;
-
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.JsonAdapter;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author huangyuhui

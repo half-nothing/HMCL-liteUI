@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable

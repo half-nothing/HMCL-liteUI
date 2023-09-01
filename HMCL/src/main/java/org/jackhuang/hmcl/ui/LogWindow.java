@@ -31,14 +31,13 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -49,7 +48,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -63,7 +65,6 @@ import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
@@ -151,6 +152,146 @@ public final class LogWindow extends Stage {
         }
     }
 
+    private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
+        private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
+        private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
+        private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
+        private static final PseudoClass WARN = PseudoClass.getPseudoClass("warn");
+        private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
+        private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
+        private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+
+        protected LogWindowSkin(LogWindowImpl control) {
+            super(control);
+
+            VBox vbox = new VBox(3);
+            vbox.setPadding(new Insets(3, 0, 3, 0));
+            vbox.setStyle("-fx-background-color: white");
+            getChildren().setAll(vbox);
+
+            {
+                BorderPane borderPane = new BorderPane();
+                borderPane.setPadding(new Insets(0, 3, 0, 3));
+
+                {
+                    HBox hBox = new HBox(3);
+                    hBox.setPadding(new Insets(0, 0, 0, 4));
+                    hBox.setAlignment(Pos.CENTER_LEFT);
+
+                    Label label = new Label(i18n("logwindow.show_lines"));
+                    hBox.getChildren().setAll(label, control.cboLines);
+
+                    borderPane.setLeft(hBox);
+                }
+
+                {
+                    HBox hBox = new HBox(3);
+                    hBox.getChildren().setAll(
+                            createToggleButton("#F7A699", control.buttonText.get(0), control.showLevel.get(0)),
+                            createToggleButton("#FFCCBB", control.buttonText.get(1), control.showLevel.get(1)),
+                            createToggleButton("#FFEECC", control.buttonText.get(2), control.showLevel.get(2)),
+                            createToggleButton("#FBFBFB", control.buttonText.get(3), control.showLevel.get(3)),
+                            createToggleButton("#EEE9E0", control.buttonText.get(4), control.showLevel.get(4))
+                    );
+                    borderPane.setRight(hBox);
+                }
+
+                vbox.getChildren().add(borderPane);
+            }
+
+            {
+                ListView<Log> listView = control.listView;
+                listView.getItems().addListener((InvalidationListener) observable -> {
+                    if (!listView.getItems().isEmpty() && control.autoScroll.get())
+                        listView.scrollTo(listView.getItems().size() - 1);
+                });
+
+                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "; -fx-font-size: " + config().getFontSize() + "px;");
+                Holder<Object> lastCell = new Holder<>();
+                listView.setCellFactory(x -> new ListCell<Log>() {
+                    {
+                        getStyleClass().add("log-window-list-cell");
+                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
+                        if (clippedContainer != null) {
+                            maxWidthProperty().bind(clippedContainer.widthProperty());
+                            prefWidthProperty().bind(clippedContainer.widthProperty());
+                        }
+                        setPadding(new Insets(2));
+                        setWrapText(true);
+                        setGraphic(null);
+                    }
+
+                    @Override
+                    protected void updateItem(Log item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                        if (this == lastCell.value && !isVisible())
+                            return;
+                        lastCell.value = this;
+
+                        pseudoClassStateChanged(EMPTY, empty);
+                        pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
+                        pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);
+                        pseudoClassStateChanged(WARN, !empty && item.level == Log4jLevel.WARN);
+                        pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
+                        pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
+                        pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
+                        if (empty) {
+                            setText(null);
+                        } else {
+                            setText(item.log);
+                        }
+                    }
+                });
+
+                VBox.setVgrow(listView, Priority.ALWAYS);
+                vbox.getChildren().add(listView);
+            }
+
+            {
+                BorderPane bottom = new BorderPane();
+
+                JFXButton exportGameCrashInfoButton = new JFXButton(i18n("logwindow.export_game_crash_logs"));
+                exportGameCrashInfoButton.setOnMouseClicked(e -> getSkinnable().onExportGameCrashInfo());
+                exportGameCrashInfoButton.visibleProperty().bind(getSkinnable().showCrashReport);
+                bottom.setLeft(exportGameCrashInfoButton);
+
+                HBox hBox = new HBox(3);
+                bottom.setRight(hBox);
+                hBox.setAlignment(Pos.CENTER_RIGHT);
+                hBox.setPadding(new Insets(0, 3, 0, 3));
+
+                JFXCheckBox autoScrollCheckBox = new JFXCheckBox(i18n("logwindow.autoscroll"));
+                autoScrollCheckBox.setSelected(true);
+                control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
+
+                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
+                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
+
+                JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
+                exportLogsButton.setOnMouseClicked(e -> getSkinnable().onExportLogs());
+
+                JFXButton clearButton = new JFXButton(i18n("button.clear"));
+                clearButton.setOnMouseClicked(e -> getSkinnable().onClear());
+                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, clearButton);
+
+                vbox.getChildren().add(bottom);
+            }
+        }
+
+        private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
+            ToggleButton button = new ToggleButton();
+            button.setStyle("-fx-background-color: " + backgroundColor + ";");
+            button.getStyleClass().add("log-toggle");
+            button.textProperty().bind(buttonText);
+            button.setSelected(true);
+            showLevel.bind(button.selectedProperty());
+            return button;
+        }
+    }
+
     public class LogWindowImpl extends Control {
 
         private final ListView<Log> listView = new JFXListView<>();
@@ -225,146 +366,6 @@ public final class LogWindow extends Stage {
         @Override
         protected Skin<?> createDefaultSkin() {
             return new LogWindowSkin(this);
-        }
-    }
-
-    private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
-        private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
-        private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
-        private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
-        private static final PseudoClass WARN = PseudoClass.getPseudoClass("warn");
-        private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
-        private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
-        private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
-
-        private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
-            ToggleButton button = new ToggleButton();
-            button.setStyle("-fx-background-color: " + backgroundColor + ";");
-            button.getStyleClass().add("log-toggle");
-            button.textProperty().bind(buttonText);
-            button.setSelected(true);
-            showLevel.bind(button.selectedProperty());
-            return button;
-        }
-
-        protected LogWindowSkin(LogWindowImpl control) {
-            super(control);
-
-            VBox vbox = new VBox(3);
-            vbox.setPadding(new Insets(3, 0, 3, 0));
-            vbox.setStyle("-fx-background-color: white");
-            getChildren().setAll(vbox);
-
-            {
-                BorderPane borderPane = new BorderPane();
-                borderPane.setPadding(new Insets(0, 3, 0, 3));
-
-                {
-                    HBox hBox = new HBox(3);
-                    hBox.setPadding(new Insets(0, 0, 0, 4));
-                    hBox.setAlignment(Pos.CENTER_LEFT);
-
-                    Label label = new Label(i18n("logwindow.show_lines"));
-                    hBox.getChildren().setAll(label, control.cboLines);
-
-                    borderPane.setLeft(hBox);
-                }
-
-                {
-                    HBox hBox = new HBox(3);
-                    hBox.getChildren().setAll(
-                            createToggleButton("#F7A699", control.buttonText.get(0), control.showLevel.get(0)),
-                            createToggleButton("#FFCCBB", control.buttonText.get(1), control.showLevel.get(1)),
-                            createToggleButton("#FFEECC", control.buttonText.get(2), control.showLevel.get(2)),
-                            createToggleButton("#FBFBFB", control.buttonText.get(3), control.showLevel.get(3)),
-                            createToggleButton("#EEE9E0", control.buttonText.get(4), control.showLevel.get(4))
-                    );
-                    borderPane.setRight(hBox);
-                }
-
-                vbox.getChildren().add(borderPane);
-            }
-
-            {
-                ListView<Log> listView = control.listView;
-                listView.getItems().addListener((InvalidationListener) observable -> {
-                    if (!listView.getItems().isEmpty() && control.autoScroll.get())
-                        listView.scrollTo(listView.getItems().size() - 1);
-                });
-
-                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
-                        + "; -fx-font-size: " + config().getFontSize() + "px;");
-                Holder<Object> lastCell = new Holder<>();
-                listView.setCellFactory(x -> new ListCell<Log>() {
-                    {
-                        getStyleClass().add("log-window-list-cell");
-                        Region clippedContainer = (Region)listView.lookup(".clipped-container");
-                        if (clippedContainer != null) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
-                        }
-                        setPadding(new Insets(2));
-                        setWrapText(true);
-                        setGraphic(null);
-                    }
-
-                    @Override
-                    protected void updateItem(Log item, boolean empty) {
-                        super.updateItem(item, empty);
-
-                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                        if (this == lastCell.value && !isVisible())
-                            return;
-                        lastCell.value = this;
-
-                        pseudoClassStateChanged(EMPTY, empty);
-                        pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
-                        pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);
-                        pseudoClassStateChanged(WARN, !empty && item.level == Log4jLevel.WARN);
-                        pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
-                        pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
-                        pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
-                        if (empty) {
-                            setText(null);
-                        } else {
-                            setText(item.log);
-                        }
-                    }
-                });
-
-                VBox.setVgrow(listView, Priority.ALWAYS);
-                vbox.getChildren().add(listView);
-            }
-
-            {
-                BorderPane bottom = new BorderPane();
-
-                JFXButton exportGameCrashInfoButton = new JFXButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnMouseClicked(e -> getSkinnable().onExportGameCrashInfo());
-                exportGameCrashInfoButton.visibleProperty().bind(getSkinnable().showCrashReport);
-                bottom.setLeft(exportGameCrashInfoButton);
-
-                HBox hBox = new HBox(3);
-                bottom.setRight(hBox);
-                hBox.setAlignment(Pos.CENTER_RIGHT);
-                hBox.setPadding(new Insets(0, 3, 0, 3));
-
-                JFXCheckBox autoScrollCheckBox = new JFXCheckBox(i18n("logwindow.autoscroll"));
-                autoScrollCheckBox.setSelected(true);
-                control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
-
-                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
-                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
-
-                JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
-                exportLogsButton.setOnMouseClicked(e -> getSkinnable().onExportLogs());
-
-                JFXButton clearButton = new JFXButton(i18n("button.clear"));
-                clearButton.setOnMouseClicked(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, clearButton);
-
-                vbox.getChildren().add(bottom);
-            }
         }
     }
 }

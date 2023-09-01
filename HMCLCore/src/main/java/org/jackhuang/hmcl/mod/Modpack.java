@@ -25,7 +25,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 public abstract class Modpack {
@@ -49,6 +48,19 @@ public abstract class Modpack {
         this.description = description;
         this.encoding = encoding;
         this.manifest = manifest;
+    }
+
+    public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
+        if (path.isEmpty())
+            return true;
+        if (ModAdviser.match(blackList, path, false))
+            return false;
+        if (whiteList == null || whiteList.isEmpty())
+            return true;
+        for (String s : whiteList)
+            if (path.equals(s))
+                return true;
+        return false;
     }
 
     public String getName() {
@@ -115,17 +127,4 @@ public abstract class Modpack {
     }
 
     public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name);
-
-    public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
-        if (path.isEmpty())
-            return true;
-        if (ModAdviser.match(blackList, path, false))
-            return false;
-        if (whiteList == null || whiteList.isEmpty())
-            return true;
-        for (String s : whiteList)
-            if (path.equals(s))
-                return true;
-        return false;
-    }
 }

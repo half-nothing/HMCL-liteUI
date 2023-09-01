@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.util.skin;
 
 public class InvalidSkinException extends Exception {
 
-    public InvalidSkinException() {}
+    public InvalidSkinException() {
+    }
 
     public InvalidSkinException(String message) {
         super(message);

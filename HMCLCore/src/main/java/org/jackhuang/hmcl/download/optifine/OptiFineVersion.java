@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.download.optifine;
 import com.google.gson.annotations.SerializedName;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OptiFineVersion {

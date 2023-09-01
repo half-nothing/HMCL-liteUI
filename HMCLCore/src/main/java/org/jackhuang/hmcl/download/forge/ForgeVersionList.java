@@ -28,10 +28,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
+    public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
     private final DownloadProvider downloadProvider;
 
     public ForgeVersionList(DownloadProvider downloadProvider) {
@@ -81,6 +81,4 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                     }
                 });
     }
-
-    public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
 }

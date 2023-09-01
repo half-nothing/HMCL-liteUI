@@ -1,7 +1,10 @@
 package org.jackhuang.hmcl.util;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.NativesDirectoryType;
+import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -14,19 +17,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class NativePatcher {
+    private static final Library NONEXISTENT_LIBRARY = new Library(null);
+    private static final Map<Platform, Map<String, Library>> natives = new HashMap<>();
+
     private NativePatcher() {
     }
-
-    private static final Library NONEXISTENT_LIBRARY = new Library(null);
-
-    private static final Map<Platform, Map<String, Library>> natives = new HashMap<>();
 
     private static Map<String, Library> getNatives(Platform platform) {
         return natives.computeIfAbsent(platform, p -> {

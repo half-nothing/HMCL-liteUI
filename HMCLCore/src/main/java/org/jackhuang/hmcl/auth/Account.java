@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.auth;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.BooleanProperty;
@@ -36,10 +35,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- *
  * @author huangyuhui
  */
 public abstract class Account implements Observable {
+
+    private final BooleanProperty portable = new SimpleBooleanProperty(false);
+    private final ObservableHelper helper = new ObservableHelper(this);
 
     /**
      * @return the name of the account who owns the character
@@ -65,6 +66,7 @@ public abstract class Account implements Observable {
 
     /**
      * Play offline.
+     *
      * @return the specific offline player's info.
      */
     public abstract AuthInfo playOffline() throws AuthenticationException;
@@ -73,8 +75,6 @@ public abstract class Account implements Observable {
 
     public void clearCache() {
     }
-
-    private final BooleanProperty portable = new SimpleBooleanProperty(false);
 
     public BooleanProperty portableProperty() {
         return portable;
@@ -89,8 +89,6 @@ public abstract class Account implements Observable {
     }
 
     public abstract String getIdentifier();
-
-    private final ObservableHelper helper = new ObservableHelper(this);
 
     @Override
     public void addListener(InvalidationListener listener) {

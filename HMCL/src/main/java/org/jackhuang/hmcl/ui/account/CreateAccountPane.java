@@ -61,7 +61,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -81,21 +80,18 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
-    private boolean showMethodSwitcher;
-    private AccountFactory<?> factory;
-
+    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
     private final Label lblErrorMessage;
     private final JFXButton btnAccept;
     private final SpinnerPane spinner;
     private final Node body;
-
-    private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
-
     private final BooleanProperty logging = new SimpleBooleanProperty();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final WeakListenerHolder holder = new WeakListenerHolder();
-
+    private boolean showMethodSwitcher;
+    private AccountFactory<?> factory;
+    private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private TaskExecutor loginTask;
 
     public CreateAccountPane() {
@@ -351,39 +347,25 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         detailsContainer.getChildren().add(detailsPane);
     }
 
+    @Override
+    public void onDialogShown() {
+        if (detailsPane instanceof AccountDetailsInputPane) {
+            ((AccountDetailsInputPane) detailsPane).focus();
+        }
+    }
+
     private static class AccountDetailsInputPane extends GridPane {
 
         // ==== authlib-injector hyperlinks ====
         private static final String[] ALLOWED_LINKS = {"homepage", "register"};
-
-        private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
-            if (server == null) {
-                return emptyList();
-            }
-
-            Map<String, String> links = server.getLinks();
-            List<Hyperlink> result = new ArrayList<>();
-            for (String key : ALLOWED_LINKS) {
-                String value = links.get(key);
-                if (value != null) {
-                    Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
-                    FXUtils.installSlowTooltip(link, value);
-                    link.setOnAction(e -> FXUtils.openLink(value));
-                    result.add(link);
-                }
-            }
-            return unmodifiableList(result);
-        }
-        // =====
-
         private final AccountFactory<?> factory;
+        // =====
+        private final BooleanBinding valid;
         private @Nullable AuthlibInjectorServer server;
         private @Nullable JFXComboBox<AuthlibInjectorServer> cboServers;
         private @Nullable JFXTextField txtUsername;
         private @Nullable JFXPasswordField txtPassword;
         private @Nullable JFXTextField txtUUID;
-        private final BooleanBinding valid;
-
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
             this.factory = factory;
 
@@ -599,6 +581,25 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             };
         }
 
+        private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
+            if (server == null) {
+                return emptyList();
+            }
+
+            Map<String, String> links = server.getLinks();
+            List<Hyperlink> result = new ArrayList<>();
+            for (String key : ALLOWED_LINKS) {
+                String value = links.get(key);
+                if (value != null) {
+                    Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
+                    FXUtils.installSlowTooltip(link, value);
+                    link.setOnAction(e -> FXUtils.openLink(value));
+                    result.add(link);
+                }
+            }
+            return unmodifiableList(result);
+        }
+
         private boolean requiresEmailAsUsername() {
             if (factory instanceof YggdrasilAccountFactory) {
                 return true;
@@ -701,13 +702,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    @Override
-    public void onDialogShown() {
-        if (detailsPane instanceof AccountDetailsInputPane) {
-            ((AccountDetailsInputPane) detailsPane).focus();
-        }
-    }
-
     private static class UUIDValidator extends ValidatorBase {
 
         public UUIDValidator() {
@@ -740,6 +734,4 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
         }
     }
-
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
 }

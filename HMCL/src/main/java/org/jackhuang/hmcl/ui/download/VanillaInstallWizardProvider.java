@@ -34,6 +34,7 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VanillaInstallWizardProvider implements WizardProvider {
+    public static final String PROFILE = "PROFILE";
     private final Profile profile;
     private final DefaultDependencyManager dependencyManager;
     private final DownloadProvider downloadProvider;
@@ -88,6 +89,4 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

@@ -85,48 +85,48 @@ public final class ImagePickerItem extends BorderPane {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public EventHandler<? super MouseEvent> getOnSelectButtonClicked() {
         return onSelectButtonClicked.get();
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> onSelectButtonClickedProperty() {
-        return onSelectButtonClicked;
-    }
-
     public void setOnSelectButtonClicked(EventHandler<? super MouseEvent> onSelectButtonClicked) {
         this.onSelectButtonClicked.set(onSelectButtonClicked);
+    }
+
+    public ObjectProperty<EventHandler<? super MouseEvent>> onSelectButtonClickedProperty() {
+        return onSelectButtonClicked;
     }
 
     public EventHandler<? super MouseEvent> getOnDeleteButtonClicked() {
         return onDeleteButtonClicked.get();
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClickedProperty() {
-        return onDeleteButtonClicked;
-    }
-
     public void setOnDeleteButtonClicked(EventHandler<? super MouseEvent> onDeleteButtonClicked) {
         this.onDeleteButtonClicked.set(onDeleteButtonClicked);
+    }
+
+    public ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClickedProperty() {
+        return onDeleteButtonClicked;
     }
 
     public Image getImage() {
         return image.get();
     }
 
-    public ObjectProperty<Image> imageProperty() {
-        return image;
-    }
-
     public void setImage(Image image) {
         this.image.set(image);
+    }
+
+    public ObjectProperty<Image> imageProperty() {
+        return image;
     }
 
     public ImageView getImageView() {

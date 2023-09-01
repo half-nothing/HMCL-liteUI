@@ -55,6 +55,16 @@ public enum ModTranslations {
         }
     };
 
+    private final String resourceName;
+    private List<Mod> mods;
+    private Map<String, Mod> modIdMap; // mod id -> mod
+    private Map<String, Mod> curseForgeMap; // curseforge id -> mod
+    private List<Pair<String, Mod>> keywords;
+    private int maxKeywordLength = -1;
+    ModTranslations(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
     public static ModTranslations getTranslationsByRepositoryType(RemoteModRepository.Type type) {
         switch (type) {
             case MOD:
@@ -64,17 +74,6 @@ public enum ModTranslations {
             default:
                 return EMPTY;
         }
-    }
-
-    private final String resourceName;
-    private List<Mod> mods;
-    private Map<String, Mod> modIdMap; // mod id -> mod
-    private Map<String, Mod> curseForgeMap; // curseforge id -> mod
-    private List<Pair<String, Mod>> keywords;
-    private int maxKeywordLength = -1;
-
-    ModTranslations(String resourceName) {
-        this.resourceName = resourceName;
     }
 
     @Nullable
@@ -98,7 +97,7 @@ public enum ModTranslations {
 
         StringBuilder newQuery = query.chars()
                 .filter(ch -> !Character.isSpaceChar(ch))
-                .collect(StringBuilder::new, (sb, value) -> sb.append((char)value), StringBuilder::append);
+                .collect(StringBuilder::new, (sb, value) -> sb.append((char) value), StringBuilder::append);
         query = newQuery.toString();
 
         StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), maxKeywordLength);

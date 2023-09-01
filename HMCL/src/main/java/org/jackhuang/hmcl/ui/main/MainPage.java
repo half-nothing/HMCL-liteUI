@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -84,11 +83,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
     private final ObservableList<Node> versionNodes;
-    private Profile profile;
-
-    private VBox announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
+    private Profile profile;
+    private VBox announcementPane;
 
     {
         HBox titleNode = new HBox(8);
@@ -316,36 +314,36 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return currentGame.get();
     }
 
-    public StringProperty currentGameProperty() {
-        return currentGame;
-    }
-
     public void setCurrentGame(String currentGame) {
         this.currentGame.set(currentGame);
+    }
+
+    public StringProperty currentGameProperty() {
+        return currentGame;
     }
 
     public boolean isShowUpdate() {
         return showUpdate.get();
     }
 
-    public BooleanProperty showUpdateProperty() {
-        return showUpdate;
-    }
-
     public void setShowUpdate(boolean showUpdate) {
         this.showUpdate.set(showUpdate);
+    }
+
+    public BooleanProperty showUpdateProperty() {
+        return showUpdate;
     }
 
     public RemoteVersion getLatestVersion() {
         return latestVersion.get();
     }
 
-    public ObjectProperty<RemoteVersion> latestVersionProperty() {
-        return latestVersion;
-    }
-
     public void setLatestVersion(RemoteVersion latestVersion) {
         this.latestVersion.set(latestVersion);
+    }
+
+    public ObjectProperty<RemoteVersion> latestVersionProperty() {
+        return latestVersion;
     }
 
     public void initVersions(Profile profile, List<Version> versions) {

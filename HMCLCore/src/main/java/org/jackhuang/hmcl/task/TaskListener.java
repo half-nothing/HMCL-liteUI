@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.task;
 import java.util.EventListener;
 
 /**
- *
  * @author huangyuhui
  */
 public abstract class TaskListener implements EventListener {
@@ -33,7 +32,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed before the task's pre-execution and dependents execution.
-     *
+     * <p>
      * TaskState of this task is READY.
      *
      * @param task the task that gets ready.
@@ -43,7 +42,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed when the task's execution starts.
-     *
+     * <p>
      * TaskState of this task is RUNNING.
      *
      * @param task the task which is being run.
@@ -53,7 +52,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed after the task's dependencies and post-execution finished.
-     *
+     * <p>
      * TaskState of the task is EXECUTED.
      *
      * @param task the task which finishes its work.
@@ -73,7 +72,7 @@ public abstract class TaskListener implements EventListener {
     /**
      * Executed when the task execution chain stopped.
      *
-     * @param success true if no error occurred during task execution.
+     * @param success  true if no error occurred during task execution.
      * @param executor the task executor with responsibility to the task execution.
      */
     public void onStop(boolean success, TaskExecutor executor) {

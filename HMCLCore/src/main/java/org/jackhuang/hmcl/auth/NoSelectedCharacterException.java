@@ -21,8 +21,8 @@ package org.jackhuang.hmcl.auth;
  * This exception gets threw when a monitor of {@link CharacterSelector} cannot select a
  * valid character.
  *
- * @see CharacterSelector
  * @author huangyuhui
+ * @see CharacterSelector
  */
 public final class NoSelectedCharacterException extends AuthenticationException {
     public NoSelectedCharacterException() {

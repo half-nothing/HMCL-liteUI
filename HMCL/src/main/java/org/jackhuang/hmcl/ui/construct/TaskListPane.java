@@ -74,11 +74,11 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
-    private TaskExecutor executor;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final List<StageNode> stageNodes = new ArrayList<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
+    private TaskExecutor executor;
 
     public TaskListPane() {
         listBox.setSpacing(0);

@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -69,6 +68,29 @@ public final class ForgeOldModMetadata {
         this.credits = credits;
         this.authorList = authorList;
         this.authors = authors;
+    }
+
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+        Path mcmod = fs.getPath("mcmod.info");
+        if (Files.notExists(mcmod))
+            throw new IOException("File " + modFile + " is not a Forge mod.");
+        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod),
+                new TypeToken<List<ForgeOldModMetadata>>() {
+                }.getType());
+        if (modList == null || modList.isEmpty())
+            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
+        ForgeOldModMetadata metadata = modList.get(0);
+        String authors = metadata.getAuthor();
+        if (StringUtils.isBlank(authors) && metadata.getAuthors().length > 0)
+            authors = String.join(", ", metadata.getAuthors());
+        if (StringUtils.isBlank(authors) && metadata.getAuthorList().length > 0)
+            authors = String.join(", ", metadata.getAuthorList());
+        if (StringUtils.isBlank(authors))
+            authors = metadata.getCredits();
+        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()),
+                authors, metadata.getVersion(), metadata.getGameVersion(),
+                StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
+                metadata.getLogoFile());
     }
 
     public String getModId() {
@@ -117,28 +139,5 @@ public final class ForgeOldModMetadata {
 
     public String[] getAuthors() {
         return authors;
-    }
-
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path mcmod = fs.getPath("mcmod.info");
-        if (Files.notExists(mcmod))
-            throw new IOException("File " + modFile + " is not a Forge mod.");
-        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod),
-                new TypeToken<List<ForgeOldModMetadata>>() {
-                }.getType());
-        if (modList == null || modList.isEmpty())
-            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
-        ForgeOldModMetadata metadata = modList.get(0);
-        String authors = metadata.getAuthor();
-        if (StringUtils.isBlank(authors) && metadata.getAuthors().length > 0)
-            authors = String.join(", ", metadata.getAuthors());
-        if (StringUtils.isBlank(authors) && metadata.getAuthorList().length > 0)
-            authors = String.join(", ", metadata.getAuthorList());
-        if (StringUtils.isBlank(authors))
-            authors = metadata.getCredits();
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()),
-                authors, metadata.getVersion(), metadata.getGameVersion(),
-                StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
-                metadata.getLogoFile());
     }
 }

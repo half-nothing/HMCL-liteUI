@@ -41,14 +41,13 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TaskExecutorDialogPane extends BorderPane {
-    private TaskExecutor executor;
-    private TaskCancellationAction onCancel;
     private final Consumer<FileDownloadTask.SpeedEvent> speedEventHandler;
-
     private final Label lblTitle;
     private final Label lblProgress;
     private final JFXButton btnCancel;
     private final TaskListPane taskListPane;
+    private TaskExecutor executor;
+    private TaskCancellationAction onCancel;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         FXUtils.setLimitWidth(this, 500);

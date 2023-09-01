@@ -36,6 +36,13 @@ import static org.jackhuang.hmcl.util.Lang.handleUncaughtException;
  */
 public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
+    protected final ObservableValue<? extends T> predecessor;
+
+    public BindingMapping(ObservableValue<? extends T> predecessor) {
+        this.predecessor = requireNonNull(predecessor);
+        bind(predecessor);
+    }
+
     public static <T> BindingMapping<?, T> of(ObservableValue<T> property) {
         if (property instanceof BindingMapping) {
             return (BindingMapping<?, T>) property;
@@ -45,13 +52,6 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
     public static <S extends Observable, T> BindingMapping<?, T> of(S watched, Function<S, T> mapper) {
         return of(Bindings.createObjectBinding(() -> mapper.apply(watched), watched));
-    }
-
-    protected final ObservableValue<? extends T> predecessor;
-
-    public BindingMapping(ObservableValue<? extends T> predecessor) {
-        this.predecessor = requireNonNull(predecessor);
-        bind(predecessor);
     }
 
     public <V> BindingMapping<?, V> map(Function<? super U, ? extends V> mapper) {
@@ -144,11 +144,10 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
     private static class AsyncMappedBinding<T, U> extends BindingMapping<T, U> {
 
+        private final Function<? super T, ? extends CompletableFuture<? extends U>> mapper;
         private boolean initialized = false;
         private T prev;
         private U value;
-
-        private final Function<? super T, ? extends CompletableFuture<? extends U>> mapper;
         private T computingPrev;
         private boolean computing = false;
 

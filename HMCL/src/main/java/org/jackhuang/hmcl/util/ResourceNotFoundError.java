@@ -21,6 +21,7 @@ import java.io.InputStream;
 
 /**
  * Suppress the throwable when we make sure the resource cannot miss.
+ *
  * @see CrashReporter
  */
 public class ResourceNotFoundError extends Error {

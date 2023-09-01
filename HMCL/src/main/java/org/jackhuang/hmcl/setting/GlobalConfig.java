@@ -35,6 +35,20 @@ import java.util.*;
 @JsonAdapter(GlobalConfig.Serializer.class)
 public class GlobalConfig implements Cloneable, Observable {
 
+    private final Map<String, Object> unknownFields = new HashMap<>();
+    private IntegerProperty agreementVersion = new SimpleIntegerProperty();
+
+    private IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
+
+    private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
+
+    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
+    private transient ObservableHelper helper = new ObservableHelper(this);
+
+    public GlobalConfig() {
+        PropertyUtils.attachListener(this, helper);
+    }
+
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
         GlobalConfig loaded = Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
@@ -45,22 +59,6 @@ public class GlobalConfig implements Cloneable, Observable {
         PropertyUtils.copyProperties(loaded, instance);
         instance.unknownFields.putAll(loaded.unknownFields);
         return instance;
-    }
-
-    private IntegerProperty agreementVersion = new SimpleIntegerProperty();
-
-    private IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
-
-    private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
-
-    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
-
-    private final Map<String, Object> unknownFields = new HashMap<>();
-
-    private transient ObservableHelper helper = new ObservableHelper(this);
-
-    public GlobalConfig() {
-        PropertyUtils.attachListener(this, helper);
     }
 
     @Override
@@ -86,48 +84,48 @@ public class GlobalConfig implements Cloneable, Observable {
         return agreementVersion.get();
     }
 
-    public IntegerProperty agreementVersionProperty() {
-        return agreementVersion;
-    }
-
     public void setAgreementVersion(int agreementVersion) {
         this.agreementVersion.set(agreementVersion);
+    }
+
+    public IntegerProperty agreementVersionProperty() {
+        return agreementVersion;
     }
 
     public int getPlatformPromptVersion() {
         return platformPromptVersion.get();
     }
 
-    public IntegerProperty platformPromptVersionProperty() {
-        return platformPromptVersion;
-    }
-
     public void setPlatformPromptVersion(int platformPromptVersion) {
         this.platformPromptVersion.set(platformPromptVersion);
+    }
+
+    public IntegerProperty platformPromptVersionProperty() {
+        return platformPromptVersion;
     }
 
     public boolean isMultiplayerRelay() {
         return multiplayerRelay.get();
     }
 
-    public BooleanProperty multiplayerRelayProperty() {
-        return multiplayerRelay;
-    }
-
     public void setMultiplayerRelay(boolean multiplayerRelay) {
         this.multiplayerRelay.set(multiplayerRelay);
+    }
+
+    public BooleanProperty multiplayerRelayProperty() {
+        return multiplayerRelay;
     }
 
     public int getMultiplayerAgreementVersion() {
         return multiplayerAgreementVersion.get();
     }
 
-    public IntegerProperty multiplayerAgreementVersionProperty() {
-        return multiplayerAgreementVersion;
-    }
-
     public void setMultiplayerAgreementVersion(int multiplayerAgreementVersion) {
         this.multiplayerAgreementVersion.set(multiplayerAgreementVersion);
+    }
+
+    public IntegerProperty multiplayerAgreementVersionProperty() {
+        return multiplayerAgreementVersion;
     }
 
     public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {

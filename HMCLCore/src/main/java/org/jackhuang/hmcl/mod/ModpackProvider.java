@@ -37,12 +37,12 @@ public interface ModpackProvider {
     Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException;
 
     /**
-     * @param zipFile the opened modpack zip file.
-     * @param file the modpack zip file path.
+     * @param zipFile  the opened modpack zip file.
+     * @param file     the modpack zip file path.
      * @param encoding encoding of zip file.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the manifest.json is missing or malformed.
      * @return the manifest.
+     * @throws IOException        if the file is not a valid zip file.
+     * @throws JsonParseException if the manifest.json is missing or malformed.
      */
     Modpack readManifest(ZipFile zipFile, Path file, Charset encoding) throws IOException, JsonParseException;
 

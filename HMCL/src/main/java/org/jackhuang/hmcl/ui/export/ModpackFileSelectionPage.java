@@ -50,6 +50,23 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
+    public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
+    private static final Map<String, String> TRANSLATION = mapOf(
+            pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
+            pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),
+            pair("minecraft/saves", i18n("modpack.files.saves")),
+            pair("minecraft/mods", i18n("modpack.files.mods")),
+            pair("minecraft/config", i18n("modpack.files.config")),
+            pair("minecraft/liteconfig", i18n("modpack.files.liteconfig")),
+            pair("minecraft/resourcepacks", i18n("modpack.files.resourcepacks")),
+            pair("minecraft/resources", i18n("modpack.files.resourcepacks")),
+            pair("minecraft/options.txt", i18n("modpack.files.options_txt")),
+            pair("minecraft/optionsshaders.txt", i18n("modpack.files.optionsshaders_txt")),
+            pair("minecraft/mods/VoxelMods", i18n("modpack.files.mods.voxelmods")),
+            pair("minecraft/dumps", i18n("modpack.files.dumps")),
+            pair("minecraft/blueprints", i18n("modpack.files.blueprints")),
+            pair("minecraft/scripts", i18n("modpack.files.scripts"))
+    );
     private final WizardController controller;
     private final String version;
     private final ModAdviser adviser;
@@ -170,22 +187,4 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     public String getTitle() {
         return i18n("modpack.wizard.step.2.title");
     }
-
-    public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
-    private static final Map<String, String> TRANSLATION = mapOf(
-            pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
-            pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),
-            pair("minecraft/saves", i18n("modpack.files.saves")),
-            pair("minecraft/mods", i18n("modpack.files.mods")),
-            pair("minecraft/config", i18n("modpack.files.config")),
-            pair("minecraft/liteconfig", i18n("modpack.files.liteconfig")),
-            pair("minecraft/resourcepacks", i18n("modpack.files.resourcepacks")),
-            pair("minecraft/resources", i18n("modpack.files.resourcepacks")),
-            pair("minecraft/options.txt", i18n("modpack.files.options_txt")),
-            pair("minecraft/optionsshaders.txt", i18n("modpack.files.optionsshaders_txt")),
-            pair("minecraft/mods/VoxelMods", i18n("modpack.files.mods.voxelmods")),
-            pair("minecraft/dumps", i18n("modpack.files.dumps")),
-            pair("minecraft/blueprints", i18n("modpack.files.blueprints")),
-            pair("minecraft/scripts", i18n("modpack.files.scripts"))
-    );
 }

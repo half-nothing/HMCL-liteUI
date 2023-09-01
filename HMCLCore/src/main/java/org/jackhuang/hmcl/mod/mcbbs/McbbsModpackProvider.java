@@ -36,6 +36,11 @@ import java.nio.file.Path;
 public final class McbbsModpackProvider implements ModpackProvider {
     public static final McbbsModpackProvider INSTANCE = new McbbsModpackProvider();
 
+    private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {
+        McbbsModpackManifest manifest = JsonUtils.fromNonNullJsonFully(json, McbbsModpackManifest.class);
+        return manifest.toModpack(encoding);
+    }
+
     @Override
     public String getName() {
         return "Mcbbs";
@@ -64,11 +69,6 @@ public final class McbbsModpackProvider implements ModpackProvider {
         }
 
         config.getManifest().injectLaunchOptions(builder);
-    }
-
-    private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {
-        McbbsModpackManifest manifest = JsonUtils.fromNonNullJsonFully(json, McbbsModpackManifest.class);
-        return manifest.toModpack(encoding);
     }
 
     @Override

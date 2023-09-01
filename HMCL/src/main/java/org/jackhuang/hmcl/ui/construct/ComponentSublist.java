@@ -36,23 +36,23 @@ public class ComponentSublist extends ComponentList {
         return headerLeft.get();
     }
 
-    public ObjectProperty<Node> headerLeftProperty() {
-        return headerLeft;
-    }
-
     public void setHeaderLeft(Node headerLeft) {
         this.headerLeft.set(headerLeft);
+    }
+
+    public ObjectProperty<Node> headerLeftProperty() {
+        return headerLeft;
     }
 
     public Node getHeaderRight() {
         return headerRight.get();
     }
 
-    public ObjectProperty<Node> headerRightProperty() {
-        return headerRight;
-    }
-
     public void setHeaderRight(Node headerRight) {
         this.headerRight.set(headerRight);
+    }
+
+    public ObjectProperty<Node> headerRightProperty() {
+        return headerRight;
     }
 }

@@ -29,15 +29,27 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Lang.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class AsyncTaskExecutor extends TaskExecutor {
 
+    private static Thread.UncaughtExceptionHandler uncaughtExceptionHandler = null;
     private CompletableFuture<Boolean> future;
 
     public AsyncTaskExecutor(Task<?> task) {
         super(task);
+    }
+
+    private static Exception convertInterruptedException(Exception e) {
+        if (e instanceof InterruptedException) {
+            return new CancellationException(e.getMessage());
+        } else {
+            return e;
+        }
+    }
+
+    public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+        AsyncTaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
     }
 
     @Override
@@ -323,19 +335,5 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         if (isCancelled()) {
             throw new CancellationException("Cancelled by user");
         }
-    }
-
-    private static Exception convertInterruptedException(Exception e) {
-        if (e instanceof InterruptedException) {
-            return new CancellationException(e.getMessage());
-        } else {
-            return e;
-        }
-    }
-
-    private static Thread.UncaughtExceptionHandler uncaughtExceptionHandler = null;
-
-    public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
-        AsyncTaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
     }
 }

@@ -227,11 +227,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return modded.get();
     }
 
-    public BooleanProperty moddedProperty() {
-        return modded;
-    }
-
     public void setModded(boolean modded) {
         this.modded.set(modded);
+    }
+
+    public BooleanProperty moddedProperty() {
+        return modded;
     }
 }

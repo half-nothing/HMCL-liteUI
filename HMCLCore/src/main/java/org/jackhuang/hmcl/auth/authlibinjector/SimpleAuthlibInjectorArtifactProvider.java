@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class SimpleAuthlibInjectorArtifactProvider implements AuthlibInjectorArtifactProvider {
 

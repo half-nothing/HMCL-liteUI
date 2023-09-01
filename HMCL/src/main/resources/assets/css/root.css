@@ -262,13 +262,13 @@
 }
 
 .two-line-list-item > .first-line > .title {
-	-fx-text-fill: #292929;
-	-fx-font-size: 15px;
+    -fx-text-fill: #292929;
+    -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
 .two-line-list-item > HBox > .subtitle {
-	-fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
@@ -308,7 +308,7 @@
 
 .bubble > HBox > .two-line-list-item > .first-line > .title,
 .bubble > HBox > .two-line-list-item > HBox > .subtitle {
-	-fx-text-fill: white;
+    -fx-text-fill: white;
 }
 
 .sponsor-pane {
@@ -633,9 +633,9 @@
  *                                                                             *
  ******************************************************************************/
 
- .jfx-radio-button {
+.jfx-radio-button {
     -jfx-selected-color: -fx-base-check-color;
- }
+}
 
 .jfx-radio-button .radio {
     -fx-stroke-width: 2.0px;
@@ -1389,7 +1389,7 @@
 
 .scroll-pane > .viewport {
     -fx-background-color: null;
- }
+}
 
 .scroll-pane .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";

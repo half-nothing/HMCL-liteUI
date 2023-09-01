@@ -32,6 +32,17 @@ public class RemoteAuthenticationException extends AuthenticationException {
         this.cause = cause;
     }
 
+    private static String buildMessage(String name, String message, String cause) {
+        StringBuilder builder = new StringBuilder(name);
+        if (message != null)
+            builder.append(": ").append(message);
+
+        if (cause != null)
+            builder.append(": ").append(cause);
+
+        return builder.toString();
+    }
+
     public String getRemoteName() {
         return name;
     }
@@ -42,16 +53,5 @@ public class RemoteAuthenticationException extends AuthenticationException {
 
     public String getRemoteCause() {
         return cause;
-    }
-
-    private static String buildMessage(String name, String message, String cause) {
-        StringBuilder builder = new StringBuilder(name);
-        if (message != null)
-            builder.append(": ").append(message);
-
-        if (cause != null)
-            builder.append(": ").append(cause);
-
-        return builder.toString();
     }
 }

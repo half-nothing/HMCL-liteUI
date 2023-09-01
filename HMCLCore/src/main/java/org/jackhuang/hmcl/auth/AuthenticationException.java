@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.auth;
 
 /**
- *
  * @author huangyuhui
  */
 public class AuthenticationException extends Exception {

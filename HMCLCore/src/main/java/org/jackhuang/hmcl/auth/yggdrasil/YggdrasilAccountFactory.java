@@ -29,7 +29,6 @@ import java.util.UUID;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
- *
  * @author huangyuhui
  */
 public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
