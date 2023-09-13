@@ -28,7 +28,7 @@ public class SyncConfig {
         this.folderConfig = new HashMap<>();
         for (String name : this.getData()) {
             Map<String, Object> object = (Map<String, Object>) Objects.requireNonNull(jsonObject.get(name));
-            SyncFolderConfig syncFolderConfig = new SyncFolderConfig(name, object);
+            SyncFolderConfig syncFolderConfig = new SyncFolderConfig(object);
             folderConfig.put(name, syncFolderConfig);
         }
     }

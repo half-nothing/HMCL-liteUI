@@ -1,5 +1,6 @@
 package cn.pigeon.update.tasks;
 
+import cn.pigeon.update.Static;
 import cn.pigeon.update.data.SyncConfig;
 import cn.pigeon.update.data.SyncFolderConfig;
 import cn.pigeon.update.enums.SyncMode;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class VerifyFiles {
     private final SyncConfig syncConfig;

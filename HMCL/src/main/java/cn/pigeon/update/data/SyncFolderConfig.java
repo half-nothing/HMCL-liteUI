@@ -9,23 +9,20 @@ import java.util.Objects;
 public class SyncFolderConfig {
     private final SyncMode mode;
     private final String serverPath;
-    private final String clientPath;
     private final Map<String, String> files;
 
     @SuppressWarnings("unchecked")
-    public SyncFolderConfig(String clientPath, Map<String, Object> stringObjectMap) {
-        this(clientPath,
-                ((String) stringObjectMap.get("mode")).toUpperCase(),
+    public SyncFolderConfig(Map<String, Object> stringObjectMap) {
+        this(((String) stringObjectMap.get("mode")).toUpperCase(),
                 (String) stringObjectMap.get("serverPath"),
                 (Map<String, String>) stringObjectMap.get("files"));
     }
 
-    public SyncFolderConfig(String clientPath, String mode, String serverPath, Map<String, String> files) {
-        this(clientPath, SyncMode.valueOf(mode.toUpperCase()), serverPath, files);
+    public SyncFolderConfig(String mode, String serverPath, Map<String, String> files) {
+        this(SyncMode.valueOf(mode.toUpperCase()), serverPath, files);
     }
 
-    public SyncFolderConfig(String clientPath, SyncMode mode, String serverPath, Map<String, String> files) {
-        this.clientPath = Objects.requireNonNull(clientPath);
+    public SyncFolderConfig(SyncMode mode, String serverPath, Map<String, String> files) {
         this.mode = Objects.requireNonNull(mode);
         this.serverPath = Objects.requireNonNull(serverPath);
         this.files = Objects.requireNonNull(files);
@@ -46,6 +43,6 @@ public class SyncFolderConfig {
 
     @Override
     public String toString() {
-        return String.format("SyncMode: %s\nServerPath: %s\nClientPath: %s\nFiles: %s", mode, serverPath, clientPath, files);
+        return String.format("SyncMode: %s\nServerPath: %s\nFiles: %s", mode, serverPath, files);
     }
 }

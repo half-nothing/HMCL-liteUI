@@ -58,6 +58,7 @@ public final class Main {
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
         System.setProperty("javafx.autoproxy.disable", "true");
+        System.setProperty("file.encoding", "UTF-8");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();

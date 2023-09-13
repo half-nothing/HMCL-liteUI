@@ -104,12 +104,12 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     ComponentSublist updatePane = new ComponentSublist();
-                    updatePane.setTitle(i18n("cn/pigeon/update"));
+                    updatePane.setTitle(i18n("update"));
                     updatePane.setHasSubtitle(true);
                     {
                         VBox headerLeft = new VBox();
 
-                        lblUpdate = new Label(i18n("cn/pigeon/update"));
+                        lblUpdate = new Label(i18n("update"));
                         lblUpdateSub = new Label();
                         lblUpdateSub.getStyleClass().add("subtitle-label");
 

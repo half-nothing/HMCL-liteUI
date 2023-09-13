@@ -166,7 +166,7 @@ public class Utils {
 
     public static String readJsonStringFromFile(File jsonFile) {
         StringBuilder stringBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(jsonFile.toPath()), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);

@@ -520,7 +520,6 @@ public final class LauncherHelper {
                                         HttpUrl.Builder builder = Utils.getBaseUrl(account, token, version.get().getId());
                                         VerifyFiles verifyFiles = new VerifyFiles(configFile, rootPath.toPath());
                                         Map<File, String> requireModFile = verifyFiles.verifyFile();
-                                        System.out.println(Static.updateMaxThread);
                                         Map<URL, File> urls = Utils.prepareForDownload(builder, requireModFile);
                                         return new DownloadRequireFileTask(urls)
                                                 .setName(i18n("update.download.config"));
