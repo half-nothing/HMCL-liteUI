@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import cn.pigeon.update.Static;
 import cn.pigeon.update.exception.HttpRequestException;
 import cn.pigeon.update.tasks.DownloadRequireFileTask;
 import cn.pigeon.update.tasks.VerifyFiles;
@@ -26,6 +27,7 @@ import cn.pigeon.update.utils.Utils;
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import okhttp3.HttpUrl;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -504,40 +506,24 @@ public final class LauncherHelper {
                 .thenComposeAsync(e -> Task.composeAsync(() -> {
                     javaVersion[0] = e;
                     File rootPath = dependencyManager.getGameRepository().getRunDirectory(version.get().getId());
-                    File modDirectory = new File(rootPath, "mods");
-                    File configDirectory = new File(rootPath, "config");
                     File pigeon = new File(rootPath, "pigeon");
                     if (!pigeon.exists()) {
                         pigeon.mkdir();
                     }
-                    File modConfig = new File(pigeon, "mods.json");
-                    File configConfig = new File(pigeon, "config.json");
-                    if (!modDirectory.exists()) {
-                        modDirectory.mkdir();
-                    }
-                    if (!configDirectory.exists()) {
-                        configDirectory.mkdir();
-                    }
+                    File configFile = new File(pigeon, "config.json");
                     return new GetTokenTask(account)
                             .setName("Get Access Key")
-                            .thenComposeAsync(res -> new CheckUpdateTask(account,
-                                    version.get().getId(), res, configConfig, modConfig, pigeon)
+                            .thenComposeAsync(token -> new CheckUpdateTask(account,
+                                    version.get().getId(), token, configFile)
                                     .setName("Check Update")
-                                    .thenComposeAsync((syncMode) -> {
-                                        String baseUrl = Utils.getBaseUrl(account, res, version.get().getId());
-                                        return Task.allOf(
-                                                Task.composeAsync(() -> {
-                                                    VerifyFiles verifyModFiles = new VerifyFiles(modDirectory.toPath(), modConfig, syncMode[0]);
-                                                    ArrayList<String> requireModFile = verifyModFiles.verifyFile();
-                                                    Map<URL, String> urls = Utils.prepareForDownload(baseUrl, requireModFile);
-                                                    return new DownloadRequireFileTask(modDirectory.toPath(), urls).setName(i18n("update.download.mods"));
-                                                }),
-                                                Task.composeAsync(() -> {
-                                                    VerifyFiles verifyConfigFiles = new VerifyFiles(configDirectory.toPath(), configConfig, syncMode[1]);
-                                                    ArrayList<String> requireConfigFile = verifyConfigFiles.verifyFile();
-                                                    Map<URL, String> urls = Utils.prepareForDownload(baseUrl, requireConfigFile);
-                                                    return new DownloadRequireFileTask(configDirectory.toPath(), urls).setName(i18n("update.download.config"));
-                                                })).whenComplete((ignored) -> FetchTask.setDownloadExecutorConcurrency(DEFAULT_CONCURRENCY));
+                                    .thenComposeAsync(() -> {
+                                        HttpUrl.Builder builder = Utils.getBaseUrl(account, token, version.get().getId());
+                                        VerifyFiles verifyFiles = new VerifyFiles(configFile, rootPath.toPath());
+                                        Map<File, String> requireModFile = verifyFiles.verifyFile();
+                                        System.out.println(Static.updateMaxThread);
+                                        Map<URL, File> urls = Utils.prepareForDownload(builder, requireModFile);
+                                        return new DownloadRequireFileTask(urls)
+                                                .setName(i18n("update.download.config"));
                                     }));
                 }).withStage("launch.state.mods"))
                 .thenComposeAsync(() -> {

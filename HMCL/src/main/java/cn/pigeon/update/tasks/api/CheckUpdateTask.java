@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
@@ -30,18 +29,13 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
     private final String packName;
     private final File configFile;
     private final Token token;
-    private final File modsConfigFile;
-    private final File tempDir;
-    private final SyncMode[] syncModes = {SyncMode.INCREMENT, SyncMode.INCREMENT};
 
-    public CheckUpdateTask(Account account, String packName, Token token, File configFile, File modsConfigFile, File tempDir) {
+    public CheckUpdateTask(Account account, String packName, Token token, File configFile) {
         this.uuid = account.getUUID().toString().replace("-", "");
         this.username = account.getUsername();
         this.packName = packName;
         this.configFile = configFile;
         this.token = token;
-        this.modsConfigFile = modsConfigFile;
-        this.tempDir = tempDir;
     }
 
     @Override
@@ -51,12 +45,12 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
         updateProgress(5, 5);
     }
 
-    @Override
-    public SyncMode[] getResult() {
-        return syncModes;
-    }
+//    @Override
+//    public SyncMode[] getResult() {
+//        return new SyncMode[2];
+//    }
 
-    public void checkUpdate() throws IOException, NoSuchAlgorithmException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void checkUpdate() throws IOException {
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(config().getBaseUrl())).newBuilder();
         updateProgress(1, 5);
         builder.addPathSegment("api");
@@ -66,7 +60,7 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
         builder.addQueryParameter("uuid", uuid);
         builder.addQueryParameter("accessKey", token.key);
         builder.addQueryParameter("packName", packName);
-        builder.addQueryParameter("localSource", Utils.calculateMD5(Utils.calculateMD5(modsConfigFile) + Utils.calculateMD5(configFile)));
+        builder.addQueryParameter("localSource", Utils.calculateMD5(configFile));
         updateProgress(2, 5);
         String url = builder.build().toString();
         Request request = new Request.Builder()
@@ -74,8 +68,6 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
                 .build();
         updateProgress(3, 5);
         Response response = Static.okHttpClient.newCall(request).execute();
-        syncModes[0] = SyncMode.valueOf(Objects.requireNonNull(response.header("X-Mod-Sync-Mode", "increment")).toUpperCase());
-        syncModes[1] = SyncMode.valueOf(Objects.requireNonNull(response.header("X-Config-Sync-Mode", "increment")).toUpperCase());
         Static.updateMaxThread = Integer.parseInt(Objects.requireNonNull(response.header("X-Update-Max-Threads", "8")));
         updateProgress(4, 5);
         if (response.code() == 304) {
@@ -84,17 +76,16 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
         ResponseBody responseBody = Objects.requireNonNull(response.body());
         if (response.isSuccessful()) {
             try (InputStream inputStream = response.body().byteStream();
-                 FileOutputStream fileOutputStream = new FileOutputStream(new File(tempDir, "config.zip"))) {
+                 FileOutputStream fileOutputStream = new FileOutputStream(configFile)) {
                 byte[] buffer = new byte[4096];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     fileOutputStream.write(buffer, 0, bytesRead);
                 }
             }
-            Utils.unzip(new File(tempDir, "config.zip"), tempDir.toPath());
             return;
         }
         Respond respond = JsonUtils.fromNonNullJson(responseBody.string(), Respond.class);
-        throw  new HttpRequestException(response.code(), respond.msg);
+        throw new HttpRequestException(response.code(), respond.msg);
     }
 }

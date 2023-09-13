@@ -132,7 +132,7 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
     @SerializedName("baseUrl")
-    private StringProperty baseUrl = new SimpleStringProperty();
+    private StringProperty baseUrl = new SimpleStringProperty("");
     /**
      * The version of UI that the user have last used.
      * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.

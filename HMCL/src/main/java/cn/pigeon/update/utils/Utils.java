@@ -6,9 +6,7 @@ import okhttp3.HttpUrl;
 import org.jackhuang.hmcl.auth.Account;
 
 import javax.xml.bind.DatatypeConverter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +19,7 @@ import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static cn.pigeon.update.Static.logger;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Utils {
@@ -62,19 +61,24 @@ public class Utils {
         return Static.defaultMacAddress;
     }
 
-    public static String calculateMD5(File path) throws NoSuchAlgorithmException {
+    public static String calculateMD5(File path) {
+        Objects.requireNonNull(path);
         if (!path.exists() || !path.isFile()) {
             return "0";
         }
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(path.toPath()), md)) {
-            byte[] buffer = new byte[8192];
-            while (dis.read(buffer) != -1) ;
-        } catch (IOException e) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(path.toPath()), md)) {
+                byte[] buffer = new byte[8192];
+                while (dis.read(buffer) != -1);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            byte[] mdBytes = md.digest();
+            return DatatypeConverter.printHexBinary(mdBytes).toLowerCase();
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        byte[] mdBytes = md.digest();
-        return DatatypeConverter.printHexBinary(mdBytes).toLowerCase();
     }
 
     public static String calculateMD5(String string) throws NoSuchAlgorithmException {
@@ -135,7 +139,7 @@ public class Utils {
         }
     }
 
-    public static String getBaseUrl(Account account, Token token, String packName) {
+    public static HttpUrl.Builder getBaseUrl(Account account, Token token, String packName) {
         final String username = account.getUsername();
         final String uuid = account.getUUID().toString().replace("-", "");
         final String accessToken = token.key;
@@ -147,16 +151,29 @@ public class Utils {
         builder.addQueryParameter("uuid", uuid);
         builder.addQueryParameter("accessKey", accessToken);
         builder.addQueryParameter("packName", packName);
-        return builder.build().toString();
+        return builder;
     }
 
-    public static Map<URL, String> prepareForDownload(String baseUrl, ArrayList<String> fileArrayList) {
-        Map<URL, String> urls = new HashMap<>();
-        for (String file : fileArrayList) {
-            HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(baseUrl)).newBuilder();
-            builder.addPathSegment(file);
-            urls.put(builder.build().url(), file);
+    public static Map<URL, File> prepareForDownload(HttpUrl.Builder urlBuilder, Map<File, String> fileArrayList) {
+        Map<URL, File> urls = new HashMap<>();
+        for (Map.Entry<File, String> entry : fileArrayList.entrySet()) {
+            urlBuilder.addPathSegment(entry.getValue());
+            urls.put(urlBuilder.build().url(), entry.getKey());
+            urlBuilder.removePathSegment(urlBuilder.getEncodedPathSegments$okhttp().size() - 1);
         }
         return urls;
+    }
+
+    public static String readJsonStringFromFile(File jsonFile) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, e.getMessage());
+        }
+        return stringBuilder.toString();
     }
 }

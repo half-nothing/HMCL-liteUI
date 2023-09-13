@@ -42,7 +42,7 @@ public class GetTokenTask extends Task<Token> {
         return token;
     }
 
-    public void getAccessToken() throws IOException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void getAccessToken() throws IOException {
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(config().getBaseUrl())).newBuilder();
         updateProgress(1, 5);
         builder.addPathSegment("api");

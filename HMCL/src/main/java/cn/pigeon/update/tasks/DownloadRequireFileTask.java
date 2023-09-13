@@ -5,6 +5,7 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -13,15 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 
 public class DownloadRequireFileTask extends Task<Void> {
 
     private final List<Task<?>> dependencies = new ArrayList<>();
-    private final Path basePath;
-    private final Map<URL, String> urls;
+    private final Map<URL, File> urls;
 
-    public DownloadRequireFileTask(Path basePath, Map<URL, String> urls) {
-        this.basePath = basePath;
+    public DownloadRequireFileTask(Map<URL, File> urls) {
         this.urls = urls;
         updateProgress(0);
     }
@@ -29,9 +29,9 @@ public class DownloadRequireFileTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         updateProgress(1, 3);
-        for (Map.Entry<URL, String> entry : urls.entrySet()){
-            FileDownloadTask task = new FileDownloadTask(entry.getKey(), basePath.getParent().resolve(entry.getValue()).toFile());
-            task.setName(entry.getValue());
+        for (Map.Entry<URL, File> entry : urls.entrySet()){
+            FileDownloadTask task = new FileDownloadTask(entry.getKey(), entry.getValue());
+            task.setName(entry.getValue().getName());
             task.setCaching(false);
             dependencies.add(task.withCounter("Download File"));
         }
@@ -42,6 +42,7 @@ public class DownloadRequireFileTask extends Task<Void> {
     @Override
     public Void getResult() {
         updateProgress(3, 3);
+        FetchTask.setDownloadExecutorConcurrency(DEFAULT_CONCURRENCY);
         return null;
     }
 
