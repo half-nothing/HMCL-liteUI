@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
+import cn.pigeon.update.Static;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -38,6 +39,8 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -45,9 +48,11 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,6 +63,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
+import static javafx.scene.control.Alert.AlertType.WARNING;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -132,14 +139,14 @@ public final class Launcher extends Application {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (showAlert(WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             } else {
                 checkConfigInTempDir();
             }
 
             if (ConfigHolder.isOwnerChanged()) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (showAlert(WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             }
 
@@ -157,6 +164,12 @@ public final class Launcher extends Application {
                 UpdateChecker.init();
 
                 primaryStage.show();
+                if (!config().isAcceptRule()) {
+                    Controllers.confirm(Static.privacyAgreement,
+                            I18n.i18n("agreement.privacy"),
+                            () -> config().setAcceptRule(true),
+                            Launcher::stopApplication);
+                }
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -206,7 +219,7 @@ public final class Launcher extends Application {
 
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+                && showAlert(WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
             System.exit(0);
         }
     }

@@ -201,6 +201,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("shownTips")
     private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
+    @SerializedName("acceptRule")
+    private BooleanProperty acceptRule = new SimpleBooleanProperty(false);
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -673,5 +676,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setDownloadThreadsPigeon(int downloadThreadsPigeon) {
         this.downloadThreadsPigeon.set(downloadThreadsPigeon);
+    }
+
+    public boolean isAcceptRule() {
+        return acceptRule.get();
+    }
+
+    public BooleanProperty acceptRuleProperty() {
+        return acceptRule;
+    }
+
+    public void setAcceptRule(boolean acceptRule) {
+        this.acceptRule.set(acceptRule);
     }
 }

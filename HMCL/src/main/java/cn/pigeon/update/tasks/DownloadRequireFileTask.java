@@ -7,11 +7,7 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.io.File;
 import java.net.URL;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
@@ -29,13 +25,12 @@ public class DownloadRequireFileTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         updateProgress(1, 3);
-        for (Map.Entry<URL, File> entry : urls.entrySet()){
+        for (Map.Entry<URL, File> entry : urls.entrySet()) {
             FileDownloadTask task = new FileDownloadTask(entry.getKey(), entry.getValue());
             task.setName(entry.getValue().getName());
             task.setCaching(false);
             dependencies.add(task.withCounter("Download File"));
         }
-        FetchTask.setDownloadExecutorConcurrency(Math.min(Static.updateMaxThread, config().getDownloadThreadsPigeon()));
         updateProgress(2, 3);
     }
 
@@ -44,6 +39,12 @@ public class DownloadRequireFileTask extends Task<Void> {
         updateProgress(3, 3);
         FetchTask.setDownloadExecutorConcurrency(DEFAULT_CONCURRENCY);
         return null;
+    }
+
+    @Override
+    public Collection<? extends Task<?>> getDependents() {
+        FetchTask.setDownloadExecutorConcurrency(Math.min(Static.updateMaxThread, config().getDownloadThreadsPigeon()));
+        return Collections.emptySet();
     }
 
     @Override

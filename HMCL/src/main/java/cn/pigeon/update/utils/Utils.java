@@ -157,7 +157,7 @@ public class Utils {
     public static Map<URL, File> prepareForDownload(HttpUrl.Builder urlBuilder, Map<File, String> fileArrayList) {
         Map<URL, File> urls = new HashMap<>();
         for (Map.Entry<File, String> entry : fileArrayList.entrySet()) {
-            urlBuilder.addPathSegment(entry.getValue());
+            urlBuilder.addEncodedPathSegment(entry.getValue().replace('\\', '/'));
             urls.put(urlBuilder.build().url(), entry.getKey());
             urlBuilder.removePathSegment(urlBuilder.getEncodedPathSegments$okhttp().size() - 1);
         }
