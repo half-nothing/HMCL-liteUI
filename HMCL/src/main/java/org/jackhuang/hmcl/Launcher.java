@@ -25,6 +25,9 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.auth.offline.Skin;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -50,8 +53,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -59,7 +64,104 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
-    public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
+
+    @Override
+    public void start(Stage primaryStage) {
+        Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+
+        CookieHandler.setDefault(COOKIE_MANAGER);
+
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
+                default:
+                    return null;
+            }
+        });
+
+        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon.png", new RemoteMod.IMod() {
+            @Override
+            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+
+            @Override
+            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+        }));
+
+        LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+        }
+
+        try {
+            try {
+                ConfigHolder.init();
+            } catch (SambaException ignored) {
+                Main.showWarningAndContinue(i18n("fatal.samba"));
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "Failed to load config", e);
+                checkConfigInTempDir();
+                checkConfigOwner();
+                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+            }
+
+            // https://lapcatsoftware.com/articles/app-translocation.html
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                    && ConfigHolder.isNewlyCreated()
+                    && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
+                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                    return;
+            } else {
+                checkConfigInTempDir();
+            }
+
+            if (ConfigHolder.isOwnerChanged()) {
+                if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                    return;
+            }
+
+            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
+                Main.showWarningAndContinue(i18n("fatal.illegal_char"));
+            }
+
+            // runLater to ensure ConfigHolder.init() finished initialization
+            Platform.runLater(() -> {
+                // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
+                // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
+                Platform.setImplicitExit(false);
+                Controllers.initialize(primaryStage);
+
+                UpdateChecker.init();
+
+                primaryStage.show();
+            });
+        } catch (Throwable e) {
+            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
+        }
+    }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
@@ -146,6 +248,12 @@ public final class Launcher extends Application {
         System.exit(1);
     }
 
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        Controllers.onApplicationStop();
+    }
+
     public static void main(String[] args) {
         if (UpdateHandler.processArguments(args)) {
             return;
@@ -166,6 +274,7 @@ public final class Launcher extends Application {
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
+            LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
                     .filter(bean -> bean.getName().equals("Metaspace"))
                     .findAny()
@@ -206,70 +315,5 @@ public final class Launcher extends Application {
         });
     }
 
-    @Override
-    public void start(Stage primaryStage) {
-        Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
-
-        CookieHandler.setDefault(COOKIE_MANAGER);
-
-        LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
-        try {
-            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
-            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
-        } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
-        }
-
-        try {
-            try {
-                ConfigHolder.init();
-            } catch (SambaException ignored) {
-                Main.showWarningAndContinue(i18n("fatal.samba"));
-            } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Failed to load config", e);
-                checkConfigInTempDir();
-                checkConfigOwner();
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
-            }
-
-            // https://lapcatsoftware.com/articles/app-translocation.html
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
-                    && ConfigHolder.isNewlyCreated()
-                    && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
-                    return;
-            } else {
-                checkConfigInTempDir();
-            }
-
-            if (ConfigHolder.isOwnerChanged()) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
-                    return;
-            }
-
-            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
-                Main.showWarningAndContinue(i18n("fatal.illegal_char"));
-            }
-
-            // runLater to ensure ConfigHolder.init() finished initialization
-            Platform.runLater(() -> {
-                // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
-                // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
-                Platform.setImplicitExit(false);
-                Controllers.initialize(primaryStage);
-
-                UpdateChecker.init();
-
-                primaryStage.show();
-            });
-        } catch (Throwable e) {
-            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
-        }
-    }
-
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        Controllers.onApplicationStop();
-    }
+    public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
 }

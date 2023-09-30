@@ -31,13 +31,15 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -48,10 +50,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -65,6 +64,7 @@ import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
+ *
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
@@ -145,10 +145,88 @@ public final class LogWindow extends Stage {
     private static class Log {
         private final String log;
         private final Log4jLevel level;
+        private boolean selected = false;
 
         public Log(String log, Log4jLevel level) {
             this.log = log;
             this.level = level;
+        }
+    }
+
+    public class LogWindowImpl extends Control {
+
+        private final ListView<Log> listView = new JFXListView<>();
+        private final BooleanProperty autoScroll = new SimpleBooleanProperty();
+        private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
+        private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
+        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
+        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
+
+        LogWindowImpl() {
+            getStyleClass().add("log-window");
+
+            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
+
+            boolean flag = false;
+            cboLines.getItems().setAll("500", "2000", "5000", "10000");
+            for (String i : cboLines.getItems())
+                if (Integer.toString(config().getLogLines()).equals(i)) {
+                    cboLines.getSelectionModel().select(i);
+                    flag = true;
+                }
+
+            if (!flag)
+                cboLines.getSelectionModel().select(2);
+
+            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
+                config().setLogLines(newValue == null ? 1000 : Integer.parseInt(newValue));
+            });
+
+            Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
+            String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
+            for (int i = 0; i < 5; ++i) {
+                buttonText.get(i).bind(Bindings.concat(levelCountMap.get(levels[i]), " " + suffix[i]));
+                levelShownMap.get(levels[i]).bind(showLevel.get(i));
+            }
+        }
+
+        private void onTerminateGame() {
+            LauncherHelper.stopManagedProcesses();
+        }
+
+        private void onClear() {
+            impl.listView.getItems().clear();
+            logs.clear();
+        }
+
+        private void onExportLogs() {
+            thread(() -> {
+                Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+                try {
+                    Files.write(logFile, logs.stream().map(x -> x.log).collect(Collectors.toList()));
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to export logs", e);
+                    return;
+                }
+
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                    alert.showAndWait();
+                });
+
+                FXUtils.showFileInExplorer(logFile);
+            });
+        }
+
+        private void onExportGameCrashInfo() {
+            if (exportGameCrashInfoCallback == null) return;
+            exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
+        }
+
+        @Override
+        protected Skin<?> createDefaultSkin() {
+            return new LogWindowSkin(this);
         }
     }
 
@@ -160,6 +238,19 @@ public final class LogWindow extends Stage {
         private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
+        private final Set<ListCell<Log>> selected = new HashSet<>();
+
+        private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
+            ToggleButton button = new ToggleButton();
+            button.setStyle("-fx-background-color: " + backgroundColor + ";");
+            button.getStyleClass().add("log-toggle");
+            button.textProperty().bind(buttonText);
+            button.setSelected(true);
+            showLevel.bind(button.selectedProperty());
+            return button;
+        }
 
         protected LogWindowSkin(LogWindowImpl control) {
             super(control);
@@ -212,7 +303,7 @@ public final class LogWindow extends Stage {
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
-                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
+                        Region clippedContainer = (Region)listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
                             maxWidthProperty().bind(clippedContainer.widthProperty());
                             prefWidthProperty().bind(clippedContainer.widthProperty());
@@ -220,6 +311,27 @@ public final class LogWindow extends Stage {
                         setPadding(new Insets(2));
                         setWrapText(true);
                         setGraphic(null);
+
+                        setOnMouseClicked(event -> {
+                            if (!event.isControlDown()) {
+                                for (ListCell<Log> logListCell: selected) {
+                                    if (logListCell != this) {
+                                        logListCell.pseudoClassStateChanged(SELECTED, false);
+                                        if (logListCell.getItem() != null) {
+                                            logListCell.getItem().selected = false;
+                                        }
+                                    }
+                                }
+
+                                selected.clear();
+                            }
+
+                            selected.add(this);
+                            pseudoClassStateChanged(SELECTED, true);
+                            if (getItem() != null) {
+                                getItem().selected = true;
+                            }
+                        });
                     }
 
                     @Override
@@ -238,11 +350,30 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.selected);
+
                         if (empty) {
                             setText(null);
                         } else {
                             setText(item.log);
                         }
+                    }
+                });
+
+                listView.setOnKeyPressed(event -> {
+                    if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        for (Log item : listView.getItems()) {
+                            if (item != null && item.selected) {
+                                if (item.log != null) {
+                                    stringBuilder.append(item.log);
+                                }
+                                stringBuilder.append('\n');
+                            }
+                        }
+
+                        FXUtils.copyText(stringBuilder.toString());
                     }
                 });
 
@@ -279,93 +410,6 @@ public final class LogWindow extends Stage {
 
                 vbox.getChildren().add(bottom);
             }
-        }
-
-        private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
-            ToggleButton button = new ToggleButton();
-            button.setStyle("-fx-background-color: " + backgroundColor + ";");
-            button.getStyleClass().add("log-toggle");
-            button.textProperty().bind(buttonText);
-            button.setSelected(true);
-            showLevel.bind(button.selectedProperty());
-            return button;
-        }
-    }
-
-    public class LogWindowImpl extends Control {
-
-        private final ListView<Log> listView = new JFXListView<>();
-        private final BooleanProperty autoScroll = new SimpleBooleanProperty();
-        private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
-        private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
-        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
-        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
-
-        LogWindowImpl() {
-            getStyleClass().add("log-window");
-
-            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
-
-            boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000", "10000");
-            for (String i : cboLines.getItems())
-                if (Integer.toString(config().getLogLines()).equals(i)) {
-                    cboLines.getSelectionModel().select(i);
-                    flag = true;
-                }
-
-            if (!flag)
-                cboLines.getSelectionModel().select(2);
-
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
-            });
-
-            Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
-            String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
-            for (int i = 0; i < 5; ++i) {
-                buttonText.get(i).bind(Bindings.concat(levelCountMap.get(levels[i]), " " + suffix[i]));
-                levelShownMap.get(levels[i]).bind(showLevel.get(i));
-            }
-        }
-
-        private void onTerminateGame() {
-            LauncherHelper.stopManagedProcesses();
-        }
-
-        private void onClear() {
-            impl.listView.getItems().clear();
-            logs.clear();
-        }
-
-        private void onExportLogs() {
-            thread(() -> {
-                Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
-                try {
-                    Files.write(logFile, logs.stream().map(x -> x.log).collect(Collectors.toList()));
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to export logs", e);
-                    return;
-                }
-
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
-                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                    alert.showAndWait();
-                });
-
-                FXUtils.showFileInExplorer(logFile);
-            });
-        }
-
-        private void onExportGameCrashInfo() {
-            if (exportGameCrashInfoCallback == null) return;
-            exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
-        }
-
-        @Override
-        protected Skin<?> createDefaultSkin() {
-            return new LogWindowSkin(this);
         }
     }
 }

@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -46,39 +47,76 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class Skin {
 
+    public enum Type {
+        DEFAULT,
+        ALEX,
+        ARI,
+        EFE,
+        KAI,
+        MAKENA,
+        NOOR,
+        STEVE,
+        SUNNY,
+        ZURI,
+        LOCAL_FILE,
+        LITTLE_SKIN,
+        CUSTOM_SKIN_LOADER_API,
+        YGGDRASIL_API;
+
+        public static Type fromStorage(String type) {
+            switch (type) {
+                case "default":
+                    return DEFAULT;
+                case "alex":
+                    return ALEX;
+                case "ari":
+                    return ARI;
+                case "efe":
+                    return EFE;
+                case "kai":
+                    return KAI;
+                case "makena":
+                    return MAKENA;
+                case "noor":
+                    return NOOR;
+                case "steve":
+                    return STEVE;
+                case "sunny":
+                    return SUNNY;
+                case "zuri":
+                    return ZURI;
+                case "local_file":
+                    return LOCAL_FILE;
+                case "little_skin":
+                    return LITTLE_SKIN;
+                case "custom_skin_loader_api":
+                    return CUSTOM_SKIN_LOADER_API;
+                case "yggdrasil_api":
+                    return YGGDRASIL_API;
+                default:
+                    return null;
+            }
+        }
+    }
+
+    private static Function<Type, InputStream> defaultSkinLoader = null;
+
+    public static void registerDefaultSkinLoader(Function<Type, InputStream> defaultSkinLoader0) {
+        defaultSkinLoader = defaultSkinLoader0;
+    }
+
     private final Type type;
     private final String cslApi;
     private final TextureModel textureModel;
     private final String localSkinPath;
     private final String localCapePath;
+
     public Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
         this.type = type;
         this.cslApi = cslApi;
         this.textureModel = textureModel;
         this.localSkinPath = localSkinPath;
         this.localCapePath = localCapePath;
-    }
-
-    public static Skin fromStorage(Map<?, ?> storage) {
-        if (storage == null) return null;
-
-        Type type = tryCast(storage.get("type"), String.class).flatMap(t -> Optional.ofNullable(Type.fromStorage(t)))
-                .orElse(Type.DEFAULT);
-        String cslApi = tryCast(storage.get("cslApi"), String.class).orElse(null);
-        String textureModel = tryCast(storage.get("textureModel"), String.class).orElse("default");
-        String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
-        String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
-
-        TextureModel model;
-        if ("default".equals(textureModel)) {
-            model = TextureModel.STEVE;
-        } else if ("slim".equals(textureModel)) {
-            model = TextureModel.ALEX;
-        } else {
-            model = TextureModel.STEVE;
-        }
-
-        return new Skin(type, cslApi, model, localSkinPath, localCapePath);
     }
 
     public Type getType() {
@@ -106,23 +144,18 @@ public class Skin {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
             case ALEX:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/alex.png")), null));
             case ARI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/ari.png")), null));
             case EFE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/efe.png")), null));
             case KAI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/kai.png")), null));
             case MAKENA:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/makena.png")), null));
             case NOOR:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/noor.png")), null));
             case STEVE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/steve.png")), null));
             case SUNNY:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/sunny.png")), null));
             case ZURI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/zuri.png")), null));
+                if (defaultSkinLoader == null) {
+                    return Task.supplyAsync(() -> null);
+                }
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;
@@ -183,56 +216,26 @@ public class Skin {
         );
     }
 
-    public enum Type {
-        DEFAULT,
-        ALEX,
-        ARI,
-        EFE,
-        KAI,
-        MAKENA,
-        NOOR,
-        STEVE,
-        SUNNY,
-        ZURI,
-        LOCAL_FILE,
-        LITTLE_SKIN,
-        CUSTOM_SKIN_LOADER_API,
-        YGGDRASIL_API;
+    public static Skin fromStorage(Map<?, ?> storage) {
+        if (storage == null) return null;
 
-        public static Type fromStorage(String type) {
-            switch (type) {
-                case "default":
-                    return DEFAULT;
-                case "alex":
-                    return ALEX;
-                case "ari":
-                    return ARI;
-                case "efe":
-                    return EFE;
-                case "kai":
-                    return KAI;
-                case "makena":
-                    return MAKENA;
-                case "noor":
-                    return NOOR;
-                case "steve":
-                    return STEVE;
-                case "sunny":
-                    return SUNNY;
-                case "zuri":
-                    return ZURI;
-                case "local_file":
-                    return LOCAL_FILE;
-                case "little_skin":
-                    return LITTLE_SKIN;
-                case "custom_skin_loader_api":
-                    return CUSTOM_SKIN_LOADER_API;
-                case "yggdrasil_api":
-                    return YGGDRASIL_API;
-                default:
-                    return null;
-            }
+        Type type = tryCast(storage.get("type"), String.class).flatMap(t -> Optional.ofNullable(Type.fromStorage(t)))
+                .orElse(Type.DEFAULT);
+        String cslApi = tryCast(storage.get("cslApi"), String.class).orElse(null);
+        String textureModel = tryCast(storage.get("textureModel"), String.class).orElse("default");
+        String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
+        String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
+
+        TextureModel model;
+        if ("default".equals(textureModel)) {
+            model = TextureModel.STEVE;
+        } else if ("slim".equals(textureModel)) {
+            model = TextureModel.ALEX;
+        } else {
+            model = TextureModel.STEVE;
         }
+
+        return new Skin(type, cslApi, model, localSkinPath, localCapePath);
     }
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
@@ -305,7 +308,7 @@ public class Skin {
         private final String cape;
         private final String elytra;
 
-        @SerializedName(value = "textures", alternate = {"skins"})
+        @SerializedName(value = "textures", alternate = { "skins" })
         private final TextureJson textures;
 
         public SkinJson(String username, String skin, String cape, String elytra, TextureJson textures) {

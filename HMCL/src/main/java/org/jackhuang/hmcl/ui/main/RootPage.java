@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -57,7 +59,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
-    private boolean checkedModpack = false;
 
     public RootPage() {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
@@ -114,31 +115,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         return mainPage;
     }
 
-    private void onRefreshedVersions(HMCLGameRepository repository) {
-        runInFX(() -> {
-            if (!checkedModpack) {
-                checkedModpack = true;
-
-                if (repository.getVersionCount() == 0) {
-                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
-                    if (modpackFile.exists()) {
-                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
-                                                modpack)
-                                        .executor())
-                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                                    executor.start();
-                                }).start();
-                    }
-                }
-            }
-        });
-    }
-
     private static class Skin extends DecoratorAnimatedPageSkin<RootPage> {
 
         protected Skin(RootPage control) {
@@ -163,21 +139,22 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
 //            AdvancedListItem gameItem = new AdvancedListItem();
-//            gameItem.setLeftGraphic(wrap(SVG::viewList));
+//            gameItem.setLeftGraphic(wrap(SVG.VIEW_LIST));
 //            gameItem.setActionButtonVisible(false);
 //            gameItem.setTitle(i18n("version.manage"));
 //            gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
 //            AdvancedListItem downloadItem = new AdvancedListItem();
-//            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
+//            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
 //            downloadItem.setActionButtonVisible(false);
 //            downloadItem.setTitle(i18n("download"));
 //            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+//            runInFX(() -> FXUtils.installFastTooltip(downloadItem, i18n("download.hint")));
 
             // fifth item in left sidebar
 //            AdvancedListItem multiplayerItem = new AdvancedListItem();
-//            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
+//            multiplayerItem.setLeftGraphic(wrap(SVG.LAN));
 //            multiplayerItem.setActionButtonVisible(false);
 //            multiplayerItem.setTitle(i18n("multiplayer"));
 //            JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
@@ -190,7 +167,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
+            launcherSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
@@ -212,5 +189,32 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
+    }
+
+    private boolean checkedModpack = false;
+
+    private void onRefreshedVersions(HMCLGameRepository repository) {
+        runInFX(() -> {
+            if (!checkedModpack) {
+                checkedModpack = true;
+
+                if (repository.getVersionCount() == 0) {
+                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
+                    if (modpackFile.exists()) {
+                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                                .thenApplyAsync(
+                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenApplyAsync(modpack -> ModpackHelper
+                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
+                                                modpack)
+                                        .executor())
+                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
+                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
+                                    executor.start();
+                                }).start();
+                    }
+                }
+            }
+        });
     }
 }

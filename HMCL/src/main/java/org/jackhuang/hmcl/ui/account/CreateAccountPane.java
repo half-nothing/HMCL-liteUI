@@ -61,6 +61,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
@@ -79,19 +81,23 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
+    private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
+    private boolean showMethodSwitcher;
+    private AccountFactory<?> factory;
+
     private final Label lblErrorMessage;
     private final JFXButton btnAccept;
     private final SpinnerPane spinner;
     private final Node body;
+
+    private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
+
     private final BooleanProperty logging = new SimpleBooleanProperty();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final WeakListenerHolder holder = new WeakListenerHolder();
-    private boolean showMethodSwitcher;
-    private AccountFactory<?> factory;
-    private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
+
     private TaskExecutor loginTask;
 
     public CreateAccountPane() {
@@ -105,7 +111,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             try {
                 factory = Accounts.getAccountFactory(preferred);
             } catch (IllegalArgumentException e) {
-                factory = Accounts.FACTORY_AUTHLIB_INJECTOR;
+                factory = Accounts.FACTORY_OFFLINE;
             }
         } else {
             showMethodSwitcher = false;
@@ -158,7 +164,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 //                    selected = tabs[i];
 //                }
 //            }
-            tabs[0] = new TabControl.Tab<>("authlibInjector", i18n("account.methods.authlib_injector"));
+
             TabHeader tabHeader = new TabHeader(tabs);
             tabHeader.getStyleClass().add("add-account-tab-header");
             tabHeader.setMinWidth(USE_PREF_SIZE);
@@ -219,35 +225,52 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             additionalData = null;
         }
 
-        logging.set(true);
-        deviceCode.set(null);
+        Runnable doCreate = () -> {
+            logging.set(true);
+            deviceCode.set(null);
 
-        loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
-                .whenComplete(Schedulers.javafx(), account -> {
-                    int oldIndex = Accounts.getAccounts().indexOf(account);
-                    if (oldIndex == -1) {
-                        Accounts.getAccounts().add(account);
-                    } else {
-                        // adding an already-added account
-                        // instead of discarding the new account, we first remove the existing one then add the new one
-                        Accounts.getAccounts().remove(oldIndex);
-                        Accounts.getAccounts().add(oldIndex, account);
-                    }
+            loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
+                    .whenComplete(Schedulers.javafx(), account -> {
+                        int oldIndex = Accounts.getAccounts().indexOf(account);
+                        if (oldIndex == -1) {
+                            Accounts.getAccounts().add(account);
+                        } else {
+                            // adding an already-added account
+                            // instead of discarding the new account, we first remove the existing one then add the new one
+                            Accounts.getAccounts().remove(oldIndex);
+                            Accounts.getAccounts().add(oldIndex, account);
+                        }
 
-                    // select the new account
-                    Accounts.setSelectedAccount(account);
+                        // select the new account
+                        Accounts.setSelectedAccount(account);
 
-                    spinner.hideSpinner();
-                    fireEvent(new DialogCloseEvent());
-                }, exception -> {
-                    if (exception instanceof NoSelectedCharacterException) {
+                        spinner.hideSpinner();
                         fireEvent(new DialogCloseEvent());
-                    } else {
-                        lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
+                    }, exception -> {
+                        if (exception instanceof NoSelectedCharacterException) {
+                            fireEvent(new DialogCloseEvent());
+                        } else {
+                            lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
+                        }
+                        body.setDisable(false);
+                        spinner.hideSpinner();
+                    }).executor(true);
+        };
+
+        if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
+            Controllers.confirm(
+                    i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
+                    MessageDialogPane.MessageType.WARNING,
+                    doCreate,
+                    () -> {
+                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        body.setDisable(false);
+                        spinner.hideSpinner();
                     }
-                    body.setDisable(false);
-                    spinner.hideSpinner();
-                }).executor(true);
+            );
+        } else {
+            doCreate.run();
+        }
     }
 
     private void onCancel() {
@@ -347,31 +370,46 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         detailsContainer.getChildren().add(detailsPane);
     }
 
-    @Override
-    public void onDialogShown() {
-        if (detailsPane instanceof AccountDetailsInputPane) {
-            ((AccountDetailsInputPane) detailsPane).focus();
-        }
-    }
-
     private static class AccountDetailsInputPane extends GridPane {
 
         // ==== authlib-injector hyperlinks ====
         private static final String[] ALLOWED_LINKS = {"homepage", "register"};
-        private final AccountFactory<?> factory;
+
+        private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
+            if (server == null) {
+                return emptyList();
+            }
+
+            Map<String, String> links = server.getLinks();
+            List<Hyperlink> result = new ArrayList<>();
+            for (String key : ALLOWED_LINKS) {
+                String value = links.get(key);
+                if (value != null) {
+                    Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
+                    FXUtils.installSlowTooltip(link, value);
+                    link.setOnAction(e -> FXUtils.openLink(value));
+                    result.add(link);
+                }
+            }
+            return unmodifiableList(result);
+        }
         // =====
-        private final BooleanBinding valid;
+
+        private final AccountFactory<?> factory;
         private @Nullable AuthlibInjectorServer server;
         private @Nullable JFXComboBox<AuthlibInjectorServer> cboServers;
         private @Nullable JFXTextField txtUsername;
         private @Nullable JFXPasswordField txtPassword;
         private @Nullable JFXTextField txtUUID;
+        private final BooleanBinding valid;
+
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
             this.factory = factory;
 
             setVgap(22);
             setHgap(15);
             setAlignment(Pos.CENTER);
+
             ColumnConstraints col0 = new ColumnConstraints();
             col0.setMinWidth(USE_PREF_SIZE);
             getColumnConstraints().add(col0);
@@ -441,7 +479,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
+                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
@@ -507,9 +545,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 //
 //                rowIndex++;
 //            }
-
+//
 //            if (factory instanceof OfflineAccountFactory) {
 //                txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
+//                runInFX(() -> FXUtils.installFastTooltip(txtUsername, i18n("account.methods.offline.name.special_characters")));
 //
 //                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
 //                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
@@ -579,25 +618,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     return true;
                 }
             };
-        }
-
-        private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
-            if (server == null) {
-                return emptyList();
-            }
-
-            Map<String, String> links = server.getLinks();
-            List<Hyperlink> result = new ArrayList<>();
-            for (String key : ALLOWED_LINKS) {
-                String value = links.get(key);
-                if (value != null) {
-                    Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
-                    FXUtils.installSlowTooltip(link, value);
-                    link.setOnAction(e -> FXUtils.openLink(value));
-                    result.add(link);
-                }
-            }
-            return unmodifiableList(result);
         }
 
         private boolean requiresEmailAsUsername() {
@@ -702,6 +722,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
+    @Override
+    public void onDialogShown() {
+        if (detailsPane instanceof AccountDetailsInputPane) {
+            ((AccountDetailsInputPane) detailsPane).focus();
+        }
+    }
+
     private static class UUIDValidator extends ValidatorBase {
 
         public UUIDValidator() {
@@ -734,4 +761,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
         }
     }
+
+    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
 }

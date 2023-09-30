@@ -53,19 +53,8 @@ public class Theme {
             Color.web("#9C27B0"), // purple
             Color.web("#B71C1C")  // red
     };
-    private static final ObjectBinding<Color> BLACK_FILL = Bindings.createObjectBinding(() -> BLACK);
-    private static final ObjectBinding<Color> WHITE_FILL = Bindings.createObjectBinding(() -> Color.WHITE);
-    private static Charset cssCharset;
-    private static ObjectBinding<Color> FOREGROUND_FILL;
-    private final Color paint;
-    private final String color;
-    private final String name;
 
-    Theme(String name, String color) {
-        this.name = name;
-        this.color = Objects.requireNonNull(color);
-        this.paint = Color.web(color);
-    }
+    private static Charset cssCharset;
 
     private static Charset getCssCharset() {
         if (cssCharset != null)
@@ -98,68 +87,14 @@ public class Theme {
         return theme == null ? BLUE : theme;
     }
 
-    public static Theme custom(String color) {
-        if (!color.startsWith("#"))
-            throw new IllegalArgumentException();
-        return new Theme(color, color);
-    }
+    private final Color paint;
+    private final String color;
+    private final String name;
 
-    public static Optional<Theme> getTheme(String name) {
-        if (name == null)
-            return Optional.empty();
-        else if (name.startsWith("#"))
-            try {
-                Color.web(name);
-                return Optional.of(custom(name));
-            } catch (IllegalArgumentException ignore) {
-            }
-        else {
-            String color = null;
-            switch (name.toLowerCase(Locale.ROOT)) {
-                case "blue":
-                    return Optional.of(BLUE);
-                case "darker_blue":
-                    color = "#283593";
-                    break;
-                case "green":
-                    color = "#43A047";
-                    break;
-                case "orange":
-                    color = "#E67E22";
-                    break;
-                case "purple":
-                    color = "#9C27B0";
-                    break;
-                case "red":
-                    color = "#F44336";
-            }
-            if (color != null)
-                return Optional.of(new Theme(name, color));
-        }
-
-        return Optional.empty();
-    }
-
-    public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
-    }
-
-    public static ObjectBinding<Color> foregroundFillBinding() {
-        if (FOREGROUND_FILL == null)
-            FOREGROUND_FILL = Bindings.createObjectBinding(
-                    () -> Theme.getTheme().getForegroundColor(),
-                    config().themeProperty()
-            );
-
-        return FOREGROUND_FILL;
-    }
-
-    public static ObjectBinding<Color> blackFillBinding() {
-        return BLACK_FILL;
-    }
-
-    public static ObjectBinding<Color> whiteFillBinding() {
-        return WHITE_FILL;
+    Theme(String name, String color) {
+        this.name = name;
+        this.color = Objects.requireNonNull(color);
+        this.paint = Color.web(color);
     }
 
     public String getName() {
@@ -209,6 +144,72 @@ public class Theme {
         }
 
         return new String[]{css, "/assets/css/root.css"};
+    }
+
+    public static Theme custom(String color) {
+        if (!color.startsWith("#"))
+            throw new IllegalArgumentException();
+        return new Theme(color, color);
+    }
+
+    public static Optional<Theme> getTheme(String name) {
+        if (name == null)
+            return Optional.empty();
+        else if (name.startsWith("#"))
+            try {
+                Color.web(name);
+                return Optional.of(custom(name));
+            } catch (IllegalArgumentException ignore) {
+            }
+        else {
+            String color = null;
+            switch (name.toLowerCase(Locale.ROOT)) {
+                case "blue":
+                    return Optional.of(BLUE);
+                case "darker_blue":
+                    color = "#283593";
+                    break;
+                case "green":
+                    color = "#43A047";
+                    break;
+                case "orange":
+                    color = "#E67E22";
+                    break;
+                case "purple":
+                    color = "#9C27B0";
+                    break;
+                case "red":
+                    color = "#F44336";
+            }
+            if (color != null)
+                return Optional.of(new Theme(name, color));
+        }
+
+        return Optional.empty();
+    }
+
+    public static String getColorDisplayName(Color c) {
+        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
+    }
+
+    private static ObjectBinding<Color> FOREGROUND_FILL;
+
+    public static ObjectBinding<Color> foregroundFillBinding() {
+        if (FOREGROUND_FILL == null)
+            FOREGROUND_FILL = Bindings.createObjectBinding(
+                    () -> Theme.getTheme().getForegroundColor(),
+                    config().themeProperty()
+            );
+
+        return FOREGROUND_FILL;
+    }
+
+    public static Color blackFill() {
+        return BLACK;
+    }
+
+    public static Color whiteFill() {
+        return Color.WHITE;
     }
 
     public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {

@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -50,10 +49,6 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * @author huangyuhui
  */
 public class DefaultLauncher extends Launcher {
-
-    private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
-            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
-    );
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -260,10 +255,15 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            res.add("--server");
-            res.add(args[0]);
-            res.add("--port");
-            res.add(args.length > 1 ? args[1] : "25565");
+            if (version.compareTo(new Version("1.20")) < 0) {
+                res.add("--server");
+                res.add(args[0]);
+                res.add("--port");
+                res.add(args.length > 1 ? args[1] : "25565");
+            } else {
+                res.add("--quickPlayMultiplayer");
+                res.add(args[0] + ":" + (args.length > 1 ? args[1] : "25565"));
+            }
         }
 
         if (options.isFullscreen())
@@ -297,6 +297,10 @@ public class DefaultLauncher extends Launcher {
                 options.getHeight() != null && options.getHeight() != 0 && options.getWidth() != null && options.getWidth() != 0
         );
     }
+
+    private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
+            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+    );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {
         return forbiddens;
@@ -415,7 +419,6 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
-
         if (StringUtils.isNotBlank(options.getWrapper())) {
             rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
         }
@@ -662,21 +665,16 @@ public class DefaultLauncher extends Launcher {
         }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
-            Throwable throwable = null;
+            processListener.onExit(exitCode, exitType);
+
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
                     ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
-                    throwable = e;
+                    LOG.log(Level.WARNING, "An Exception happened while running exit command.", e);
                 }
-            }
-
-            processListener.onExit(exitCode, exitType);
-
-            if (throwable != null) {
-                throw new RuntimeException(throwable);
             }
         }), "exit-waiter", isDaemon));
     }
