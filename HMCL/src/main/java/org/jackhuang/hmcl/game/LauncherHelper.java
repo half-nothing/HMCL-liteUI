@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import cn.pigeon.update.Static;
+import cn.pigeon.update.exception.AccountTypeErrorException;
 import cn.pigeon.update.exception.HttpRequestException;
 import cn.pigeon.update.tasks.DownloadRequireFileTask;
 import cn.pigeon.update.tasks.VerifyFiles;
@@ -31,6 +31,7 @@ import okhttp3.HttpUrl;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -71,7 +72,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -511,13 +511,16 @@ public final class LauncherHelper {
                         pigeon.mkdir();
                     }
                     File configFile = new File(pigeon, "config.json");
-                    return new GetTokenTask(account)
+                    if (!(account instanceof YggdrasilAccount)) {
+                        throw new AccountTypeErrorException();
+                    }
+                    return new GetTokenTask((YggdrasilAccount) account, version.get().getId())
                             .setName("Get Access Key")
-                            .thenComposeAsync(token -> new CheckUpdateTask(account,
+                            .thenComposeAsync(token -> new CheckUpdateTask((YggdrasilAccount) account,
                                     version.get().getId(), token, configFile)
                                     .setName("Check Update")
                                     .thenComposeAsync(() -> {
-                                        HttpUrl.Builder builder = Utils.getBaseUrl(account, token, version.get().getId());
+                                        HttpUrl.Builder builder = Utils.getBaseUrl((YggdrasilAccount) account, token, version.get().getId());
                                         VerifyFiles verifyFiles = new VerifyFiles(configFile, rootPath.toPath());
                                         Map<File, String> requireModFile = verifyFiles.verifyFile();
                                         Map<URL, File> urls = Utils.prepareForDownload(builder, requireModFile);
@@ -572,6 +575,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
+                            setting.setJavaArgs("-Dhmcl.version=hmcl-3.5liteUI -Dstart.time=" + System.currentTimeMillis());
                             LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                             return new HMCLGameLauncher(
                                     repository,
@@ -640,6 +644,8 @@ public final class LauncherHelper {
                                         message = i18n("modpack.type.curse.error");
                                 } else if (ex instanceof HttpRequestException) {
                                     message = String.format("Http code: %d\n%s", ((HttpRequestException) ex).httpCode, ex.getMessage());
+                                } else if (ex instanceof AccountTypeErrorException) {
+                                    message = i18n("lunch.failed.account.type.error");
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {

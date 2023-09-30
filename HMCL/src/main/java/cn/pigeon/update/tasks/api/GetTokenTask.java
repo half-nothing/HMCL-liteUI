@@ -10,6 +10,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -24,10 +25,12 @@ public class GetTokenTask extends Task<Token> {
     private static Token token = null;
     private final String username;
     private final String uuid;
+    private final String packName;
 
-    public GetTokenTask(Account account) {
-        this.username = account.getUsername();
+    public GetTokenTask(YggdrasilAccount account, String packName) {
+        this.username = account.getCharacter();
         this.uuid = account.getUUID().toString().replace("-", "");
+        this.packName = packName;
     }
 
     @Override
@@ -50,6 +53,7 @@ public class GetTokenTask extends Task<Token> {
         builder.addQueryParameter("macAddress", Utils.getMacAddress());
         builder.addQueryParameter("username", username);
         builder.addQueryParameter("uuid", uuid);
+        builder.addQueryParameter("packName", packName);
         updateProgress(2, 5);
         String url = builder.build().toString();
         Request request = new Request.Builder()

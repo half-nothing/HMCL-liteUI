@@ -11,6 +11,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -30,9 +31,9 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
     private final File configFile;
     private final Token token;
 
-    public CheckUpdateTask(Account account, String packName, Token token, File configFile) {
+    public CheckUpdateTask(YggdrasilAccount account, String packName, Token token, File configFile) {
         this.uuid = account.getUUID().toString().replace("-", "");
-        this.username = account.getUsername();
+        this.username = account.getCharacter();
         this.packName = packName;
         this.configFile = configFile;
         this.token = token;

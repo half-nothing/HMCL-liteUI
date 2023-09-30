@@ -177,7 +177,7 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
     @SerializedName("baseUrl")
-    private StringProperty baseUrl = new SimpleStringProperty("");
+    private StringProperty baseUrl = new SimpleStringProperty("https://sbi.pigeon-server.cn");
 
     /**
      * The version of UI that the user have last used.
