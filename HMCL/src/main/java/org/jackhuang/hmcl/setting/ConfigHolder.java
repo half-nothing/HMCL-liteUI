@@ -183,8 +183,7 @@ public final class ConfigHolder {
                 if (deserialized == null) {
                     LOG.info("Config is empty");
                 } else {
-                    Map<?, ?> raw = new Gson().fromJson(content, Map.class);
-                    ConfigUpgrader.upgradeConfig(deserialized, raw);
+                    ConfigUpgrader.upgradeConfig(deserialized, content);
                     return deserialized;
                 }
             } catch (JsonParseException e) {
