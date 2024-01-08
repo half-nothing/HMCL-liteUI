@@ -1,3 +1,5 @@
+import kotlin.streams.toList
+
 plugins {
     `java-library`
 }
@@ -15,4 +17,20 @@ dependencies {
     api("com.squareup.okhttp3:okhttp:4.11.0")
     api("javax.xml.bind:jaxb-api:2.3.1")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
+    compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:b45b6638eeaeb903aa22ea947d37c45e5716a18c")
+}
+
+tasks.getByName<JavaCompile>("compileJava") {
+    val bytecodeClasses = listOf(
+        "org/jackhuang/hmcl/util/platform/ManagedProcess"
+    )
+
+    doLast {
+        javaexec {
+            classpath(project.sourceSets["main"].compileClasspath)
+            mainClass.set("net.burningtnt.bcigenerator.BytecodeImplGenerator")
+            System.getProperty("bci.debug.address")?.let { address -> jvmArgs("-agentlib:jdwp=transport=dt_socket,server=n,address=$address,suspend=y") }
+            args(bytecodeClasses.stream().map { s -> project.layout.buildDirectory.file("classes/java/main/$s.class").get().asFile.path }.toList())
+        }
+    }
 }
