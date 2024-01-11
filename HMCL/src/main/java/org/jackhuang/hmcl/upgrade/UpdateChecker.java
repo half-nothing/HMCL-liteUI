@@ -81,9 +81,9 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
-            throw new IOException("Self verification failed");
-        }
+//        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
+//            throw new IOException("Self verification failed");
+//        }
 
         String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
                 pair("version", Metadata.VERSION),

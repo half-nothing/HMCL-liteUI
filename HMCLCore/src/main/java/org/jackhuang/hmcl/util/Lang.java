@@ -41,8 +41,7 @@ public final class Lang {
     };
     private static Timer timer;
 
-    private Lang() {
-    }
+    private Lang() {}
 
     public static <T> T requireNonNullElse(T value, T defaultValue) {
         return value != null ? value : defaultValue;

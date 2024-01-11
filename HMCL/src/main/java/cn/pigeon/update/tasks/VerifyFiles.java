@@ -49,8 +49,9 @@ public class VerifyFiles {
     private static void verifyExtraFile(Path folderPath, SyncFolderConfig folderConfig) {
         ArrayList<String> fileList = new ArrayList<>();
         Utils.listFiles(folderPath, folderPath.toFile(), fileList);
+        System.out.println(folderConfig);
         for (String filePath : fileList) {
-            if (!folderConfig.getFiles().containsKey(filePath)) {
+            if (!folderConfig.getFiles().containsKey(filePath.replace("\\", "/"))) {
                 folderPath.resolve(filePath).toFile().delete();
             }
         }
