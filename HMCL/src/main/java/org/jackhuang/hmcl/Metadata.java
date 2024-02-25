@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
+import cn.pigeon.annotation.InjectionTime;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -40,6 +41,8 @@ public final class Metadata {
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
     public static final String EULA_URL = "https://docs.hmcl.net/eula/hmcl.html";
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
+    @InjectionTime
+    public static final String BUILD_TIME = "test";
     public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY;

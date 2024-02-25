@@ -205,6 +205,7 @@ public class DownloadSettingsPage extends StackPane {
                     slider.setValue(value.intValue());
                     changedByTextField.set(false);
                 });
+
                 slider.valueProperty().addListener((value, oldVal, newVal) -> {
                     if (changedByTextField.get()) return;
                     config().downloadThreadsPigeonProperty().set(value.getValue().intValue());

@@ -210,6 +210,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("acceptRule")
     private BooleanProperty acceptRule = new SimpleBooleanProperty(false);
 
+    @SerializedName("customAuthlibInjectorFile")
+    private StringProperty customAuthlibInjectorFile = new SimpleStringProperty(null);
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -718,5 +721,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setAcceptRule(boolean acceptRule) {
         this.acceptRule.set(acceptRule);
+    }
+
+    public String getCustomAuthlibInjectorFile() {
+        return customAuthlibInjectorFile.get();
+    }
+
+    public StringProperty customAuthlibInjectorFileProperty() {
+        return customAuthlibInjectorFile;
+    }
+
+    public void setCustomAuthlibInjectorFile(String customAuthlibInjectorFile) {
+        this.customAuthlibInjectorFile.set(customAuthlibInjectorFile);
     }
 }

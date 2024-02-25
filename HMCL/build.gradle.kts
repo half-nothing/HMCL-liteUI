@@ -34,6 +34,8 @@ val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 version = "$versionRoot.$buildNumber"
 
 dependencies {
+    compileOnly(project(":Annotation"))
+    annotationProcessor(project(":AnnotationProcessor"))
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
 }
@@ -111,6 +113,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("com.github.steveice10:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
+        exclude(dependency("libs:tools:.*"))
     }
 
     manifest {

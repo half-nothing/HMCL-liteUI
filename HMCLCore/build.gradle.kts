@@ -16,6 +16,7 @@ dependencies {
     api("org.apache.commons:commons-compress:1.23.0")
     api("com.squareup.okhttp3:okhttp:4.11.0")
     api("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("libs:tools")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
     compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:b45b6638eeaeb903aa22ea947d37c45e5716a18c")
 }

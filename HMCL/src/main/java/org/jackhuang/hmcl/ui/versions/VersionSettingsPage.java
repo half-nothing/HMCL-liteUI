@@ -62,6 +62,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -194,6 +195,47 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER),
                     gameDirCustomOption
             ));
+
+            VBox authlibPath = new VBox(8);
+            {
+                Label title = new Label(i18n("settings.advanced.auth.title"));
+                authlibPath.getChildren().add(title);
+            }
+            {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setPadding(new Insets(0, 0, 0, 5));
+
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hintPane.setText(i18n("settings.advanced.auth.warn"));
+                VBox.setMargin(hintPane, new Insets(0, 0, 0, 0));
+
+                JFXCheckBox chkAutoAll = new JFXCheckBox(i18n("settings.advanced.auth.auto"));
+                VBox.setMargin(chkAutoAll, new Insets(0, 0, 0, 0));
+                FXUtils.setLimitWidth(chkAutoAll, chkAutoAll.getPrefWidth());
+
+                JFXTextField authlibInjectorJarPathField = new JFXTextField();
+                HBox.setHgrow(authlibInjectorJarPathField, Priority.ALWAYS);
+                FXUtils.bindString(authlibInjectorJarPathField, config().customAuthlibInjectorFileProperty());
+
+                if (config().getCustomAuthlibInjectorFile() == null || config().getCustomAuthlibInjectorFile().isEmpty()) {
+                    chkAutoAll.setSelected(true);
+                    authlibInjectorJarPathField.setDisable(true);
+                }
+
+                chkAutoAll.selectedProperty().addListener(((observable, oldValue, newValue) -> {
+                    if (newValue) {
+                        config().setCustomAuthlibInjectorFile(null);
+                        authlibInjectorJarPathField.clear();
+                        authlibInjectorJarPathField.setDisable(true);
+                        return;
+                    }
+                    authlibInjectorJarPathField.setDisable(false);
+                }));
+
+                hbox.getChildren().setAll(chkAutoAll, authlibInjectorJarPathField);
+                authlibPath.getChildren().add(hbox);
+            }
 
             VBox maxMemoryPane = new VBox(8);
             {
@@ -400,6 +442,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             componentList.getContent().setAll(
                     javaSublist,
                     gameDirSublist,
+                    authlibPath,
                     maxMemoryPane,
                     launcherVisibilityPane,
                     dimensionPane,

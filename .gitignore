@@ -49,3 +49,13 @@ minecraft-exported-crash-info*
 # test
 /hmcl.json
 /.hmcl.json
+/Annotation/build/tmp/compileJava/compileTransaction/stash-dir/InjectionTime.class.uniqueId0
+/AnnotationProcessor/build/libs/AnnotationProcessor-3.0.jar
+/Annotation/build/libs/Annotation-3.0.jar
+/AnnotationProcessor/build/tmp/compileJava/compileTransaction/stash-dir/javax.annotation.processing.Processor.uniqueId0
+/AnnotationProcessor/build/tmp/compileJava/compileTransaction/stash-dir/InjectionTimeProcessor.class.uniqueId1
+/AnnotationProcessor/build/classes/java/main/META-INF/services/javax.annotation.processing.Processor
+/Annotation/build/tmp/jar/MANIFEST.MF
+/AnnotationProcessor/build/tmp/jar/MANIFEST.MF
+/Annotation/build/tmp/compileJava/previous-compilation-data.bin
+/AnnotationProcessor/build/tmp/compileJava/previous-compilation-data.bin
