@@ -37,10 +37,7 @@ import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -53,10 +50,7 @@ import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.util.FutureCallback;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -66,23 +60,22 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.setting.ConfigHolder.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
+    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageX = new SimpleDoubleProperty();
     private static DoubleProperty stageY = new SimpleDoubleProperty();
     private static DoubleProperty stageWidth = new SimpleDoubleProperty();
     private static DoubleProperty stageHeight = new SimpleDoubleProperty();
+
     private static Scene scene;
     private static Stage stage;
     private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
-    private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
-    private static DecoratorController decorator;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -93,6 +86,8 @@ public final class Controllers {
         });
         return gameListPage;
     });
+    private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
+    private static DecoratorController decorator;
     private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -208,35 +203,37 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initHeight = config().getHeight();
-        double initWidth = config().getWidth();
-        double initX = config().getX() * SCREEN.getBounds().getWidth();
-        double initY = config().getY() * SCREEN.getBounds().getHeight();
+        double initWidth = Math.max(MIN_WIDTH, config().getWidth());
+        double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
 
         {
+            double initX = config().getX() * SCREEN.getBounds().getWidth();
+            double initY = config().getY() * SCREEN.getBounds().getHeight();
+
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
                 Rectangle2D bound = screen.getBounds();
 
-                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY + initHeight && initY <= bound.getMaxY() - border) {
+                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
                     invalid = false;
                     break;
                 }
             }
 
             if (invalid) {
-                initX = (0.5D - initWidth / Controllers.SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
-                initY = (0.5D - initHeight / Controllers.SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
+                initX = (0.5D - initWidth / SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
+                initY = (0.5D - initHeight / SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
             }
+
+            stage.setX(initX);
+            stage.setY(initY);
+            stageX.set(initX);
+            stageY.set(initY);
         }
 
-        stage.setX(initX);
-        stage.setY(initY);
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
-        stageX.set(initX);
-        stageY.set(initY);
         stageHeight.set(initHeight);
         stageWidth.set(initWidth);
         stage.xProperty().addListener(weakListener);
@@ -258,13 +255,13 @@ public final class Controllers {
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);
-        stage.setMinHeight(450 + 2 + 40 + 16); // bg height + border width*2 + toolbar height + shadow width*2
-        stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
-        stage.getIcons().add(newImage("/assets/img/icon.png"));
+        FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
@@ -417,5 +414,7 @@ public final class Controllers {
         stage = null;
         scene = null;
         onApplicationStop();
+
+        FXUtils.shutdown();
     }
 }

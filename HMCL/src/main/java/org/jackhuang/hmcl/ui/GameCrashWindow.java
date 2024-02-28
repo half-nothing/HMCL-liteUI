@@ -66,14 +66,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameCrashWindow extends Stage {
-    private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
     private final Version version;
     private final String memory;
     private final String total_memory;
@@ -84,11 +82,13 @@ public class GameCrashWindow extends Stage {
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
+
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
+
     private final Collection<Pair<String, Log4jLevel>> logs;
 
     public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, Collection<Pair<String, Log4jLevel>> logs) {
@@ -98,7 +98,7 @@ public class GameCrashWindow extends Stage {
         this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(version);
+        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
@@ -115,7 +115,7 @@ public class GameCrashWindow extends Stage {
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
-        getIcons().add(newImage("/assets/img/icon.png"));
+        FXUtils.setIcon(this);
 
         analyzeCrashReport();
     }
@@ -173,6 +173,8 @@ public class GameCrashWindow extends Stage {
 
                 boolean hasMultipleRules = results.keySet().stream().distinct().count() > 1;
                 if (hasMultipleRules) {
+                    segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
+                    segments.add(new Text("\n"));
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
                     LOG.log(Level.INFO, "Multiple reasons detected");
                 }
@@ -182,7 +184,6 @@ public class GameCrashWindow extends Stage {
                         case TOO_OLD_JAVA:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
                                     CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))), Controllers::onHyperlinkAction));
-                            segments.add(new Text("\n"));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
@@ -191,29 +192,32 @@ public class GameCrashWindow extends Stage {
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
                                     parseFabricModId(result.getMatcher().group("destmod"))), Controllers::onHyperlinkAction));
-                            segments.add(new Text("\n"));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("mod")),
                                     result.getMatcher().group("version")), Controllers::onHyperlinkAction));
-                            segments.add(new Text("\n"));
                             break;
                         case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
-                            segments.add(new Text("\n"));
                             break;
                         default:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
                                             .toArray()), Controllers::onHyperlinkAction));
-                            segments.add(new Text("\n"));
                             break;
                     }
                     segments.add(new Text("\n"));
+                    if (hasMultipleRules) {
+                        segments.add(new Text("\n"));
+                    } else {
+                        segments.add(new Text("\n"));
+                        segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
+                        segments.add(new Text("\n"));
+                    }
                     LOG.log(Level.INFO, "Crash cause: " + result.getRule());
                 }
                 if (results.isEmpty()) {
@@ -224,8 +228,6 @@ public class GameCrashWindow extends Stage {
                         reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
                         LOG.log(Level.INFO, "Crash reason unknown");
                     }
-
-                    feedbackTextFlow.setVisible(true);
                 } else {
                     feedbackTextFlow.setVisible(false);
                     reasonTextFlow.getChildren().setAll(segments);
@@ -233,6 +235,8 @@ public class GameCrashWindow extends Stage {
             }
         }).start();
     }
+
+    private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
 
     private String translateFabricModId(String modName) {
         switch (modName) {
