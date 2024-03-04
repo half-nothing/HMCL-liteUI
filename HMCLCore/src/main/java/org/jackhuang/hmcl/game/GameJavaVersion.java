@@ -18,9 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 public class GameJavaVersion {
-    public static final GameJavaVersion JAVA_17 = new GameJavaVersion("java-runtime-beta", 17);
-    public static final GameJavaVersion JAVA_16 = new GameJavaVersion("java-runtime-alpha", 16);
-    public static final GameJavaVersion JAVA_8 = new GameJavaVersion("jre-legacy", 8);
     private final String component;
     private final int majorVersion;
 
@@ -40,4 +37,9 @@ public class GameJavaVersion {
     public int getMajorVersion() {
         return majorVersion;
     }
+
+    public static final GameJavaVersion JAVA_21 = new GameJavaVersion("java-runtime-delta", 21);
+    public static final GameJavaVersion JAVA_17 = new GameJavaVersion("java-runtime-beta", 17);
+    public static final GameJavaVersion JAVA_16 = new GameJavaVersion("java-runtime-alpha", 16);
+    public static final GameJavaVersion JAVA_8 = new GameJavaVersion("jre-legacy", 8);
 }
