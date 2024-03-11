@@ -6,11 +6,7 @@ import cn.pigeon.update.data.Token;
 import cn.pigeon.update.enums.SyncMode;
 import cn.pigeon.update.exception.HttpRequestException;
 import cn.pigeon.update.utils.Utils;
-import okhttp3.HttpUrl;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.jackhuang.hmcl.auth.Account;
+import okhttp3.*;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -19,7 +15,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -56,16 +51,13 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
         updateProgress(1, 5);
         builder.addPathSegment("api");
         builder.addPathSegment("check-update");
-        builder.addQueryParameter("macAddress", Utils.getMacAddress());
-        builder.addQueryParameter("username", username);
-        builder.addQueryParameter("uuid", uuid);
-        builder.addQueryParameter("accessKey", token.key);
-        builder.addQueryParameter("packName", packName);
-        builder.addQueryParameter("localSource", Utils.calculateMD5(configFile));
         updateProgress(2, 5);
         String url = builder.build().toString();
+        String data = String.format("{\"macAddress\": \"%s\", \"username\": \"%s\", \"uuid\": \"%s\", \"packName\": \"%s\", \"accessKey\": \"%s\", \"localSource\": \"%s\"}",
+                Utils.getMacAddress(), username, uuid, packName, token.key, Utils.calculateMD5(configFile));
         Request request = new Request.Builder()
                 .url(url)
+                .method("POST", RequestBody.create(data, MediaType.get("application/json")))
                 .build();
         updateProgress(3, 5);
         Response response = Static.okHttpClient.newCall(request).execute();

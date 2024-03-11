@@ -5,17 +5,12 @@ import cn.pigeon.update.data.Respond;
 import cn.pigeon.update.data.Token;
 import cn.pigeon.update.exception.HttpRequestException;
 import cn.pigeon.update.utils.Utils;
-import okhttp3.HttpUrl;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.jackhuang.hmcl.auth.Account;
+import okhttp3.*;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -50,14 +45,12 @@ public class GetTokenTask extends Task<Token> {
         updateProgress(1, 5);
         builder.addPathSegment("api");
         builder.addPathSegment("get-access-key");
-        builder.addQueryParameter("macAddress", Utils.getMacAddress());
-        builder.addQueryParameter("username", username);
-        builder.addQueryParameter("uuid", uuid);
-        builder.addQueryParameter("packName", packName);
         updateProgress(2, 5);
         String url = builder.build().toString();
+        String data = String.format("{\"macAddress\": \"%s\", \"username\": \"%s\", \"uuid\": \"%s\", \"packName\": \"%s\"}", Utils.getMacAddress(), username, uuid, packName);
         Request request = new Request.Builder()
                 .url(url)
+                .method("POST", RequestBody.create(data, MediaType.get("application/json")))
                 .build();
         updateProgress(3, 5);
         Response response = Static.okHttpClient.newCall(request).execute();
