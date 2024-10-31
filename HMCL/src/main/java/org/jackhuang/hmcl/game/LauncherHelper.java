@@ -42,10 +42,7 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -505,6 +502,9 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(e -> Task.composeAsync(() -> {
                     javaVersion[0] = e;
+                    if (ConfigHolder.debugMode.getValue()) {
+                        return Task.composeAsync(() -> null);
+                    }
                     File rootPath = dependencyManager.getGameRepository().getRunDirectory(version.get().getId());
                     File pigeon = new File(rootPath, "pigeon");
                     if (!pigeon.exists()) {
@@ -518,7 +518,7 @@ public final class LauncherHelper {
                             .setName("Get Access Key")
                             .thenComposeAsync(token -> new CheckUpdateTask((YggdrasilAccount) account,
                                     version.get().getId(), token, configFile)
-                                    .setName("Check Update")
+                                    .setName("Get Sync Config")
                                     .thenComposeAsync(() -> {
                                         HttpUrl.Builder builder = Utils.getBaseUrl((YggdrasilAccount) account, token, version.get().getId());
                                         VerifyFiles verifyFiles = new VerifyFiles(configFile, rootPath.toPath());

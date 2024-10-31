@@ -25,6 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -168,6 +169,24 @@ public class DownloadSettingsPage extends StackPane {
             update.getStyleClass().add("card-non-transparent");
 
             {
+                JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.pigeon.download.skip"));
+                VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
+                chkAutoDownloadThreads.selectedProperty().bindBidirectional(ConfigHolder.debugMode);
+                update.getChildren().add(chkAutoDownloadThreads);
+
+                chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
+                    ConfigHolder.debugMode.set(newValue);
+                });
+            }
+
+            {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                hintPane.setText(i18n("settings.launcher.pigeon.download.skip.hint"));
+                update.getChildren().add(hintPane);
+            }
+
+            {
                 HBox hbox = new HBox(8);
                 hbox.setAlignment(Pos.CENTER);
                 hbox.setPadding(new Insets(0, 0, 0, 30));
@@ -221,6 +240,7 @@ public class DownloadSettingsPage extends StackPane {
                 hintPane.setText(i18n("settings.launcher.pigeon.download.hint"));
                 update.getChildren().add(hintPane);
             }
+
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.pigeon.download")), update);
         }
 

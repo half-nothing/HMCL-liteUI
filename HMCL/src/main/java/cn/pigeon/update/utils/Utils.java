@@ -3,7 +3,6 @@ package cn.pigeon.update.utils;
 import cn.pigeon.update.Static;
 import cn.pigeon.update.data.Token;
 import okhttp3.HttpUrl;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 
 import javax.xml.bind.DatatypeConverter;
@@ -143,9 +142,10 @@ public class Utils {
     public static HttpUrl.Builder getBaseUrl(YggdrasilAccount account, Token token, String packName) {
         final String username = account.getCharacter();
         final String uuid = account.getUUID().toString().replace("-", "");
-        final String accessToken = token.key;
+        final String accessToken = token.data;
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(config().getBaseUrl())).newBuilder();
         builder.addPathSegment("api");
+        builder.addPathSegment("launcher");
         builder.addPathSegment("get-source");
         builder.addQueryParameter("macAddress", getMacAddress());
         builder.addQueryParameter("username", username);

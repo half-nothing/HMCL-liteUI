@@ -85,7 +85,6 @@ public final class Accounts {
     private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
     private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
     private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
-    private final static List<String> adminAccount = Arrays.asList("Half_nothing", "fsj");
     // ====
     /**
      * True if {@link #init()} hasn't been called.
@@ -250,12 +249,6 @@ public final class Accounts {
         for (Map<Object, Object> storage : config().getAccountStorages()) {
             Account account = parseAccount(storage);
             if (account != null) {
-                if (account instanceof AuthlibInjectorAccount) {
-                    AuthlibInjectorAccount authlibInjectorAccount = (AuthlibInjectorAccount) account;
-                    if (authlibInjectorAccount.getServer().getUrl().contains("skin.pigeon-server.cn") && adminAccount.contains(authlibInjectorAccount.getUsername())) {
-                        Metadata.adminMode = true;
-                    }
-                }
                 account.setPortable(true);
                 accounts.add(account);
                 if (Boolean.TRUE.equals(storage.get("selected"))) {
@@ -267,12 +260,6 @@ public final class Accounts {
         for (Map<Object, Object> storage : globalAccountStorages) {
             Account account = parseAccount(storage);
             if (account != null) {
-                if (account instanceof AuthlibInjectorAccount) {
-                    AuthlibInjectorAccount authlibInjectorAccount = (AuthlibInjectorAccount) account;
-                    if (authlibInjectorAccount.getServer().getUrl().contains("skin.pigeon-server.cn") && adminAccount.contains(authlibInjectorAccount.getUsername())) {
-                        Metadata.adminMode = true;
-                    }
-                }
                 accounts.add(account);
             }
         }

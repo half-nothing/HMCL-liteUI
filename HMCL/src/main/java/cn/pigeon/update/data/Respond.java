@@ -1,6 +1,6 @@
 package cn.pigeon.update.data;
 
-public class Respond {
+public class Respond<T> {
     public boolean status;
     public String msg;
 }

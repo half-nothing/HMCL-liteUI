@@ -50,11 +50,12 @@ public class CheckUpdateTask extends Task<SyncMode[]> {
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(config().getBaseUrl())).newBuilder();
         updateProgress(1, 5);
         builder.addPathSegment("api");
+        builder.addPathSegment("launcher");
         builder.addPathSegment("check-update");
         updateProgress(2, 5);
         String url = builder.build().toString();
         String data = String.format("{\"macAddress\": \"%s\", \"username\": \"%s\", \"uuid\": \"%s\", \"packName\": \"%s\", \"accessKey\": \"%s\", \"localSource\": \"%s\"}",
-                Utils.getMacAddress(), username, uuid, packName, token.key, Utils.calculateMD5(configFile));
+                Utils.getMacAddress(), username, uuid, packName, token.data, Utils.calculateMD5(configFile));
         Request request = new Request.Builder()
                 .url(url)
                 .method("POST", RequestBody.create(data, MediaType.get("application/json")))

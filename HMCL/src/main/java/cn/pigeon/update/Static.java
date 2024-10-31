@@ -9,10 +9,10 @@ public class Static {
     public final static OkHttpClient okHttpClient = new OkHttpClient();
     public final static String defaultMacAddress = "00-00-00-00-00-00";
     public final static String privacyAgreement =
-            "在使用HMCL-3.5.liteUI前，需同意以下信息收集协议，否则无法正常使用我们的服务。\n" +
+            "在使用HMCL-liteUI.0.1.4前，需同意以下信息收集协议，否则无法正常使用我们的服务。\n" +
             "\n" +
-            "在使用HMCL-3.5liteUI的过程中，我们会收集您的一些隐私数据，我们十分重视你的信息的安全，这份声明将阐述我们为何、如何使用、存储你的信息。\n" +
-            "除非另有规定，这份隐私声明适用于你与HMCL-3.5liteUI之间的一切活动。我们可能会在不通知你的情况下变更这份声明，声明变更对所有用户都生效。\n" +
+            "在使用HMCL-liteUI.0.1.4的过程中，我们会收集您的一些隐私数据，我们十分重视你的信息的安全，这份声明将阐述我们为何、如何使用、存储你的信息。\n" +
+            "除非另有规定，这份隐私声明适用于你与HMCL-liteUI.0.1.4之间的一切活动。我们可能会在不通知你的情况下变更这份声明，声明变更对所有用户都生效。\n" +
             "本声明最终解释权归Pigeon Server Team所有。\n" +
             "\n" +
             "收集的信息包括以下内容：\n" +

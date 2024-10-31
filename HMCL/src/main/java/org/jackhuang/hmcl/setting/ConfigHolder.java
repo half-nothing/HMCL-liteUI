@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
@@ -31,7 +31,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -60,6 +59,7 @@ public final class ConfigHolder {
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
     private static boolean ownerChanged = false;
+    public static SimpleBooleanProperty debugMode = new SimpleBooleanProperty(false);
 
     private ConfigHolder() {
     }

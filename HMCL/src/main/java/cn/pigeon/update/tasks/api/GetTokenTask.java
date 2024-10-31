@@ -44,6 +44,7 @@ public class GetTokenTask extends Task<Token> {
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse(config().getBaseUrl())).newBuilder();
         updateProgress(1, 5);
         builder.addPathSegment("api");
+        builder.addPathSegment("launcher");
         builder.addPathSegment("get-access-key");
         updateProgress(2, 5);
         String url = builder.build().toString();

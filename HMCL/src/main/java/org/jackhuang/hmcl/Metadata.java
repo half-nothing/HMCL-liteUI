@@ -34,7 +34,7 @@ public final class Metadata {
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@"));
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
-    public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://sbi.pigeon-server.cn/api/update_link");
+    public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://sbi.pigeon-server.cn/api/launcher/update_link");
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
     public static final String HELP_URL = "https://docs.hmcl.net";
     public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
@@ -46,7 +46,6 @@ public final class Metadata {
     public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY;
-    public static boolean adminMode = false;
 
     static {
         String hmclHome = System.getProperty("hmcl.home");

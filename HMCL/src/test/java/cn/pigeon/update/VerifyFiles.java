@@ -18,6 +18,7 @@ public class VerifyFiles {
         cn.pigeon.update.tasks.VerifyFiles verifyFiles = new cn.pigeon.update.tasks.VerifyFiles(new File("D:\\WorkSpace\\Java\\HMCL\\.minecraft\\pigeon\\mods.json"), Paths.get("."));
         HttpUrl.Builder builder = Objects.requireNonNull(HttpUrl.parse("http://127.0.0.1")).newBuilder();
         builder.addPathSegment("api");
+        builder.addPathSegment("launcher");
         builder.addPathSegment("get-source");
         builder.addQueryParameter("macAddress", Utils.getMacAddress());
         builder.addQueryParameter("username", "1");
