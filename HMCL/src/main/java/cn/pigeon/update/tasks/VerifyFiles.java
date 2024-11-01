@@ -50,7 +50,7 @@ public class VerifyFiles {
         ArrayList<String> fileList = new ArrayList<>();
         Utils.listFiles(folderPath, folderPath.toFile(), fileList);
         for (String filePath : fileList) {
-            if (!folderConfig.getFiles().containsKey(filePath)) {
+            if (!folderConfig.getFiles().containsKey(filePath.replaceAll("\\\\", "/"))) {
                 folderPath.resolve(filePath).toFile().delete();
             }
         }

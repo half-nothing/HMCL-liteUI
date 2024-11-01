@@ -171,11 +171,10 @@ public class DownloadSettingsPage extends StackPane {
             {
                 JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.pigeon.download.skip"));
                 VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
-                chkAutoDownloadThreads.selectedProperty().bindBidirectional(ConfigHolder.debugMode);
                 update.getChildren().add(chkAutoDownloadThreads);
 
                 chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
-                    ConfigHolder.debugMode.set(newValue);
+                    ConfigHolder.debugMode = newValue;
                 });
             }
 

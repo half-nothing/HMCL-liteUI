@@ -502,7 +502,7 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(e -> Task.composeAsync(() -> {
                     javaVersion[0] = e;
-                    if (ConfigHolder.debugMode.getValue()) {
+                    if (ConfigHolder.debugMode) {
                         return Task.composeAsync(() -> null);
                     }
                     File rootPath = dependencyManager.getGameRepository().getRunDirectory(version.get().getId());

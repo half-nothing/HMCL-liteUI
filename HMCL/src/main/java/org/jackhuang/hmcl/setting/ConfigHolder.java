@@ -59,7 +59,7 @@ public final class ConfigHolder {
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
     private static boolean ownerChanged = false;
-    public static SimpleBooleanProperty debugMode = new SimpleBooleanProperty(false);
+    public static boolean debugMode = false;
 
     private ConfigHolder() {
     }
