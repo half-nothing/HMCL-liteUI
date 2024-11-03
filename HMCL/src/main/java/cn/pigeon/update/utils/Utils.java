@@ -23,6 +23,10 @@ import static cn.pigeon.update.Static.logger;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Utils {
+    public static boolean isPathFromRoot(String path) {
+        return path.startsWith("/") || path.matches("^[A-Za-z]:\\\\.*");
+    }
+
     public static String getMacAddress() {
         try {
             InetAddress inetAddress = null;
@@ -70,7 +74,7 @@ public class Utils {
             MessageDigest md = MessageDigest.getInstance("MD5");
             try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(path.toPath()), md)) {
                 byte[] buffer = new byte[8192];
-                while (dis.read(buffer) != -1);
+                while (dis.read(buffer) != -1) ;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

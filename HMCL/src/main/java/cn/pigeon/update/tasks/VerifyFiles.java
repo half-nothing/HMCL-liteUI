@@ -1,6 +1,5 @@
 package cn.pigeon.update.tasks;
 
-import cn.pigeon.update.Static;
 import cn.pigeon.update.data.SyncConfig;
 import cn.pigeon.update.data.SyncFolderConfig;
 import cn.pigeon.update.enums.SyncMode;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 public class VerifyFiles {
     private final SyncConfig syncConfig;
@@ -29,6 +27,9 @@ public class VerifyFiles {
         List<String> folderName = syncConfig.getData();
         Map<String, SyncFolderConfig> syncFolderConfig = syncConfig.getFolderConfig();
         for (String folder : folderName) {
+            if (Utils.isPathFromRoot(folder)) {
+                throw new RuntimeException("Invalid file path: " + folder);
+            }
             Path folderPath = basePath.resolve(folder);
             SyncFolderConfig folderConfig = syncFolderConfig.get(folder);
             verifyFolder(folderPath, folderConfig, requiredFile);
