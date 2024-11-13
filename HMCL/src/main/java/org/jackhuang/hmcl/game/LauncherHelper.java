@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import cn.pigeon.update.exception.AccountTypeErrorException;
+import cn.pigeon.update.exception.ConnectionErrorException;
 import cn.pigeon.update.exception.HttpRequestException;
+import cn.pigeon.update.exception.InterfaceErrorException;
 import cn.pigeon.update.tasks.DownloadRequireFileTask;
 import cn.pigeon.update.tasks.VerifyFiles;
 import cn.pigeon.update.tasks.api.CheckUpdateTask;
@@ -108,9 +110,7 @@ public final class LauncherHelper {
                     .withStage("launch.state.java");
         }
 
-        return Task.composeAsync(() -> {
-                    return setting.getJavaVersion(gameVersion, version);
-                })
+        return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
                 .thenComposeAsync(Schedulers.javafx(), javaVersion -> {
                     // Reset invalid java version
                     if (javaVersion == null) {
@@ -642,10 +642,14 @@ public final class LauncherHelper {
                                         message = i18n("modpack.type.curse.not_found");
                                     else
                                         message = i18n("modpack.type.curse.error");
+                                } else if (ex instanceof InterfaceErrorException) {
+                                    message = i18n("launch.failed.interface.error");
+                                } else if (ex instanceof ConnectionErrorException) {
+                                    message = i18n("launch.failed.address.error");
                                 } else if (ex instanceof HttpRequestException) {
                                     message = String.format("Http code: %d\n%s", ((HttpRequestException) ex).httpCode, ex.getMessage());
                                 } else if (ex instanceof AccountTypeErrorException) {
-                                    message = i18n("lunch.failed.account.type.error");
+                                    message = i18n("launch.failed.account.type.error");
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
