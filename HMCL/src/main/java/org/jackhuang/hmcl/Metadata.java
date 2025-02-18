@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl;
 
-import cn.pigeon.annotation.InjectionTime;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -29,28 +28,32 @@ import java.nio.file.Paths;
  * Stores metadata about this application.
  */
 public final class Metadata {
+    private Metadata() {}
+
     public static final String NAME = "HMCL";
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@"));
+
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
-    public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://sbi.pigeon-server.cn/api/launcher/update_link");
+
+    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
     public static final String HELP_URL = "https://docs.hmcl.net";
     public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
     public static final String EULA_URL = "https://docs.hmcl.net/eula/hmcl.html";
+
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
-    @InjectionTime
-    public static final String BUILD_TIME = "test";
     public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
+
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY;
 
     static {
         String hmclHome = System.getProperty("hmcl.home");
         if (hmclHome == null) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
                     HMCL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath();
@@ -63,9 +66,6 @@ public final class Metadata {
         } else {
             HMCL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
         }
-    }
-
-    private Metadata() {
     }
 
     public static boolean isStable() {

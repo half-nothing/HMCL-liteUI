@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -34,36 +33,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    public static final EventBus speedEvent = new EventBus();
-    private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
-    private static final AtomicInteger downloadSpeed = new AtomicInteger(0);
-    public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
-    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
-
-    static {
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
-            }
-        }, 0, 1000);
-    }
-
     protected final List<URL> urls;
     protected final int retry;
     protected boolean caching;
@@ -81,53 +59,6 @@ public abstract class FetchTask<T> extends Task<T> {
         setExecutor(download());
     }
 
-    private static void updateDownloadSpeed(int speed) {
-        downloadSpeed.addAndGet(speed);
-    }
-
-    /**
-     * Get singleton instance of the thread pool for file downloading.
-     *
-     * @return Thread pool for FetchTask
-     */
-    protected static ExecutorService download() {
-        if (DOWNLOAD_EXECUTOR == null) {
-            synchronized (Schedulers.class) {
-                if (DOWNLOAD_EXECUTOR == null) {
-                    DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
-                }
-            }
-        }
-
-        return DOWNLOAD_EXECUTOR;
-    }
-
-    public static int getDownloadExecutorConcurrency() {
-        synchronized (Schedulers.class) {
-            return downloadExecutorConcurrency;
-        }
-    }
-
-    public static void setDownloadExecutorConcurrency(int concurrency) {
-        concurrency = Math.max(concurrency, 1);
-        synchronized (Schedulers.class) {
-            if (DOWNLOAD_EXECUTOR == null) {
-                download();
-            }
-            if (concurrency == downloadExecutorConcurrency){
-                return;
-            }
-            if (concurrency > downloadExecutorConcurrency) {
-                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
-                DOWNLOAD_EXECUTOR.setCorePoolSize(concurrency);
-            } else {
-                DOWNLOAD_EXECUTOR.setCorePoolSize(concurrency);
-                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
-            }
-            downloadExecutorConcurrency = concurrency;
-        }
-    }
-
     public void setCaching(boolean caching) {
         this.caching = caching;
     }
@@ -136,8 +67,7 @@ public abstract class FetchTask<T> extends Task<T> {
         this.repository = repository;
     }
 
-    protected void beforeDownload(URL url) throws IOException {
-    }
+    protected void beforeDownload(URL url) throws IOException {}
 
     protected abstract void useCachedResult(Path cachedFile) throws IOException;
 
@@ -151,24 +81,19 @@ public abstract class FetchTask<T> extends Task<T> {
         URL failedURL = null;
         boolean checkETag;
         switch (shouldCheckETag()) {
-            case CHECK_E_TAG:
-                checkETag = true;
-                break;
-            case NOT_CHECK_E_TAG:
-                checkETag = false;
-                break;
-            default:
-                return;
+            case CHECK_E_TAG: checkETag = true; break;
+            case NOT_CHECK_E_TAG: checkETag = false; break;
+            default: return;
         }
 
         int repeat = 0;
-        download:
-        for (URL url : urls) {
+        download: for (URL url : urls) {
             for (int retryTime = 0; retryTime < retry; retryTime++) {
                 if (isCancelled()) {
                     break download;
                 }
 
+                List<String> redirects = null;
                 try {
                     beforeDownload(url);
 
@@ -178,7 +103,9 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
-                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn);
+                        redirects = new ArrayList<>();
+
+                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn, redirects);
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -188,7 +115,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 useCachedResult(cache);
                                 return;
                             } catch (IOException e) {
-                                Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload " + url, e);
+                                LOG.warning("Unable to use cached file, redownload " + url, e);
                                 repository.removeRemoteEntry(conn);
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
@@ -239,13 +166,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 } catch (FileNotFoundException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", not found", ex);
+                    LOG.warning("Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat), ex);
+                    LOG.warning("Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }
@@ -254,10 +181,21 @@ public abstract class FetchTask<T> extends Task<T> {
             throw new DownloadException(failedURL, exception);
     }
 
-    protected enum EnumCheckETag {
-        CHECK_E_TAG,
-        NOT_CHECK_E_TAG,
-        CACHED
+    private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
+    private static final AtomicInteger downloadSpeed = new AtomicInteger(0);
+    public static final EventBus speedEvent = new EventBus();
+
+    static {
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+            }
+        }, 0, 1000);
+    }
+
+    private static void updateDownloadSpeed(int speed) {
+        downloadSpeed.addAndGet(speed);
     }
 
     public static class SpeedEvent extends Event {
@@ -271,7 +209,6 @@ public abstract class FetchTask<T> extends Task<T> {
 
         /**
          * Download speed in byte/sec.
-         *
          * @return download speed
          */
         public int getSpeed() {
@@ -298,6 +235,12 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
+    protected enum EnumCheckETag {
+        CHECK_E_TAG,
+        NOT_CHECK_E_TAG,
+        CACHED
+    }
+    
     protected static final class DownloadState {
         private final int startPosition;
         private final int endPosition;
@@ -333,5 +276,50 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected static final class DownloadMission {
 
+    }
+
+    public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
+    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
+
+    /**
+     * Get singleton instance of the thread pool for file downloading.
+     *
+     * @return Thread pool for FetchTask
+     */
+    protected static ExecutorService download() {
+        if (DOWNLOAD_EXECUTOR == null) {
+            synchronized (Schedulers.class) {
+                if (DOWNLOAD_EXECUTOR == null) {
+                    DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
+                }
+            }
+        }
+
+        return DOWNLOAD_EXECUTOR;
+    }
+
+    public static void setDownloadExecutorConcurrency(int concurrency) {
+        concurrency = Math.max(concurrency, 1);
+        synchronized (Schedulers.class) {
+            downloadExecutorConcurrency = concurrency;
+
+            ThreadPoolExecutor downloadExecutor = DOWNLOAD_EXECUTOR;
+            if (downloadExecutor != null) {
+                if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                    downloadExecutor.setCorePoolSize(concurrency);
+                } else {
+                    downloadExecutor.setCorePoolSize(concurrency);
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                }
+            }
+        }
+    }
+
+    public static int getDownloadExecutorConcurrency() {
+        synchronized (Schedulers.class) {
+            return downloadExecutorConcurrency;
+        }
     }
 }

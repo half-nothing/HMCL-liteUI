@@ -63,7 +63,8 @@ public final class OSRestriction {
     }
 
     public boolean allow() {
-        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT_OS)
+        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT_OS
+                && !(name == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
             return false;
 
         if (version != null)

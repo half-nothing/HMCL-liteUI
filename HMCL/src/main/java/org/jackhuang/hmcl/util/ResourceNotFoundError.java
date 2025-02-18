@@ -24,7 +24,7 @@ import java.io.InputStream;
  *
  * @see CrashReporter
  */
-public class ResourceNotFoundError extends Error {
+public final class ResourceNotFoundError extends Error {
     public ResourceNotFoundError(String message) {
         super(message);
     }

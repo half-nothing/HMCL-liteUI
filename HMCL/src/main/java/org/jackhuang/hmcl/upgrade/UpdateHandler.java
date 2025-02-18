@@ -32,7 +32,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,13 +41,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateHandler {
@@ -64,17 +64,22 @@ public final class UpdateHandler {
             try {
                 performMigration();
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to perform migration", e);
+                LOG.warning("Failed to perform migration", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
         }
 
         if (args.length == 2 && args[0].equals("--apply-to")) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL));
+                return true;
+            }
+
             try {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to apply update", e);
+                LOG.warning("Failed to apply update", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
@@ -91,12 +96,17 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+            Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
+            return;
+        }
+
         Controllers.dialog(new UpgradeDialog(version, () -> {
             Path downloaded;
             try {
                 downloaded = Files.createTempFile("hmcl-update-", ".jar");
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to create temp file", e);
+                LOG.warning("Failed to create temp file", e);
                 return;
             }
 
@@ -110,20 +120,20 @@ public final class UpdateHandler {
 
                 if (success) {
                     try {
-                        if (!IntegrityChecker.isSelfVerified()) {
+                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
-                        System.exit(0);
+                        Main.exit(0);
                     } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                        LOG.warning("Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
                     }
 
                 } else {
                     Exception e = executor.getException();
-                    LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                    LOG.warning("Failed to update to " + version, e);
                     if (e instanceof CancellationException) {
                         Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
                     } else {
@@ -138,7 +148,9 @@ public final class UpdateHandler {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        IntegrityChecker.requireVerifiedJar(self);
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
+            throw new IOException("Self verification failed");
+        }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
         Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
@@ -148,7 +160,7 @@ public final class UpdateHandler {
                 Files.move(target, newFilename.get());
                 target = newFilename.get();
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to move target", e);
+                LOG.warning("Failed to move target", e);
             }
         }
 
@@ -156,13 +168,21 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        IntegrityChecker.requireVerifiedJar(updateTo);
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+            IntegrityChecker.verifyJar(updateTo);
+        }
         startJava(updateTo, "--apply-to", self.toString());
     }
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
-        commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+        commandline.add(JavaRuntime.getDefault().getBinary().toString());
+        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
+                commandline.add("-D" + key + "=" + entry.getValue());
+            }
+        }
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
@@ -186,7 +206,11 @@ public final class UpdateHandler {
     }
 
     private static Path getCurrentLocation() throws IOException {
-        return JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
+        Path path = JarUtils.thisJarPath();
+        if (path == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+        return path;
     }
 
     // ==== support for old versions ===
@@ -226,10 +250,10 @@ public final class UpdateHandler {
     }
 
     private static boolean isFirstLaunchAfterUpgrade() {
-        Optional<Path> currentPath = JarUtils.thisJar();
-        if (currentPath.isPresent()) {
+        Path currentPath = JarUtils.thisJarPath();
+        if (currentPath != null) {
             Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
-            if (currentPath.get().toAbsolutePath().equals(updated.toAbsolutePath())) {
+            if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
         }
@@ -247,11 +271,10 @@ public final class UpdateHandler {
                     LOG.info("Successfully broke the force update feature");
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to break the force update feature", e);
+                LOG.warning("Failed to break the force update feature", e);
             } catch (JsonParseException e) {
                 hmclVersionJson.toFile().delete();
             }
         }
     }
-    // ====
 }

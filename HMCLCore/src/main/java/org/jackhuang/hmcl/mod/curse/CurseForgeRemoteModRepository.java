@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash2;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Nullable;
@@ -36,35 +38,25 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
-    public static final int SECTION_BUKKIT_PLUGIN = 5;
-    public static final int SECTION_MOD = 6;
-    public static final int SECTION_RESOURCE_PACK = 12;
-    public static final int SECTION_WORLD = 17;
-    public static final int SECTION_MODPACK = 4471;
-    public static final int SECTION_CUSTOMIZATION = 4546;
-    public static final int SECTION_ADDONS = 4559; // For Pocket Edition
-    public static final int SECTION_UNKNOWN1 = 4944;
-    public static final int SECTION_UNKNOWN2 = 4979;
-    public static final int SECTION_UNKNOWN3 = 4984;
-    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MOD, SECTION_MOD);
-    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MODPACK, SECTION_MODPACK);
-    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
-    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
-    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
-    private final Type type;
-    private final int section;
-    public CurseForgeRemoteModRepository(Type type, int section) {
-        this.type = type;
-        this.section = section;
-    }
+
+    private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
+    }
+
+    private final Type type;
+    private final int section;
+
+    public CurseForgeRemoteModRepository(Type type, int section) {
+        this.type = type;
+        this.section = section;
     }
 
     @Override
@@ -103,8 +95,12 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return "asc";
     }
 
+    private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
+        return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
+    }
+
     @Override
-    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
         if (category != null) categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
@@ -115,12 +111,35 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                         pair("searchFilter", searchFilter),
                         pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
                         pair("sortOrder", toSortOrder(sortOrder)),
-                        pair("index", Integer.toString(pageOffset)),
+                        pair("index", Integer.toString(pageOffset * pageSize)),
                         pair("pageSize", Integer.toString(pageSize)))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon>>>() {
-                }.getType());
-        return response.getData().stream().map(CurseAddon::toMod);
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+        if (searchFilter.isEmpty()) {
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+        }
+
+        // https://github.com/HMCL-dev/HMCL/issues/1549
+        String lowerCaseSearchFilter = searchFilter.toLowerCase();
+        Map<String, Integer> searchFilterWords = new HashMap<>();
+        for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
+            searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
+        }
+
+        StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
+
+        return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
+            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
+            int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
+
+            for (String s : StringUtils.tokenize(lowerCaseResult)) {
+                if (searchFilterWords.containsKey(s)) {
+                    diff -= WORD_PERFECT_MATCH_WEIGHT * searchFilterWords.get(s) * s.length();
+                }
+            }
+
+            return pair(remoteMod, diff);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
     }
 
     @Override
@@ -141,11 +160,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
+        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<FingerprintMatchesResult>>() {
-                }.getType());
+                .getJson(Response.typeOf(FingerprintMatchesResult.class));
 
         if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
             return Optional.empty();
@@ -158,8 +176,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod getModById(String id) throws IOException {
         Response<CurseAddon> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id)
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.class));
         return response.data.toMod();
     }
 
@@ -167,8 +184,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         Response<CurseAddon.LatestFile> response = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon.LatestFile>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.LatestFile.class));
         return response.getData().toVersion().getFile();
     }
 
@@ -177,16 +193,14 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                         pair("pageSize", "10000"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.LatestFile>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
         Response<List<CurseAddon.Category>> categories = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.Category>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
         return reorganizeCategories(categories.getData(), section);
     }
 
@@ -216,6 +230,23 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
         return result;
     }
+
+    public static final int SECTION_BUKKIT_PLUGIN = 5;
+    public static final int SECTION_MOD = 6;
+    public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_WORLD = 17;
+    public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_CUSTOMIZATION = 4546;
+    public static final int SECTION_ADDONS = 4559; // For Pocket Edition
+    public static final int SECTION_UNKNOWN1 = 4944;
+    public static final int SECTION_UNKNOWN2 = 4979;
+    public static final int SECTION_UNKNOWN3 = 4984;
+
+    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MOD, SECTION_MOD);
+    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MODPACK, SECTION_MODPACK);
+    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
+    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
 
     public static class Pagination {
         private final int index;
@@ -248,6 +279,17 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     public static class Response<T> {
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType);
+        }
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(TypeToken<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType.getType());
+        }
+
         private final T data;
         private final Pagination pagination;
 

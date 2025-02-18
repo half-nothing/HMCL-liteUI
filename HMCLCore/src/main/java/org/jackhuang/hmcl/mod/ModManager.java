@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.mod.modinfo.*;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -25,64 +28,42 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.*;
 
 public final class ModManager {
-    public static final String DISABLED_EXTENSION = ".disabled";
-    public static final String OLD_EXTENSION = ".old";
+    @FunctionalInterface
+    private interface ModMetadataReader {
+        LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
+    }
+
+    private static final Map<String, Pair<ModMetadataReader[], String>> READERS;
+
+    static {
+        TreeMap<String, Pair<ModMetadataReader[], String>> readers = new TreeMap<>();
+        readers.put("zip", Pair.pair(new ModMetadataReader[]{
+                ForgeOldModMetadata::fromFile,
+                ForgeNewModMetadata::fromFile,
+                FabricModMetadata::fromFile,
+                QuiltModMetadata::fromFile,
+                PackMcMeta::fromFile,
+        }, ""));
+        readers.put("jar", readers.get("zip"));
+        readers.put("litemod", Pair.pair(new ModMetadataReader[]{
+                LiteModMetadata::fromFile
+        }, "LiteLoader Mod"));
+        READERS = Collections.unmodifiableMap(readers);
+    }
+
     private final GameRepository repository;
     private final String id;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
     private final HashMap<LocalMod, LocalMod> localMods = new HashMap<>();
+
     private boolean loaded = false;
 
     public ModManager(GameRepository repository, String id) {
         this.repository = repository;
         this.id = id;
-    }
-
-    public static String getModName(Path file) {
-        return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
-    }
-
-    public static boolean isFileNameMod(Path file) {
-        String name = getModName(file);
-        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
-    }
-
-    public static boolean isFileMod(Path modFile) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
-                return true;
-            }
-
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public static String getMcbbsUrl(String mcbbsId) {
-        return String.format("https://www.mcbbs.net/thread-%s-1-1.html", mcbbsId);
     }
 
     public GameRepository getRepository() {
@@ -113,46 +94,28 @@ public final class ModManager {
 
     public LocalModFile getModInfo(Path modFile) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(modFile), DISABLED_EXTENSION, OLD_EXTENSION);
-        String description;
-        if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-                try {
-                    return ForgeOldModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return ForgeNewModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return FabricModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return PackMcMeta.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-            } catch (Exception ignored) {
-            }
-
-            description = "";
-        } else if (fileName.endsWith(".litemod")) {
-            try {
-                return LiteModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-                description = "LiteLoader Mod";
-            }
-        } else {
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+        Pair<ModMetadataReader[], String> currentReader = READERS.get(extension);
+        if (currentReader == null) {
             throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            for (ModMetadataReader reader : currentReader.getKey()) {
+                try {
+                    return reader.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
         return new LocalModFile(this,
                 getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.UNKNOWN),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
-                new LocalModFile.Description(description));
+                new LocalModFile.Description(currentReader.getValue())
+        );
     }
 
     public void refreshMods() throws IOException {
@@ -294,12 +257,54 @@ public final class ModManager {
         return enabled;
     }
 
+    public static String getModName(Path file) {
+        return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
+    }
+
     public boolean isOld(Path file) {
         return FileUtils.getName(file).endsWith(OLD_EXTENSION);
     }
 
     public boolean isDisabled(Path file) {
         return FileUtils.getName(file).endsWith(DISABLED_EXTENSION);
+    }
+
+    public static boolean isFileNameMod(Path file) {
+        String name = getModName(file);
+        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+    }
+
+    public static boolean isFileMod(Path modFile) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
+                // Forge mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("fabric.mod.json"))) {
+                // Fabric mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("quilt.mod.json"))) {
+                // Quilt mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("litemod.json"))) {
+                // Liteloader mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("pack.mcmeta"))) {
+                // resource pack, data pack
+                return true;
+            }
+
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**
@@ -316,4 +321,7 @@ public final class ModManager {
     public Path getSimpleModPath(String fileName) {
         return getModsDirectory().resolve(fileName);
     }
+
+    public static final String DISABLED_EXTENSION = ".disabled";
+    public static final String OLD_EXTENSION = ".old";
 }

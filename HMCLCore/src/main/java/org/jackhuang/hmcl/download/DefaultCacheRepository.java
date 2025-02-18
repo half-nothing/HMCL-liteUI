@@ -21,9 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -38,13 +36,14 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public class DefaultCacheRepository extends CacheRepository {
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Path librariesDir;
     private Path indexFile;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Index index = null;
 
     public DefaultCacheRepository() {
@@ -65,11 +64,11 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile))
-                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile.toFile()), Index.class);
+                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile), Index.class);
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
+            LOG.warning("Unable to read index file", e);
             index = new Index();
         } finally {
             lock.writeLock().unlock();
@@ -82,7 +81,7 @@ public class DefaultCacheRepository extends CacheRepository {
      * If cannot be verified, the library will not be cached.
      *
      * @param library the library being cached
-     * @param jar     the file of library
+     * @param jar the file of library
      */
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
@@ -107,7 +106,7 @@ public class DefaultCacheRepository extends CacheRepository {
                 // or we will not cache the library
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
+            LOG.warning("Unable to calc hash value of file " + jar, e);
         }
     }
 
@@ -171,8 +170,8 @@ public class DefaultCacheRepository extends CacheRepository {
      * Caches the library file to repository.
      *
      * @param library the library to cache
-     * @param path    the file being cached, must be verified
-     * @param forge   true if this library is provided by Forge
+     * @param path the file being cached, must be verified
+     * @param forge true if this library is provided by Forge
      * @return cached file location
      * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
      */
@@ -182,7 +181,7 @@ public class DefaultCacheRepository extends CacheRepository {
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
-        FileUtils.copyFile(path.toFile(), cache.toFile());
+        FileUtils.copyFile(path, cache);
 
         Lock writeLock = lock.writeLock();
         writeLock.lock();
@@ -200,15 +199,49 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
-            FileUtils.writeText(indexFile.toFile(), JsonUtils.GSON.toJson(index));
+            FileUtils.writeText(indexFile, JsonUtils.GSON.toJson(index));
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to save index.json", e);
+            LOG.error("Unable to save index.json", e);
+        }
+    }
+
+    /**
+     * {
+     *     "libraries": {
+     *         // allow a library has multiple hash code.
+     *         [
+     *             "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
+     *             "hash": "blablabla",
+     *             "type": "forge"
+     *         ]
+     *     }
+     *     // assets and versions will not be included in index.
+     * }
+     */
+    private static final class Index implements Validation {
+        private final Set<LibraryIndex> libraries;
+
+        public Index() {
+            this(new HashSet<>());
+        }
+
+        public Index(Set<LibraryIndex> libraries) {
+            this.libraries = Objects.requireNonNull(libraries);
+        }
+
+        @NotNull
+        public Set<LibraryIndex> getLibraries() {
+            return libraries;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (libraries == null)
+                throw new JsonParseException("Index.libraries cannot be null");
         }
     }
 
     private static final class LibraryIndex implements Validation {
-        public static final String TYPE_FORGE = "forge";
-        public static final String TYPE_JAR = "jar";
         private final String name;
         private final String hash;
         private final String type;
@@ -258,41 +291,8 @@ public class DefaultCacheRepository extends CacheRepository {
         public int hashCode() {
             return Objects.hash(name, hash, type);
         }
-    }
 
-    /**
-     * {
-     * "libraries": {
-     * // allow a library has multiple hash code.
-     * [
-     * "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
-     * "hash": "blablabla",
-     * "type": "forge"
-     * ]
-     * }
-     * // assets and versions will not be included in index.
-     * }
-     */
-    private class Index implements Validation {
-        private final Set<LibraryIndex> libraries;
-
-        public Index() {
-            this(new HashSet<>());
-        }
-
-        public Index(Set<LibraryIndex> libraries) {
-            this.libraries = Objects.requireNonNull(libraries);
-        }
-
-        @NotNull
-        public Set<LibraryIndex> getLibraries() {
-            return libraries;
-        }
-
-        @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
-            if (libraries == null)
-                throw new JsonParseException("Index.libraries cannot be null");
-        }
+        public static final String TYPE_FORGE = "forge";
+        public static final String TYPE_JAR = "jar";
     }
 }

@@ -34,12 +34,15 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
-import org.jackhuang.hmcl.download.java.JavaDownloadTask;
+import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
+import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
@@ -123,6 +126,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
+                } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.neoforge")));
                 } else if (task instanceof LiteLoaderInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));
                 } else if (task instanceof OptiFineInstallTask) {
@@ -155,8 +160,10 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));
-                } else if (task instanceof JavaDownloadTask) {
+                } else if (task instanceof MojangJavaDownloadTask) {
                     task.setName(i18n("download.java"));
+                } else if (task instanceof JavaInstallTask) {
+                    task.setName(i18n("java.install"));
                 }
 
                 Platform.runLater(() -> {
@@ -248,6 +255,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.assets": message = i18n("assets.download"); break;
                 case "hmcl.install.game": message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge": message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.neoforge": message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
                 case "hmcl.install.optifine": message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
                 case "hmcl.install.fabric": message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
@@ -301,7 +309,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
         private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight(),
+                        getWidth() - getPadding().getLeft() - getPadding().getRight() - getInsets().getLeft() - getInsets().getRight(),
                 paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {

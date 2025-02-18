@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
@@ -46,6 +45,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
+ *
  * @author huang
  */
 public class OfflineAccount extends Account {
@@ -100,14 +100,7 @@ public class OfflineAccount extends Account {
     }
 
     protected boolean loadAuthlibInjector(Skin skin) {
-        if (skin == null) return false;
-        if (skin.getType() == Skin.Type.DEFAULT) return false;
-        TextureModel defaultModel = TextureModel.detectUUID(getUUID());
-        if (skin.getType() == Skin.Type.ALEX && defaultModel == TextureModel.ALEX ||
-                skin.getType() == Skin.Type.STEVE && defaultModel == TextureModel.STEVE) {
-            return false;
-        }
-        return true;
+        return skin != null && skin.getType() != Skin.Type.DEFAULT;
     }
 
     @Override
@@ -146,46 +139,6 @@ public class OfflineAccount extends Account {
         } else {
             return authInfo;
         }
-    }
-
-    @Override
-    public AuthInfo playOffline() throws AuthenticationException {
-        return logIn();
-    }
-
-    @Override
-    public Map<Object, Object> toStorage() {
-        return mapOf(
-                pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
-                pair("username", username),
-                pair("skin", skin == null ? null : skin.toStorage())
-        );
-    }
-
-    @Override
-    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
-        return super.getTextures();
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this)
-                .append("username", username)
-                .append("uuid", uuid)
-                .toString();
-    }
-
-    @Override
-    public int hashCode() {
-        return username.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof OfflineAccount))
-            return false;
-        OfflineAccount another = (OfflineAccount) obj;
-        return isPortable() == another.isPortable() && username.equals(another.username);
     }
 
     private class OfflineAuthInfo extends AuthInfo {
@@ -227,5 +180,45 @@ public class OfflineAccount extends Account {
             if (server != null)
                 server.stop();
         }
+    }
+
+    @Override
+    public AuthInfo playOffline() throws AuthenticationException {
+        return logIn();
+    }
+
+    @Override
+    public Map<Object, Object> toStorage() {
+        return mapOf(
+                pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
+                pair("username", username),
+                pair("skin", skin == null ? null : skin.toStorage())
+        );
+    }
+
+    @Override
+    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+        return super.getTextures();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("username", username)
+                .append("uuid", uuid)
+                .toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return username.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof OfflineAccount))
+            return false;
+        OfflineAccount another = (OfflineAccount) obj;
+        return isPortable() == another.isPortable() && username.equals(another.username);
     }
 }

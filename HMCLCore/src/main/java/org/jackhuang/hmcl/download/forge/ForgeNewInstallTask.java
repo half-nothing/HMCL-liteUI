@@ -23,10 +23,15 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DownloadInfo;
+import org.jackhuang.hmcl.game.DownloadType;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -35,7 +40,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +60,122 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
 public class ForgeNewInstallTask extends Task<Version> {
+
+    private class ProcessorTask extends Task<Void> {
+
+        private Processor processor;
+        private Map<String, String> vars;
+
+        public ProcessorTask(@NotNull Processor processor, @NotNull Map<String, String> vars) {
+            this.processor = processor;
+            this.vars = vars;
+            setSignificance(TaskSignificance.MODERATE);
+        }
+
+        @Override
+        public void execute() throws Exception {
+            Map<String, String> outputs = new HashMap<>();
+            boolean miss = false;
+
+            for (Map.Entry<String, String> entry : processor.getOutputs().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                key = parseLiteral(key, vars);
+                value = parseLiteral(value, vars);
+
+                if (key == null || value == null) {
+                    throw new ArtifactMalformedException("Invalid forge installation configuration");
+                }
+
+                outputs.put(key, value);
+
+                Path artifact = Paths.get(key);
+                if (Files.exists(artifact)) {
+                    String code;
+                    try (InputStream stream = Files.newInputStream(artifact)) {
+                        code = (DigestUtils.digestToString("SHA-1", stream));
+                    }
+
+                    if (!Objects.equals(code, value)) {
+                        Files.delete(artifact);
+                        LOG.info("Found existing file is not valid: " + artifact);
+
+                        miss = true;
+                    }
+                } else {
+                    miss = true;
+                }
+            }
+
+            if (!processor.getOutputs().isEmpty() && !miss) {
+                return;
+            }
+
+            Path jar = gameRepository.getArtifactFile(version, processor.getJar());
+            if (!Files.isRegularFile(jar))
+                throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
+
+            String mainClass;
+            try (JarFile jarFile = new JarFile(jar.toFile())) {
+                mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+            }
+
+            if (StringUtils.isBlank(mainClass))
+                throw new Exception("Game processor jar does not have main class " + jar);
+
+            List<String> command = new ArrayList<>();
+            command.add(JavaRuntime.getDefault().getBinary().toString());
+            command.add("-cp");
+
+            List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
+            for (Artifact artifact : processor.getClasspath()) {
+                Path file = gameRepository.getArtifactFile(version, artifact);
+                if (!Files.isRegularFile(file))
+                    throw new Exception("Game processor dependency missing");
+                classpath.add(file.toString());
+            }
+            classpath.add(jar.toString());
+            command.add(String.join(OperatingSystem.PATH_SEPARATOR, classpath));
+
+            command.add(mainClass);
+
+            List<String> args = new ArrayList<>(processor.getArgs().size());
+            for (String arg : processor.getArgs()) {
+                String parsed = parseLiteral(arg, vars);
+                if (parsed == null)
+                    throw new ArtifactMalformedException("Invalid forge installation configuration");
+                args.add(parsed);
+            }
+
+            command.addAll(args);
+
+            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
+            int exitCode = SystemUtils.callExternalProcess(command);
+            if (exitCode != 0)
+                throw new IOException("Game processor exited abnormally with code " + exitCode);
+
+            for (Map.Entry<String, String> entry : outputs.entrySet()) {
+                Path artifact = Paths.get(entry.getKey());
+                if (!Files.isRegularFile(artifact))
+                    throw new FileNotFoundException("File missing: " + artifact);
+
+                String code;
+                try (InputStream stream = Files.newInputStream(artifact)) {
+                    code = DigestUtils.digestToString("SHA-1", stream);
+                }
+
+                if (!Objects.equals(code, entry.getValue())) {
+                    Files.delete(artifact);
+                    throw new ChecksumMismatchException("SHA-1", entry.getValue(), code);
+                }
+            }
+        }
+    }
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
@@ -66,13 +183,16 @@ public class ForgeNewInstallTask extends Task<Version> {
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
-    private final String selfVersion;
+
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
     private Version forgeVersion;
+    private final String selfVersion;
+
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
-    ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+
+    public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
@@ -304,117 +424,5 @@ public class ForgeNewInstallTask extends Task<Version> {
     @Override
     public void postExecute() throws Exception {
         FileUtils.deleteDirectory(tempDir.toFile());
-    }
-
-    private class ProcessorTask extends Task<Void> {
-
-        private Processor processor;
-        private Map<String, String> vars;
-
-        public ProcessorTask(@NotNull Processor processor, @NotNull Map<String, String> vars) {
-            this.processor = processor;
-            this.vars = vars;
-            setSignificance(TaskSignificance.MODERATE);
-        }
-
-        @Override
-        public void execute() throws Exception {
-            Map<String, String> outputs = new HashMap<>();
-            boolean miss = false;
-
-            for (Map.Entry<String, String> entry : processor.getOutputs().entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-
-                key = parseLiteral(key, vars);
-                value = parseLiteral(value, vars);
-
-                if (key == null || value == null) {
-                    throw new ArtifactMalformedException("Invalid forge installation configuration");
-                }
-
-                outputs.put(key, value);
-
-                Path artifact = Paths.get(key);
-                if (Files.exists(artifact)) {
-                    String code;
-                    try (InputStream stream = Files.newInputStream(artifact)) {
-                        code = (DigestUtils.digestToString("SHA-1", stream));
-                    }
-
-                    if (!Objects.equals(code, value)) {
-                        Files.delete(artifact);
-                        LOG.info("Found existing file is not valid: " + artifact);
-
-                        miss = true;
-                    }
-                } else {
-                    miss = true;
-                }
-            }
-
-            if (!processor.getOutputs().isEmpty() && !miss) {
-                return;
-            }
-
-            Path jar = gameRepository.getArtifactFile(version, processor.getJar());
-            if (!Files.isRegularFile(jar))
-                throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
-
-            String mainClass;
-            try (JarFile jarFile = new JarFile(jar.toFile())) {
-                mainClass = jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-            }
-
-            if (StringUtils.isBlank(mainClass))
-                throw new Exception("Game processor jar does not have main class " + jar);
-
-            List<String> command = new ArrayList<>();
-            command.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
-            command.add("-cp");
-
-            List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
-            for (Artifact artifact : processor.getClasspath()) {
-                Path file = gameRepository.getArtifactFile(version, artifact);
-                if (!Files.isRegularFile(file))
-                    throw new Exception("Game processor dependency missing");
-                classpath.add(file.toString());
-            }
-            classpath.add(jar.toString());
-            command.add(String.join(OperatingSystem.PATH_SEPARATOR, classpath));
-
-            command.add(mainClass);
-
-            List<String> args = new ArrayList<>(processor.getArgs().size());
-            for (String arg : processor.getArgs()) {
-                String parsed = parseLiteral(arg, vars);
-                if (parsed == null)
-                    throw new ArtifactMalformedException("Invalid forge installation configuration");
-                args.add(parsed);
-            }
-
-            command.addAll(args);
-
-            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
-            int exitCode = SystemUtils.callExternalProcess(command);
-            if (exitCode != 0)
-                throw new IOException("Game processor exited abnormally with code " + exitCode);
-
-            for (Map.Entry<String, String> entry : outputs.entrySet()) {
-                Path artifact = Paths.get(entry.getKey());
-                if (!Files.isRegularFile(artifact))
-                    throw new FileNotFoundException("File missing: " + artifact);
-
-                String code;
-                try (InputStream stream = Files.newInputStream(artifact)) {
-                    code = DigestUtils.digestToString("SHA-1", stream);
-                }
-
-                if (!Objects.equals(code, entry.getValue())) {
-                    Files.delete(artifact);
-                    throw new ChecksumMismatchException("SHA-1", entry.getValue(), code);
-                }
-            }
-        }
     }
 }

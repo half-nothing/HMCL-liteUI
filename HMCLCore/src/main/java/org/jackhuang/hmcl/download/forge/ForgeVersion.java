@@ -32,7 +32,7 @@ public final class ForgeVersion implements Validation {
     private final String jobver;
     private final String version;
     private final int build;
-    private final double modified;
+    private final long modified;
     private final String[][] files;
 
     /**
@@ -43,7 +43,7 @@ public final class ForgeVersion implements Validation {
         this(null, null, null, null, 0, 0, null);
     }
 
-    public ForgeVersion(String branch, String mcversion, String jobver, String version, int build, double modified, String[][] files) {
+    public ForgeVersion(String branch, String mcversion, String jobver, String version, int build, long modified, String[][] files) {
         this.branch = branch;
         this.mcversion = mcversion;
         this.jobver = jobver;
@@ -73,7 +73,7 @@ public final class ForgeVersion implements Validation {
         return build;
     }
 
-    public double getModified() {
+    public long getModified() {
         return modified;
     }
 

@@ -17,28 +17,20 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
-import javafx.util.StringConverter;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+
+import javafx.util.StringConverter;
+
 /**
  * @author yushijinhun
  */
-public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
-
-    private ExceptionalFunction<String, S, ?> converter;
-    private Class<?> malformedExceptionClass;
-    private S fallbackValue = null;
-    private List<Predicate<S>> restrictions = new ArrayList<>();
-    public <E extends Exception> SafeStringConverter(ExceptionalFunction<String, S, E> converter, Class<E> malformedExceptionClass) {
-        this.converter = converter;
-        this.malformedExceptionClass = malformedExceptionClass;
-    }
+public final class SafeStringConverter<S extends T, T> extends StringConverter<T> {
 
     public static SafeStringConverter<Integer, Number> fromInteger() {
         return new SafeStringConverter<Integer, Number>(Integer::parseInt, NumberFormatException.class)
@@ -54,6 +46,16 @@ public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
         return new SafeStringConverter<Double, Number>(Double::parseDouble, NumberFormatException.class)
                 .restrict(Double::isFinite)
                 .fallbackTo(0.0);
+    }
+
+    private final ExceptionalFunction<String, S, ?> converter;
+    private final Class<?> malformedExceptionClass;
+    private S fallbackValue = null;
+    private final List<Predicate<S>> restrictions = new ArrayList<>();
+
+    public <E extends Exception> SafeStringConverter(ExceptionalFunction<String, S, E> converter, Class<E> malformedExceptionClass) {
+        this.converter = converter;
+        this.malformedExceptionClass = malformedExceptionClass;
     }
 
     @Override
@@ -92,7 +94,7 @@ public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
         return Optional.of(converted);
     }
 
-    protected boolean filter(S value) {
+    private boolean filter(S value) {
         for (Predicate<S> restriction : restrictions) {
             if (!restriction.test(value)) {
                 return false;

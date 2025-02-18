@@ -18,51 +18,34 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
-import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.logging.Level;
+import java.nio.file.*;
+import java.util.Locale;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ConfigHolder {
+
+    private ConfigHolder() {
+    }
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
     public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("config.json");
-    private static final InvocationDispatcher<String> globalConfigWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
-        try {
-            writeToGlobalConfig(content);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
-        }
-    });
+
     private static Path configLocation;
-    private static final InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
-        try {
-            writeToConfig(content);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
-        }
-    });
     private static Config configInstance;
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
     private static boolean ownerChanged = false;
-    public static boolean debugMode = false;
-
-    private ConfigHolder() {
-    }
 
     public static Config config() {
         if (configInstance == null) {
@@ -90,14 +73,14 @@ public final class ConfigHolder {
         return ownerChanged;
     }
 
-    public synchronized static void init() throws IOException {
+    public static void init() throws IOException {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
         configLocation = locateConfig();
 
-        LOG.log(Level.INFO, "Config location: " + configLocation);
+        LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
         configInstance.addListener(source -> markConfigDirty());
@@ -105,6 +88,9 @@ public final class ConfigHolder {
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> markGlobalConfigDirty());
 
+        Locale.setDefault(config().getLocalization().getLocale());
+        I18n.setLocale(configInstance.getLocalization());
+        LOG.setLogRetention(globalConfig().getLogRetention());
         Settings.init();
 
         if (newlyCreated) {
@@ -115,7 +101,7 @@ public final class ConfigHolder {
                 try {
                     Files.setAttribute(configLocation, "dos:hidden", true);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to set hidden attribute of " + configLocation, e);
+                    LOG.warning("Failed to set hidden attribute of " + configLocation, e);
                 }
             }
         }
@@ -137,7 +123,7 @@ public final class ConfigHolder {
     private static Path locateConfig() {
         Path exePath = Paths.get("").toAbsolutePath();
         try {
-            Path jarPath = JarUtils.thisJar().orElse(null);
+            Path jarPath = JarUtils.thisJarPath();
             if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
                 exePath = jarPath;
@@ -175,7 +161,7 @@ public final class ConfigHolder {
                     ownerChanged = true;
                 }
             } catch (IOException e1) {
-                LOG.log(Level.WARNING, "Failed to get owner");
+                LOG.warning("Failed to get owner");
             }
             try {
                 String content = FileUtils.readText(configLocation);
@@ -187,7 +173,7 @@ public final class ConfigHolder {
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.log(Level.WARNING, "Malformed config.", e);
+                LOG.warning("Malformed config.", e);
             }
         }
 
@@ -196,6 +182,14 @@ public final class ConfigHolder {
         return new Config();
     }
 
+    private static final InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+        try {
+            writeToConfig(content);
+        } catch (IOException e) {
+            LOG.error("Failed to save config", e);
+        }
+    });
+
     private static void writeToConfig(String content) throws IOException {
         LOG.info("Saving config");
         synchronized (configLocation) {
@@ -203,15 +197,15 @@ public final class ConfigHolder {
         }
     }
 
-    static void markConfigDirty() {
+    private static void markConfigDirty() {
         configWriter.accept(configInstance.toJson());
     }
-
-    // Global Config
 
     private static void saveConfigSync() throws IOException {
         writeToConfig(configInstance.toJson());
     }
+
+    // Global Config
 
     private static GlobalConfig loadGlobalConfig() throws IOException {
         if (Files.exists(GLOBAL_CONFIG_PATH)) {
@@ -224,13 +218,21 @@ public final class ConfigHolder {
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.log(Level.WARNING, "Malformed config.", e);
+                LOG.warning("Malformed config.", e);
             }
         }
 
         LOG.info("Creating an empty global config");
         return new GlobalConfig();
     }
+
+    private static final InvocationDispatcher<String> globalConfigWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+        try {
+            writeToGlobalConfig(content);
+        } catch (IOException e) {
+            LOG.error("Failed to save config", e);
+        }
+    });
 
     private static void writeToGlobalConfig(String content) throws IOException {
         LOG.info("Saving global config");
@@ -239,11 +241,7 @@ public final class ConfigHolder {
         }
     }
 
-    static void markGlobalConfigDirty() {
+    private static void markGlobalConfigDirty() {
         globalConfigWriter.accept(globalConfigInstance.toJson());
-    }
-
-    private static void saveGlobalConfigSync() throws IOException {
-        writeToConfig(globalConfigInstance.toJson());
     }
 }

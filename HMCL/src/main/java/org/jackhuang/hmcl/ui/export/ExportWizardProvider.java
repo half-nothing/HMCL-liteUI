@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -68,8 +69,8 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
-        Optional<Path> launcherJar = JarUtils.thisJar();
-        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar.isPresent();
+        Path launcherJar = JarUtils.thisJarPath();
+        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
         return new Task<Object>() {
             File tempModpack;
             Task<?> exportTask;
@@ -129,19 +130,15 @@ public final class ExportWizardProvider implements WizardProvider {
                     if (bg.isDirectory())
                         zip.putDirectory(bg.toPath(), "bg");
 
-                    File background_png = new File("background.png").getAbsoluteFile();
-                    if (background_png.isFile())
-                        zip.putFile(background_png, "background.png");
+                    for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+                        String fileName = "background." + extension;
 
-                    File background_jpg = new File("background.jpg").getAbsoluteFile();
-                    if (background_jpg.isFile())
-                        zip.putFile(background_jpg, "background.jpg");
+                        File background = new File(fileName).getAbsoluteFile();
+                        if (background.isFile())
+                            zip.putFile(background, "background.png");
+                    }
 
-                    File background_gif = new File("background.gif").getAbsoluteFile();
-                    if (background_gif.isFile())
-                        zip.putFile(background_gif, "background.gif");
-
-                    zip.putFile(launcherJar.get(), launcherJar.get().getFileName().toString());
+                    zip.putFile(launcherJar, launcherJar.getFileName().toString());
                 }
             }
         };
@@ -195,7 +192,8 @@ public final class ExportWizardProvider implements WizardProvider {
                                 /* overrideJavaArgs */ true,
                                 /* overrideConsole */ true,
                                 /* overrideCommands */ true,
-                                /* overrideWindow */ true
+                                /* overrideWindow */ true,
+                                /* iconKey */ null // TODO
                         ), modpackFile);
             }
 

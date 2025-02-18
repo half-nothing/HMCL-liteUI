@@ -32,20 +32,12 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
-    public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
     private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
-    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(FAILED_ACTION, get());
-        }
-    };
 
     public SpinnerPane() {
         getStyleClass().add("spinner-pane");
@@ -64,59 +56,63 @@ public class SpinnerPane extends Control {
         return content.get();
     }
 
-    public void setContent(Node content) {
-        this.content.set(content);
-    }
-
     public ObjectProperty<Node> contentProperty() {
         return content;
+    }
+
+    public void setContent(Node content) {
+        this.content.set(content);
     }
 
     public boolean isLoading() {
         return loading.get();
     }
 
-    public void setLoading(boolean loading) {
-        this.loading.set(loading);
-    }
-
     public BooleanProperty loadingProperty() {
         return loading;
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
     }
 
     public String getFailedReason() {
         return failedReason.get();
     }
 
-    public void setFailedReason(String failedReason) {
-        this.failedReason.set(failedReason);
-    }
-
     public StringProperty failedReasonProperty() {
         return failedReason;
+    }
+
+    public void setFailedReason(String failedReason) {
+        this.failedReason.set(failedReason);
     }
 
     public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
         return onFailedAction;
     }
 
-    public final EventHandler<Event> getOnFailedAction() {
-        return onFailedActionProperty().get();
-    }
-
     public final void setOnFailedAction(EventHandler<Event> value) {
         onFailedActionProperty().set(value);
     }
 
+    public final EventHandler<Event> getOnFailedAction() {
+        return onFailedActionProperty().get();
+    }
+
+    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(FAILED_ACTION, get());
+        }
+    };
+
     @Override
-    protected Skin createDefaultSkin() {
+    protected SkinBase<SpinnerPane> createDefaultSkin() {
         return new Skin(this);
     }
 
-    public interface State {
-    }
-
-    private static class Skin extends SkinBase<SpinnerPane> {
+    private static final class Skin extends SkinBase<SpinnerPane> {
         private final JFXSpinner spinner = new JFXSpinner();
         private final StackPane contentPane = new StackPane();
         private final StackPane topPane = new StackPane();
@@ -126,20 +122,18 @@ public class SpinnerPane extends Control {
         @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
         private final InvalidationListener observer;
 
-        protected Skin(SpinnerPane control) {
+        Skin(SpinnerPane control) {
             super(control);
 
             topPane.getChildren().setAll(spinner);
             topPane.getStyleClass().add("notice-pane");
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
-            failedPane.onMouseClickedProperty().bind(
-                    BindingMapping.of(control.onFailedAction)
-                            .map(actionHandler -> (e -> {
-                                if (actionHandler != null) {
-                                    actionHandler.handle(new Event(FAILED_ACTION));
-                                }
-                            })));
+            FXUtils.onClicked(failedPane, () -> {
+                EventHandler<Event> action = control.getOnFailedAction();
+                if (action != null)
+                    action.handle(new Event(FAILED_ACTION));
+            });
 
             FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
                 if (newValue == null) {
@@ -152,22 +146,22 @@ public class SpinnerPane extends Control {
 
             observer = FXUtils.observeWeak(() -> {
                 if (getSkinnable().getFailedReason() != null) {
-                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE);
                     failedReasonLabel.setText(getSkinnable().getFailedReason());
                 } else if (getSkinnable().isLoading()) {
-                    root.setContent(topPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(topPane, ContainerAnimations.FADE);
                 } else {
-                    root.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(contentPane, ContainerAnimations.FADE);
                 }
             }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
         }
     }
 
-    public static class LoadedState implements State {
-    }
+    public interface State {}
 
-    public static class LoadingState implements State {
-    }
+    public static class LoadedState implements State {}
+
+    public static class LoadingState implements State {}
 
     public static class FailedState implements State {
         private final String reason;
@@ -180,4 +174,6 @@ public class SpinnerPane extends Control {
             return reason;
         }
     }
+
+    public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
 }

@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * The remote version list.
  *
  * @param <T> The subclass of {@code RemoteVersion}, the type of RemoteVersion.
+ *
  * @author huangyuhui
  */
 public abstract class VersionList<T extends RemoteVersion> {
@@ -36,8 +37,7 @@ public abstract class VersionList<T extends RemoteVersion> {
      * key: game version.
      * values: corresponding remote versions.
      */
-    protected final SimpleMultimap<String, T> versions = new SimpleMultimap<String, T>(HashMap::new, TreeSet::new);
-    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    protected final SimpleMultimap<String, T, TreeSet<T>> versions = new SimpleMultimap<>(HashMap::new, TreeSet::new);
 
     /**
      * True if the version list has been loaded.
@@ -48,7 +48,6 @@ public abstract class VersionList<T extends RemoteVersion> {
 
     /**
      * True if the version list that contains the remote versions which depends on the specific game version has been loaded.
-     *
      * @param gameVersion the remote version depends on
      */
     public boolean isLoaded(String gameVersion) {
@@ -56,6 +55,8 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     public abstract boolean hasType();
+
+    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * @return the task to reload the remote version list.
@@ -122,7 +123,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     /**
      * Get the specific remote version.
      *
-     * @param gameVersion   the Minecraft version that remote versions belong to
+     * @param gameVersion the Minecraft version that remote versions belong to
      * @param remoteVersion the version of the remote version.
      * @return the specific remote version, null if it is not found.
      */
@@ -130,9 +131,14 @@ public abstract class VersionList<T extends RemoteVersion> {
         lock.readLock().lock();
         try {
             T result = null;
-            for (T it : versions.get(gameVersion))
+            TreeSet<T> remoteVersions = versions.get(gameVersion);
+            for (T it : remoteVersions)
                 if (remoteVersion.equals(it.getSelfVersion()))
                     result = it;
+            if (result == null)
+                for (T it : remoteVersions)
+                    if (remoteVersion.equals(it.getFullVersion()))
+                        result = it;
             return Optional.ofNullable(result);
         } finally {
             lock.readLock().unlock();

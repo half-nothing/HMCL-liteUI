@@ -28,7 +28,7 @@ import javafx.scene.image.WritableImage;
  *
  * @author yushijinhun
  */
-public class NormalizedSkin {
+public final class NormalizedSkin {
 
     private final Image texture;
     private final WritableImage normalizedTexture;

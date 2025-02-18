@@ -17,6 +17,13 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
+import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.Property;
@@ -25,18 +32,21 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-
 public final class PropertyUtils {
     private PropertyUtils() {
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static final class PropertyHandle {
+        public final WritableValue<Object> accessor;
+        public final Observable observable;
+
+        public PropertyHandle(WritableValue<Object> accessor, Observable observable) {
+            this.accessor = accessor;
+            this.observable = observable;
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static Map<String, Function<Object, PropertyHandle>> getPropertyHandleFactories(Class<?> type) {
         Map<String, Method> collectionGetMethods = new LinkedHashMap<>();
         Map<String, Method> propertyMethods = new LinkedHashMap<>();
@@ -150,18 +160,6 @@ public final class PropertyUtils {
 
     public static void attachListener(Object instance, InvalidationListener listener) {
         getPropertyHandleFactories(instance.getClass())
-                .forEach((name, factory) -> {
-                    factory.apply(instance).observable.addListener(listener);
-                });
-    }
-
-    public static class PropertyHandle {
-        public final WritableValue<Object> accessor;
-        public final Observable observable;
-
-        public PropertyHandle(WritableValue<Object> accessor, Observable observable) {
-            this.accessor = accessor;
-            this.observable = observable;
-        }
+                .forEach((name, factory) -> factory.apply(instance).observable.addListener(listener));
     }
 }

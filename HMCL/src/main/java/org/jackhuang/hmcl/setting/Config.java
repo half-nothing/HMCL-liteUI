@@ -47,7 +47,7 @@ import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
 
-public final class Config implements Cloneable, Observable {
+public final class Config implements Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
@@ -131,13 +131,11 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(false);
+    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
 
-    @SerializedName("downloadThreads-Pigeon")
-    private IntegerProperty downloadThreadsPigeon = new SimpleIntegerProperty(8);
     @SerializedName("downloadType")
     private StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
 
@@ -166,7 +164,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(1000);
+    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -182,8 +180,6 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
-    @SerializedName("baseUrl")
-    private StringProperty baseUrl = new SimpleStringProperty("https://sbi.pigeon-server.cn");
 
     /**
      * The version of UI that the user have last used.
@@ -207,12 +203,6 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("shownTips")
     private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
-    @SerializedName("acceptRule")
-    private BooleanProperty acceptRule = new SimpleBooleanProperty(false);
-
-    @SerializedName("customAuthlibInjectorFile")
-    private StringProperty customAuthlibInjectorFile = new SimpleStringProperty(null);
-
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -231,11 +221,6 @@ public final class Config implements Cloneable, Observable {
 
     public String toJson() {
         return CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public Config clone() {
-        return fromJson(this.toJson());
     }
 
     // Getters & Setters & Properties
@@ -403,8 +388,8 @@ public final class Config implements Cloneable, Observable {
         return x;
     }
 
-    public void setX(double height) {
-        this.x.set(height);
+    public void setX(double x) {
+        this.x.set(x);
     }
 
     public double getY() {
@@ -415,8 +400,8 @@ public final class Config implements Cloneable, Observable {
         return y;
     }
 
-    public void setY(double height) {
-        this.y.set(height);
+    public void setY(double y) {
+        this.y.set(y);
     }
 
     public double getWidth() {
@@ -583,15 +568,15 @@ public final class Config implements Cloneable, Observable {
         this.launcherFontFamily.set(launcherFontFamily);
     }
 
-    public int getLogLines() {
+    public Integer getLogLines() {
         return logLines.get();
     }
 
-    public void setLogLines(int logLines) {
+    public void setLogLines(Integer logLines) {
         this.logLines.set(logLines);
     }
 
-    public IntegerProperty logLinesProperty() {
+    public ObjectProperty<Integer> logLinesProperty() {
         return logLines;
     }
 
@@ -685,53 +670,5 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
-    }
-
-    public String getBaseUrl() {
-        return baseUrl.get();
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl.set(baseUrl);
-    }
-
-    public StringProperty baseUrlProperty() {
-        return baseUrl;
-    }
-
-    public int getDownloadThreadsPigeon() {
-        return downloadThreadsPigeon.get();
-    }
-
-    public IntegerProperty downloadThreadsPigeonProperty() {
-        return downloadThreadsPigeon;
-    }
-
-    public void setDownloadThreadsPigeon(int downloadThreadsPigeon) {
-        this.downloadThreadsPigeon.set(downloadThreadsPigeon);
-    }
-
-    public boolean isAcceptRule() {
-        return acceptRule.get();
-    }
-
-    public BooleanProperty acceptRuleProperty() {
-        return acceptRule;
-    }
-
-    public void setAcceptRule(boolean acceptRule) {
-        this.acceptRule.set(acceptRule);
-    }
-
-    public String getCustomAuthlibInjectorFile() {
-        return customAuthlibInjectorFile.get();
-    }
-
-    public StringProperty customAuthlibInjectorFileProperty() {
-        return customAuthlibInjectorFile;
-    }
-
-    public void setCustomAuthlibInjectorFile(String customAuthlibInjectorFile) {
-        this.customAuthlibInjectorFile.set(customAuthlibInjectorFile);
     }
 }

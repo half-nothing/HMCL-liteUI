@@ -23,16 +23,12 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.logging.Level;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class YggdrasilAccount extends ClassicAccount {
+public abstract class YggdrasilAccount extends ClassicAccount {
 
     protected final YggdrasilService service;
     protected final UUID characterUUID;
@@ -40,7 +36,6 @@ public class YggdrasilAccount extends ClassicAccount {
 
     private boolean authenticated = false;
     private YggdrasilSession session;
-    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
 
     protected YggdrasilAccount(YggdrasilService service, String username, YggdrasilSession session) {
         this.service = requireNonNull(service);
@@ -78,10 +73,7 @@ public class YggdrasilAccount extends ClassicAccount {
         addProfilePropertiesListener();
     }
 
-    private static String randomClientToken() {
-        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
-    }
-
+    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
     private void addProfilePropertiesListener() {
         // binding() is thread-safe
         // hold the binding so that it won't be garbage-collected
@@ -204,15 +196,25 @@ public class YggdrasilAccount extends ClassicAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));
 
     }
 
-    public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {
-        service.uploadSkin(characterUUID, session.getAccessToken(), model, file);
+    @Override
+    public boolean canUploadSkin() {
+        return true;
+    }
+
+    @Override
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(characterUUID, session.getAccessToken(), isSlim, file);
+    }
+
+    private static String randomClientToken() {
+        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
     }
 
     @Override

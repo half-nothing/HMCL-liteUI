@@ -25,40 +25,36 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .create();
+
     private final OAuth.Callback callback;
+
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
     public MicrosoftService(OAuth.Callback callback) {
@@ -66,7 +62,147 @@ public class MicrosoftService {
         this.profileRepository = new ObservableOptionalCache<>(uuid -> {
             LOG.info("Fetching properties of " + uuid);
             return getCompleteGameProfile(uuid);
-        }, (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid, e), POOL);
+        }, (uuid, e) -> LOG.warning("Failed to fetch properties of " + uuid, e), POOL);
+    }
+
+    public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
+        return profileRepository;
+    }
+
+    public MicrosoftSession authenticate() throws AuthenticationException {
+        try {
+            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
+        try {
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    private String getUhs(XBoxLiveAuthenticationResponse response, String existingUhs) throws AuthenticationException {
+        if (response.errorCode != 0) {
+            throw new XboxAuthorizationException(response.errorCode, response.redirectUrl);
+        }
+
+        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
+            LOG.warning("Unrecognized xbox authorization response " + GSON.toJson(response));
+            throw new NoXuiException();
+        }
+
+        String uhs = (String) response.displayClaims.xui.get(0).get("uhs");
+        if (existingUhs != null) {
+            if (!Objects.equals(uhs, existingUhs)) {
+                throw new ServerResponseMalformedException("uhs mismatched");
+            }
+        }
+        return uhs;
+    }
+
+    private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
+        String uhs;
+        XBoxLiveAuthenticationResponse xboxResponse, minecraftXstsResponse;
+        try {
+            // Authenticate with XBox Live
+            xboxResponse = HttpRequest
+                    .POST("https://user.auth.xboxlive.com/user/authenticate")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                            pair("RpsTicket", "d=" + liveAccessToken))),
+                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                    .retry(5)
+                    .accept("application/json")
+                    .getJson(XBoxLiveAuthenticationResponse.class);
+
+            uhs = getUhs(xboxResponse, null);
+
+            minecraftXstsResponse = HttpRequest
+                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("SandboxId", "RETAIL"),
+                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                            pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                    .ignoreHttpErrorCode(401)
+                    .retry(5)
+                    .getJson(XBoxLiveAuthenticationResponse.class);
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 400) {
+                throw new XBox400Exception();
+            }
+
+            throw e;
+        }
+
+        getUhs(minecraftXstsResponse, uhs);
+
+        // Authenticate with Minecraft
+        MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
+                .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
+                .json(mapOf(pair("identityToken", "XBL3.0 x=" + uhs + ";" + minecraftXstsResponse.token)))
+                .retry(5)
+                .accept("application/json").getJson(MinecraftLoginWithXBoxResponse.class);
+
+        long notAfter = minecraftResponse.expiresIn * 1000L + System.currentTimeMillis();
+
+        // Check MC ownership, this is necessary, see GitHub#2979
+        HttpURLConnection request = HttpRequest.GET("https://api.minecraftservices.com/entitlements/mcstore")
+                .authorization("Bearer " + minecraftResponse.accessToken)
+                .retry(5)
+                .accept("application/json").createConnection();
+
+        if (request.getResponseCode() != 200) {
+            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
+        }
+
+        // Get Minecraft Account UUID
+        MinecraftProfileResponse profileResponse = getMinecraftProfile(minecraftResponse.tokenType, minecraftResponse.accessToken);
+        handleErrorResponse(profileResponse);
+
+        return new MicrosoftSession(minecraftResponse.tokenType, minecraftResponse.accessToken, notAfter, liveRefreshToken,
+                new MicrosoftSession.User(minecraftResponse.username), new MicrosoftSession.GameProfile(profileResponse.id, profileResponse.name));
+    }
+
+    public Optional<MinecraftProfileResponse> getCompleteProfile(String authorization) throws AuthenticationException {
+        try {
+            return Optional.ofNullable(
+                    HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
+                            .authorization(authorization).getJson(MinecraftProfileResponse.class));
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    public boolean validate(long notAfter, String tokenType, String accessToken) throws AuthenticationException {
+        requireNonNull(tokenType);
+        requireNonNull(accessToken);
+
+        if (System.currentTimeMillis() > notAfter) {
+            return false;
+        }
+
+        try {
+            getMinecraftProfile(tokenType, accessToken);
+            return true;
+        } catch (ResponseCodeException e) {
+            return false;
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        }
     }
 
     private static void handleErrorResponse(MinecraftErrorResponse response) throws AuthenticationException {
@@ -118,6 +254,39 @@ public class MicrosoftService {
         return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
     }
 
+    public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
+        Objects.requireNonNull(uuid);
+
+        return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
+    }
+
+    public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/skins"));
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+                request.param("variant", isSlim ? "slim" : "classic");
+                try (InputStream fis = Files.newInputStream(file)) {
+                    request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
+                }
+            }
+
+            String response = NetworkUtils.readData(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     private static String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -129,144 +298,7 @@ public class MicrosoftService {
         }
     }
 
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
-        }
-    }
-
-    public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
-        return profileRepository;
-    }
-
-    public MicrosoftSession authenticate() throws AuthenticationException {
-        try {
-            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
-        }
-    }
-
-    public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
-        try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
-        }
-    }
-
-    private String getUhs(XBoxLiveAuthenticationResponse response, String existingUhs) throws AuthenticationException {
-        if (response.errorCode != 0) {
-            throw new XboxAuthorizationException(response.errorCode, response.redirectUrl);
-        }
-
-        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
-            LOG.log(Level.WARNING, "Unrecognized xbox authorization response " + GSON.toJson(response));
-            throw new NoXuiException();
-        }
-
-        String uhs = (String) response.displayClaims.xui.get(0).get("uhs");
-        if (existingUhs != null) {
-            if (!Objects.equals(uhs, existingUhs)) {
-                throw new ServerResponseMalformedException("uhs mismatched");
-            }
-        }
-        return uhs;
-    }
-
-    private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
-        // Authenticate with XBox Live
-        XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
-                .POST("https://user.auth.xboxlive.com/user/authenticate")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                        pair("RpsTicket", "d=" + liveAccessToken))),
-                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                .retry(5)
-                .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
-
-        String uhs = getUhs(xboxResponse, null);
-
-        // Authenticate Minecraft with XSTS
-        XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
-                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("SandboxId", "RETAIL"),
-                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                        pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
-                .ignoreHttpErrorCode(401)
-                .retry(5)
-                .getJson(XBoxLiveAuthenticationResponse.class);
-
-        getUhs(minecraftXstsResponse, uhs);
-
-        // Authenticate with Minecraft
-        MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
-                .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
-                .json(mapOf(pair("identityToken", "XBL3.0 x=" + uhs + ";" + minecraftXstsResponse.token)))
-                .retry(5)
-                .accept("application/json").getJson(MinecraftLoginWithXBoxResponse.class);
-
-        long notAfter = minecraftResponse.expiresIn * 1000L + System.currentTimeMillis();
-
-        // Get Minecraft Account UUID
-        MinecraftProfileResponse profileResponse = getMinecraftProfile(minecraftResponse.tokenType, minecraftResponse.accessToken);
-        handleErrorResponse(profileResponse);
-
-        return new MicrosoftSession(minecraftResponse.tokenType, minecraftResponse.accessToken, notAfter, liveRefreshToken,
-                new MicrosoftSession.User(minecraftResponse.username), new MicrosoftSession.GameProfile(profileResponse.id, profileResponse.name));
-    }
-
-    public Optional<MinecraftProfileResponse> getCompleteProfile(String authorization) throws AuthenticationException {
-        try {
-            return Optional.ofNullable(
-                    HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
-                            .authorization(authorization).getJson(MinecraftProfileResponse.class));
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
-        }
-    }
-
-    public boolean validate(long notAfter, String tokenType, String accessToken) throws AuthenticationException {
-        requireNonNull(tokenType);
-        requireNonNull(accessToken);
-
-        if (System.currentTimeMillis() > notAfter) {
-            return false;
-        }
-
-        try {
-            getMinecraftProfile(tokenType, accessToken);
-            return true;
-        } catch (ResponseCodeException e) {
-            return false;
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        }
-    }
-
-    public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
-        Objects.requireNonNull(uuid);
-
-        return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
-    }
-
     public static class XboxAuthorizationException extends AuthenticationException {
-        public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
-        public static final long COUNTRY_UNAVAILABLE = 2148916235L;
-        public static final long ADD_FAMILY = 2148916238L;
         private final long errorCode;
         private final String redirect;
 
@@ -282,6 +314,13 @@ public class MicrosoftService {
         public String getRedirect() {
             return redirect;
         }
+
+        public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
+        public static final long COUNTRY_UNAVAILABLE = 2148916235L;
+        public static final long ADD_FAMILY = 2148916238L;
+    }
+
+    public static class XBox400Exception extends AuthenticationException {
     }
 
     public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
@@ -411,5 +450,10 @@ public class MicrosoftService {
         public String errorMessage;
         public String developerMessage;
     }
+
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .create();
 
 }

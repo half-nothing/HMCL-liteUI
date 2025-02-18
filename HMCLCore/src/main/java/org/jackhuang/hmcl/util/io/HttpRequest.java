@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
@@ -26,10 +27,8 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,41 +47,14 @@ public abstract class HttpRequest {
     protected final String url;
     protected final String method;
     protected final Map<String, String> headers = new HashMap<>();
-    protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
     protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
+    protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
     protected int retryTimes = 1;
     protected boolean ignoreHttpCode;
 
     private HttpRequest(String url, String method) {
         this.url = url;
         this.method = method;
-    }
-
-    public static HttpGetRequest GET(String url) {
-        return new HttpGetRequest(url);
-    }
-
-    @SafeVarargs
-    public static HttpGetRequest GET(String url, Pair<String, String>... query) {
-        return GET(NetworkUtils.withQuery(url, mapOf(query)));
-    }
-
-    public static HttpPostRequest POST(String url) throws MalformedURLException {
-        return new HttpPostRequest(url);
-    }
-
-    private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
-        SocketTimeoutException exception = null;
-        for (int i = 0; i < retryTimes; i++) {
-            try {
-                return supplier.get();
-            } catch (SocketTimeoutException e) {
-                exception = e;
-            }
-        }
-        if (exception != null)
-            throw exception;
-        throw new IOException("retry 0");
     }
 
     public HttpRequest accept(String contentType) {
@@ -129,7 +101,7 @@ public abstract class HttpRequest {
         return JsonUtils.fromNonNullJson(getString(), typeOfT);
     }
 
-    public <T> T getJson(Type type) throws IOException, JsonParseException {
+    public <T> T getJson(TypeToken<T> type) throws IOException, JsonParseException {
         return JsonUtils.fromNonNullJson(getString(), type);
     }
 
@@ -137,7 +109,7 @@ public abstract class HttpRequest {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, typeOfT));
     }
 
-    public <T> CompletableFuture<T> getJsonAsync(Type type) {
+    public <T> CompletableFuture<T> getJsonAsync(TypeToken<T> type) {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
     }
 
@@ -160,12 +132,6 @@ public abstract class HttpRequest {
         return con;
     }
 
-    public interface Authorization {
-        String getTokenType();
-
-        String getAccessToken();
-    }
-
     public static class HttpGetRequest extends HttpRequest {
         public HttpGetRequest(String url) {
             super(url, "GET");
@@ -175,7 +141,7 @@ public abstract class HttpRequest {
             return getStringWithRetry(() -> {
                 HttpURLConnection con = createConnection();
                 con = resolveConnection(con);
-                return IOUtils.readFullyAsString(con.getInputStream());
+                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(con.getInputStream()) : con.getInputStream());
             }, retryTimes);
         }
     }
@@ -221,13 +187,18 @@ public abstract class HttpRequest {
                     os.write(bytes);
                 }
 
+                URL url = new URL(this.url);
+
                 if (responseCodeTester != null) {
-                    responseCodeTester.accept(new URL(url), con.getResponseCode());
+                    responseCodeTester.accept(url, con.getResponseCode());
                 } else {
                     if (con.getResponseCode() / 100 != 2) {
                         if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
-                            String data = NetworkUtils.readData(con);
-                            throw new ResponseCodeException(new URL(url), con.getResponseCode(), data);
+                            try {
+                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
+                            } catch (IOException e) {
+                                throw new ResponseCodeException(url, con.getResponseCode(), e);
+                            }
                         }
                     }
                 }
@@ -235,5 +206,43 @@ public abstract class HttpRequest {
                 return NetworkUtils.readData(con);
             }, retryTimes);
         }
+    }
+
+    public static HttpGetRequest GET(String url) {
+        return new HttpGetRequest(url);
+    }
+
+    @SafeVarargs
+    public static HttpGetRequest GET(String url, Pair<String, String>... query) {
+        return GET(NetworkUtils.withQuery(url, mapOf(query)));
+    }
+
+    public static HttpPostRequest POST(String url) throws MalformedURLException {
+        return new HttpPostRequest(url);
+    }
+
+    private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
+        Throwable exception = null;
+        for (int i = 0; i < retryTimes; i++) {
+            try {
+                return supplier.get();
+            } catch (Throwable e) {
+                exception = e;
+            }
+        }
+        if (exception != null) {
+            if (exception instanceof IOException) {
+                throw (IOException) exception;
+            } else {
+                throw new IOException(exception);
+            }
+        }
+        throw new IOException("retry 0");
+    }
+
+    public interface Authorization {
+        String getTokenType();
+
+        String getAccessToken();
     }
 }

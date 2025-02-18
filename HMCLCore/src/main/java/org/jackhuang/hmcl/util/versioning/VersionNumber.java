@@ -18,101 +18,30 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Copied from org.apache.maven.artifact.versioning.ComparableVersion
  * Apache License 2.0
- * <p>
- * Maybe we can migrate to org.jenkins-ci:version-number:1.7?
  *
+ * Maybe we can migrate to org.jenkins-ci:version-number:1.7?
  * @see <a href="http://maven.apache.org/pom.html#Version_Order_Specification">Specification</a>
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 
-    public static final Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
-    private static final int MAX_LONGITEM_LENGTH = 18;
-    public final ListItem items;
-    private final String value;
-    private final String canonical;
-
-    private VersionNumber(String version) {
-        this.value = version;
-
-        ListItem list = this.items = new ListItem();
-
-        Deque<Item> stack = new ArrayDeque<>();
-        stack.push(list);
-
-        boolean isDigit = false;
-
-        int startIndex = 0;
-
-        for (int i = 0; i < version.length(); i++) {
-            char c = version.charAt(i);
-
-            if (c == '.') {
-                if (i == startIndex) {
-                    list.add(LongItem.ZERO);
-                } else {
-                    list.add(parseItem(version.substring(startIndex, i)));
-                }
-                startIndex = i + 1;
-            } else if ("!\"#$%&'()*+,-/:;<=>?@[\\]^_`{|}~".indexOf(c) != -1) {
-                if (i == startIndex) {
-                    list.add(LongItem.ZERO);
-                } else {
-                    list.add(parseItem(version.substring(startIndex, i)));
-                }
-                startIndex = i + 1;
-
-                list.add(list = new ListItem(c));
-                stack.push(list);
-            } else if (c >= '0' && c <= '9') {
-                if (!isDigit && i > startIndex) {
-                    list.add(parseItem(version.substring(startIndex, i)));
-                    startIndex = i;
-
-                    list.add(list = new ListItem());
-                    stack.push(list);
-                }
-
-                isDigit = true;
-            } else {
-                if (isDigit && i > startIndex) {
-                    list.add(parseItem(version.substring(startIndex, i)));
-                    startIndex = i;
-
-                    list.add(list = new ListItem());
-                    stack.push(list);
-                }
-
-                isDigit = false;
-            }
-        }
-
-        if (version.length() > startIndex) {
-            list.add(parseItem(version.substring(startIndex)));
-        }
-
-        while (!stack.isEmpty()) {
-            list = (ListItem) stack.pop();
-            list.normalize();
-        }
-
-        this.canonical = items.toString();
-    }
-
-    // For simple version
-    private VersionNumber(String version, ListItem items) {
-        this.value = version;
-        this.items = items;
-        this.canonical = version;
-    }
+    public static final VersionNumber ZERO = asVersion("0");
 
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
         return new VersionNumber(version);
+    }
+
+    public static int compare(String version1, String version2) {
+        return asVersion(version1).compareTo(asVersion(version2));
     }
 
     public static String normalize(String str) {
@@ -156,68 +85,16 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         return true;
     }
 
-    private static Item parseItem(String buf) {
-        int numberLength = 0;
-        boolean leadingZero = true;
-        for (int i = 0; i < buf.length(); i++) {
-            char ch = buf.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                if (ch != '0') {
-                    leadingZero = false;
-                }
-
-                if (!leadingZero) {
-                    numberLength++;
-                }
-            } else {
-                return new StringItem(buf);
-            }
-        }
-
-        if (numberLength == 0) {
-            return LongItem.ZERO;
-        } else if (numberLength <= MAX_LONGITEM_LENGTH) {
-            // Numbers which are larger than 10^19 cannot be stored as long
-            return new LongItem(Long.parseLong(buf));
-        } else {
-            return new BigIntegerItem(buf);
-        }
+    public static VersionRange<VersionNumber> between(String minimum, String maximum) {
+        return VersionRange.between(asVersion(minimum), asVersion(maximum));
     }
 
-    public int compareTo(String o) {
-        return compareTo(VersionNumber.asVersion(o));
+    public static VersionRange<VersionNumber> atLeast(String minimum) {
+        return VersionRange.atLeast(asVersion(minimum));
     }
 
-    @Override
-    public int compareTo(VersionNumber o) {
-        return items.compareTo(o.items);
-    }
-
-    @Override
-    public String toString() {
-        return value;
-    }
-
-    public String getCanonical() {
-        return canonical;
-    }
-
-    public VersionNumber min(VersionNumber that) {
-        return this.compareTo(that) <= 0 ? this : that;
-    }
-
-    public VersionNumber max(VersionNumber that) {
-        return this.compareTo(that) >= 0 ? this : that;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return o instanceof VersionNumber && canonical.equals(((VersionNumber) o).canonical);
-    }
-
-    @Override
-    public int hashCode() {
-        return canonical.hashCode();
+    public static VersionRange<VersionNumber> atMost(String maximum) {
+        return VersionRange.atMost(asVersion(maximum));
     }
 
     private interface Item {
@@ -236,8 +113,9 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     }
 
     private static final class LongItem implements Item {
-        public static final LongItem ZERO = new LongItem(0L);
         private final long value;
+
+        public static final LongItem ZERO = new LongItem(0L);
 
         LongItem(long value) {
             this.value = value;
@@ -483,5 +361,141 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             appendTo(buffer);
             return buffer.toString();
         }
+    }
+
+    private static final int MAX_LONGITEM_LENGTH = 18;
+
+    private final String value;
+    private final ListItem items;
+    private final String canonical;
+
+    private VersionNumber(String version) {
+        this.value = version;
+
+        ListItem list = this.items = new ListItem();
+
+        Deque<Item> stack = new ArrayDeque<>();
+        stack.push(list);
+
+        boolean isDigit = false;
+
+        int startIndex = 0;
+
+        for (int i = 0; i < version.length(); i++) {
+            char c = version.charAt(i);
+
+            if (c == '.') {
+                if (i == startIndex) {
+                    list.add(LongItem.ZERO);
+                } else {
+                    list.add(parseItem(version.substring(startIndex, i)));
+                }
+                startIndex = i + 1;
+            } else if ("!\"#$%&'()*+,-/:;<=>?@[\\]^_`{|}~".indexOf(c) != -1) {
+                if (i == startIndex) {
+                    list.add(LongItem.ZERO);
+                } else {
+                    list.add(parseItem(version.substring(startIndex, i)));
+                }
+                startIndex = i + 1;
+
+                list.add(list = new ListItem(c));
+                stack.push(list);
+            } else if (c >= '0' && c <= '9') {
+                if (!isDigit && i > startIndex) {
+                    list.add(parseItem(version.substring(startIndex, i)));
+                    startIndex = i;
+
+                    list.add(list = new ListItem());
+                    stack.push(list);
+                }
+
+                isDigit = true;
+            } else {
+                if (isDigit && i > startIndex) {
+                    list.add(parseItem(version.substring(startIndex, i)));
+                    startIndex = i;
+
+                    list.add(list = new ListItem());
+                    stack.push(list);
+                }
+
+                isDigit = false;
+            }
+        }
+
+        if (version.length() > startIndex) {
+            list.add(parseItem(version.substring(startIndex)));
+        }
+
+        while (!stack.isEmpty()) {
+            list = (ListItem) stack.pop();
+            list.normalize();
+        }
+
+        this.canonical = items.toString();
+    }
+
+    // For simple version
+    private VersionNumber(String version, ListItem items) {
+        this.value = version;
+        this.items = items;
+        this.canonical = version;
+    }
+
+    private static Item parseItem(String buf) {
+        int numberLength = 0;
+        boolean leadingZero = true;
+        for (int i = 0; i < buf.length(); i++) {
+            char ch = buf.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                if (ch != '0') {
+                    leadingZero = false;
+                }
+
+                if (!leadingZero) {
+                    numberLength++;
+                }
+            } else {
+                return new StringItem(buf);
+            }
+        }
+
+        if (numberLength == 0) {
+            return LongItem.ZERO;
+        } else if (numberLength <= MAX_LONGITEM_LENGTH) {
+            // Numbers which are larger than 10^19 cannot be stored as long
+            return new LongItem(Long.parseLong(buf));
+        } else {
+            return new BigIntegerItem(buf);
+        }
+    }
+
+    public int compareTo(String o) {
+        return compareTo(VersionNumber.asVersion(o));
+    }
+
+    @Override
+    public int compareTo(VersionNumber o) {
+        return items.compareTo(o.items);
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
+
+    public String getCanonical() {
+        return canonical;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof VersionNumber && canonical.equals(((VersionNumber) o).canonical);
+    }
+
+    @Override
+    public int hashCode() {
+        return canonical.hashCode();
     }
 }
