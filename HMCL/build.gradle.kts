@@ -23,10 +23,10 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
-        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
+        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "liteUI"
     }
 }
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.6"
+val versionRoot = System.getenv("VERSION_ROOT") ?: "1.1.0"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
@@ -36,9 +36,13 @@ val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 version = "$versionRoot.$buildNumber"
 
 dependencies {
+    compileOnly(project(":Annotation"))
+    annotationProcessor(project(":AnnotationProcessor"))
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
     implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("cn.hutool:hutool-core:5.8.35")
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)

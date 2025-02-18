@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.util.Locale;
+
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class Settings {

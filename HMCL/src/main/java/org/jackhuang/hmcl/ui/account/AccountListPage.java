@@ -31,7 +31,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -47,9 +46,9 @@ import java.net.URI;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ObservableList<AccountListItem> items;
@@ -99,21 +98,21 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT)));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
-                    AdvancedListItem offlineItem = new AdvancedListItem();
-                    offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
-                    offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                    boxMethods.getChildren().add(offlineItem);
-
-                    AdvancedListItem microsoftItem = new AdvancedListItem();
-                    microsoftItem.getStyleClass().add("navigation-drawer-item");
-                    microsoftItem.setActionButtonVisible(false);
-                    microsoftItem.setTitle(i18n("account.methods.microsoft"));
-                    microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
-                    boxMethods.getChildren().add(microsoftItem);
+//                    AdvancedListItem offlineItem = new AdvancedListItem();
+//                    offlineItem.getStyleClass().add("navigation-drawer-item");
+//                    offlineItem.setActionButtonVisible(false);
+//                    offlineItem.setTitle(i18n("account.methods.offline"));
+//                    offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
+//                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+//                    boxMethods.getChildren().add(offlineItem);
+//
+//                    AdvancedListItem microsoftItem = new AdvancedListItem();
+//                    microsoftItem.getStyleClass().add("navigation-drawer-item");
+//                    microsoftItem.setActionButtonVisible(false);
+//                    microsoftItem.setTitle(i18n("account.methods.microsoft"));
+//                    microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
+//                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
+//                    boxMethods.getChildren().add(microsoftItem);
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
@@ -122,16 +121,18 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         item.setLeftGraphic(wrap(SVG.SERVER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
-                        JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                skinnable.authServersProperty().remove(server);
-                            }, null);
-                            e.consume();
-                        });
-                        btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
-                        item.setRightGraphic(btnRemove);
+                        if (!server.getUrl().startsWith("https://skin.pigeon-server.cn/api/yggdrasil")) {
+                            JFXButton btnRemove = new JFXButton();
+                            btnRemove.setOnAction(e -> {
+                                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                                    skinnable.authServersProperty().remove(server);
+                                }, null);
+                                e.consume();
+                            });
+                            btnRemove.getStyleClass().add("toggle-icon4");
+                            btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
+                            item.setRightGraphic(btnRemove);
+                        }
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);

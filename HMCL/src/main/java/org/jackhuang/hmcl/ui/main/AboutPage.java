@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import cn.pigeon.update.Static;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -49,16 +50,22 @@ public final class AboutPage extends StackPane {
             IconedTwoLineListItem launcher = new IconedTwoLineListItem();
             launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
-            launcher.setSubtitle(Metadata.VERSION);
+            launcher.setSubtitle(Metadata.VERSION + " BUILD_TIME: " + Static.BUILD_TIME);
             launcher.setExternalLink("https://hmcl.huangyuhui.net");
 
             IconedTwoLineListItem author = new IconedTwoLineListItem();
-            author.setImage(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
-            author.setTitle("huanghongxun");
-            author.setSubtitle(i18n("about.author.statement"));
-            author.setExternalLink("https://space.bilibili.com/1445341");
+            author.setImage(FXUtils.newBuiltinImage("/assets/img/half-nothing@2x.png"));
+            author.setTitle("Half_nothing");
+            author.setSubtitle(i18n("about.thanks_to.half.statement"));
+            author.setExternalLink("https://github.com/half-nothing");
 
-            about.getContent().setAll(launcher, author);
+            IconedTwoLineListItem originAuthor = new IconedTwoLineListItem();
+            originAuthor.setImage(new Image("/assets/img/yellow_fish.png"));
+            originAuthor.setTitle("huanghongxun");
+            originAuthor.setSubtitle(i18n("about.author.statement"));
+            originAuthor.setExternalLink("https://space.bilibili.com/1445341");
+
+            about.getContent().setAll(launcher, originAuthor, author);
         }
 
         ComponentList thanks = loadIconedTwoLineList("/assets/about/thanks.json");

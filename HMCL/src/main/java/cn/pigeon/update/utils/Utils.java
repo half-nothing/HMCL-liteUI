@@ -1,11 +1,11 @@
 package cn.pigeon.update.utils;
 
+import cn.hutool.core.util.HexUtil;
 import cn.pigeon.update.Static;
 import cn.pigeon.update.data.Token;
 import okhttp3.HttpUrl;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -79,7 +79,7 @@ public class Utils {
                 throw new RuntimeException(e);
             }
             byte[] mdBytes = md.digest();
-            return DatatypeConverter.printHexBinary(mdBytes).toLowerCase();
+            return HexUtil.encodeHexStr(mdBytes).toLowerCase();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
@@ -88,7 +88,7 @@ public class Utils {
     public static String calculateMD5(String string) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         byte[] mdBytes = md.digest(string.getBytes(StandardCharsets.UTF_8));
-        return DatatypeConverter.printHexBinary(mdBytes).toLowerCase();
+        return HexUtil.encodeHexStr(mdBytes).toLowerCase();
     }
 
     public static void unzip(File zipFile, Path destPath) throws IOException {

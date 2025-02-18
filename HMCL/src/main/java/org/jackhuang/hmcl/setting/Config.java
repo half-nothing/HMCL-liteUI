@@ -203,6 +203,18 @@ public final class Config implements Observable {
     @SerializedName("shownTips")
     private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
+    @SerializedName("baseUrl")
+    private StringProperty baseUrl = new SimpleStringProperty("https://sbi.pigeon-server.cn");
+
+    @SerializedName("acceptRule")
+    private BooleanProperty acceptRule = new SimpleBooleanProperty(false);
+
+    @SerializedName("customAuthlibInjectorFile")
+    private StringProperty customAuthlibInjectorFile = new SimpleStringProperty(null);
+
+    @SerializedName("downloadThreads-Pigeon")
+    private IntegerProperty downloadThreadsPigeon = new SimpleIntegerProperty(8);
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -670,5 +682,53 @@ public final class Config implements Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
+    }
+
+    public boolean isAcceptRule() {
+        return acceptRule.get();
+    }
+
+    public BooleanProperty acceptRuleProperty() {
+        return acceptRule;
+    }
+
+    public void setAcceptRule(boolean acceptRule) {
+        this.acceptRule.set(acceptRule);
+    }
+
+    public String getBaseUrl() {
+        return baseUrl.get();
+    }
+
+    public StringProperty baseUrlProperty() {
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl.set(baseUrl);
+    }
+
+    public String getCustomAuthlibInjectorFile() {
+        return customAuthlibInjectorFile.get();
+    }
+
+    public StringProperty customAuthlibInjectorFileProperty() {
+        return customAuthlibInjectorFile;
+    }
+
+    public void setCustomAuthlibInjectorFile(String customAuthlibInjectorFile) {
+        this.customAuthlibInjectorFile.set(customAuthlibInjectorFile);
+    }
+
+    public int getDownloadThreadsPigeon() {
+        return downloadThreadsPigeon.get();
+    }
+
+    public IntegerProperty downloadThreadsPigeonProperty() {
+        return downloadThreadsPigeon;
+    }
+
+    public void setDownloadThreadsPigeon(int downloadThreadsPigeon) {
+        this.downloadThreadsPigeon.set(downloadThreadsPigeon);
     }
 }

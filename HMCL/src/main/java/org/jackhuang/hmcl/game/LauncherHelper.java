@@ -17,11 +17,20 @@
  */
 package org.jackhuang.hmcl.game;
 
+import cn.pigeon.update.Static;
+import cn.pigeon.update.exception.AccountTypeErrorException;
+import cn.pigeon.update.tasks.DownloadRequireFileTask;
+import cn.pigeon.update.tasks.VerifyFiles;
+import cn.pigeon.update.tasks.api.CheckUpdateTask;
+import cn.pigeon.update.tasks.api.GetTokenTask;
+import cn.pigeon.update.utils.Utils;
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
+import okhttp3.HttpUrl;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -131,13 +140,42 @@ public final class LauncherHelper {
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
+        final JavaRuntime[] javaVersion = {null};
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
 
         TaskExecutor executor = checkGameState(profile, setting, version.get())
-                .thenComposeAsync(java -> {
-                    javaVersionRef.set(Objects.requireNonNull(java));
-                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), java, setting));
+                .thenComposeAsync(e -> Task.composeAsync(() -> {
+                    javaVersion[0] = e;
+                    if (Static.debugMode) {
+                        return Task.composeAsync(() -> null);
+                    }
+                    File rootPath = dependencyManager.getGameRepository().getRunDirectory(version.get().getId());
+                    File pigeon = new File(rootPath, "pigeon");
+                    if (!pigeon.exists()) {
+                        pigeon.mkdir();
+                    }
+                    File configFile = new File(pigeon, "config.json");
+                    if (!(account instanceof YggdrasilAccount)) {
+                        throw new AccountTypeErrorException();
+                    }
+                    return new GetTokenTask((YggdrasilAccount) account, version.get().getId())
+                            .setName("Get Access Key")
+                            .thenComposeAsync(token -> new CheckUpdateTask((YggdrasilAccount) account,
+                                    version.get().getId(), token, configFile)
+                                    .setName("Get Sync Config")
+                                    .thenComposeAsync(() -> {
+                                        HttpUrl.Builder builder = Utils.getBaseUrl((YggdrasilAccount) account, token, version.get().getId());
+                                        VerifyFiles verifyFiles = new VerifyFiles(configFile, rootPath.toPath());
+                                        Map<File, String> requireModFile = verifyFiles.verifyFile();
+                                        Map<URL, File> urls = Utils.prepareForDownload(builder, requireModFile);
+                                        return new DownloadRequireFileTask(urls)
+                                                .setName(i18n("update.download.config"));
+                                    }));
+                }).withStage("launch.state.mods"))
+                .thenComposeAsync(ignored -> {
+                    javaVersionRef.set(javaVersion[0]);
+                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion[0], setting));
                     if (setting.isNotCheckGame())
                         return null;
                     return Task.allOf(
@@ -155,7 +193,7 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(java, renderer);
+                                    Library lib = NativePatcher.getMesaLoader(javaVersion[0], renderer);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);

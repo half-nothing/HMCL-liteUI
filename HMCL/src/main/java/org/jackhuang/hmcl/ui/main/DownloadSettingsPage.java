@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import cn.pigeon.update.Static;
 import com.jfoenix.controls.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -173,7 +174,7 @@ public class DownloadSettingsPage extends StackPane {
                 update.getChildren().add(chkAutoDownloadThreads);
 
                 chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
-                    ConfigHolder.debugMode = newValue;
+                    Static.debugMode = newValue;
                 });
             }
 

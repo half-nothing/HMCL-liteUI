@@ -28,7 +28,8 @@ import java.nio.file.Paths;
  * Stores metadata about this application.
  */
 public final class Metadata {
-    private Metadata() {}
+    private Metadata() {
+    }
 
     public static final String NAME = "HMCL";
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
@@ -37,7 +38,7 @@ public final class Metadata {
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
 
-    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
+    public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://sbi.pigeon-server.cn/api/launcher/update_link");
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
     public static final String HELP_URL = "https://docs.hmcl.net";
     public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
@@ -77,6 +78,7 @@ public final class Metadata {
     }
 
     public static boolean isNightly() {
-        return !isStable() && !isDev();
+        return false;
+//        return !isStable() && !isDev();
     }
 }
