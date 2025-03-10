@@ -26,7 +26,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "liteUI"
     }
 }
-val versionRoot = System.getenv("VERSION_ROOT") ?: "1.1.0"
+val versionRoot = System.getenv("VERSION_ROOT") ?: "1.2.0"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
