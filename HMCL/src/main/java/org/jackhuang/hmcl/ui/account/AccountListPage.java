@@ -24,14 +24,12 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -46,7 +44,6 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.net.URI;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -182,10 +179,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 list.getStyleClass().add("card-list");
 
 
-                Bindings.bindContent(list.getChildren(),
-                        (ObservableList<? extends Node>) skinnable.items.stream()
-                                .filter(account -> account.getAccount() instanceof AuthlibInjectorAccount)
-                                .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                Bindings.bindContent(list.getChildren(), skinnable.items);
 
 
                 scrollPane.setContent(list);

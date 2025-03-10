@@ -41,7 +41,7 @@ public final class Metadata {
     public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://sbi.pigeon-server.cn/api/launcher/update_link");
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
     public static final String HELP_URL = "https://docs.hmcl.net";
-    public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
+    public static final String CHANGELOG_URL = "https://skin.pigeon-server.cn/";
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
     public static final String EULA_URL = "https://docs.hmcl.net/eula/hmcl.html";
 
